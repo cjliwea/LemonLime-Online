@@ -1,0 +1,143 @@
+/* LemonLime global theme: clean light + lemon green */
+
+QPushButton {
+	background-color: #FFFFFF;
+	border: 1px solid #D4D4D8;
+	border-radius: 6px;
+	padding: 5px 14px;
+}
+
+QPushButton:hover {
+	background-color: #F4F4F5;
+}
+
+QPushButton:disabled {
+	color: #A1A1AA;
+	background-color: #FAFAFA;
+}
+
+QPushButton#PrimaryBtn {
+	background-color: #84CC16;
+	color: #1A2E05;
+	font-weight: bold;
+}
+
+QPushButton#PrimaryBtn:hover {
+	background-color: #65A30D;
+	color: #FFFFFF;
+}
+
+QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox, QDateTimeEdit {
+	border: 1px solid #D4D4D8;
+	border-radius: 4px;
+	padding: 4px 8px;
+	background-color: #FFFFFF;
+}
+
+QLineEdit:focus, QComboBox:focus, QSpinBox:focus, QDoubleSpinBox:focus, QDateTimeEdit:focus {
+	border: 1px solid #84CC16;
+}
+
+QTableView, QTableWidget {
+	border: 1px solid #E5E7EB;
+	gridline-color: #F1F5F9;
+	background-color: #FFFFFF;
+	selection-background-color: #ECFCCB;
+	selection-color: #0F172A;
+}
+
+QHeaderView::section {
+	background-color: #F8FAFC;
+	padding: 6px;
+	border: none;
+	border-bottom: 1px solid #E5E7EB;
+	color: #475569;
+}
+
+QTabWidget::pane {
+	border: 1px solid #E5E7EB;
+	border-radius: 6px;
+	background-color: #FFFFFF;
+	position: relative;
+	top: -1px;
+}
+
+QTabBar::tab {
+	padding: 7px 18px;
+	border-top-left-radius: 6px;
+	border-top-right-radius: 6px;
+	color: #64748B;
+}
+
+QTabBar::tab:selected {
+	background-color: #FFFFFF;
+	color: #0F172A;
+	font-weight: bold;
+	border: 1px solid #E5E7EB;
+}
+
+QGroupBox {
+	border: 1px solid #E5E7EB;
+	border-radius: 6px;
+	margin-top: 12px;
+}
+
+QGroupBox::title {
+	subcontrol-origin: margin;
+	left: 10px;
+	padding: 0 4px;
+	color: #475569;
+	font-weight: bold;
+}
+
+QMenuBar::item:selected, QMenu::item:selected {
+	background-color: #F7FEE7;
+	color: #3F6212;
+}
+
+QMenu {
+	border: 1px solid #E5E7EB;
+}
+
+QToolBar {
+	background-color: #FFFFFF;
+	border: none;
+	spacing: 4px;
+}
+
+QToolButton {
+	border-radius: 6px;
+	padding: 5px;
+}
+
+QToolButton:hover {
+	background-color: #F4F4F5;
+}
+
+QStatusBar {
+	background-color: #F8FAFC;
+}
+
+QStatusBar::item {
+	border: none;
+}
+
+QLabel#welcomeBadge {
+	color: #94A3B8;
+	padding: 2px 10px;
+	border: 1px solid #E5E7EB;
+	border-radius: 10px;
+}
+
+QProgressBar {
+	height: 8px;
+	border: none;
+	background-color: #F1F5F9;
+	border-radius: 4px;
+	text-align: center;
+}
+
+QProgressBar::chunk {
+	background-color: #84CC16;
+	border-radius: 4px;
+}

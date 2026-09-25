@@ -16,6 +16,7 @@
 #include "spdlog/sinks/daily_file_sink.h"
 //
 #include <QApplication>
+#include <QFile>
 #include <QPixmap>
 #include <QSplashScreen>
 #include <chrono>
@@ -65,6 +66,14 @@ int main(int argc, char *argv[]) {
 	// fonts.setFamily("PingFangSC-Regular");
 #endif
 	Q_INIT_RESOURCE(resource);
+
+	// load global lemon-green theme (silently skip if missing)
+	QFile styleFile(QStringLiteral(":/qss/lemonlime.qss"));
+	if (styleFile.open(QFile::ReadOnly)) {
+		app.setStyleSheet(QString::fromUtf8(styleFile.readAll()));
+		styleFile.close();
+	}
+
 	QPixmap pixmap(":/logo/splash2.png");
 	QSplashScreen screen(pixmap.scaled(450, 191, Qt::KeepAspectRatio, Qt::SmoothTransformation));
 	LemonLime w;

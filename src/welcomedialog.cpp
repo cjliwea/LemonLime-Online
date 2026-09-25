@@ -10,10 +10,22 @@
 #include "welcomedialog.h"
 #include "ui_welcomedialog.h"
 //
+#include <QHBoxLayout>
+#include <QLabel>
 #include <QPushButton>
 
 WelcomeDialog::WelcomeDialog(QWidget *parent) : QDialog(parent), ui(new Ui::WelcomeDialog) {
 	ui->setupUi(this);
+
+	auto *headerLayout = new QHBoxLayout;
+	auto *badge = new QLabel(QStringLiteral("AC CSP-J/S"), this);
+	badge->setObjectName(QStringLiteral("welcomeBadge"));
+	headerLayout->addStretch();
+	headerLayout->addWidget(badge);
+	if (auto *vbox = qobject_cast<QVBoxLayout *>(layout())) {
+		vbox->insertLayout(0, headerLayout);
+	}
+
 	ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
 	connect(ui->openContestWidget, &OpenContestWidget::selectionChanged, this,
 	        &WelcomeDialog::selectionChanged);
