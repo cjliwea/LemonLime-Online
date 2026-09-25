@@ -56,16 +56,6 @@
        <property name="layoutDirection">
         <enum>Qt::LayoutDirection::LeftToRight</enum>
        </property>
-       <property name="styleSheet">
-        <string notr="true">    QProgressBar {
-        border: 2px solid;
-        border-radius: 5px;
-        text-align:center;
-    }
-    QProgressBar::chunk {
-        background: #0c3;
-    }</string>
-       </property>
        <property name="maximum">
         <number>1000</number>
        </property>

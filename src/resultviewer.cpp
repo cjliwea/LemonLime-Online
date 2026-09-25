@@ -30,10 +30,38 @@
 
 #define LEMON_MODULE_NAME "ResultViewer"
 
-static bool shouldApplyDarkFrame() {
-	const QPalette &defaultPalette = QApplication::palette();
-	return defaultPalette.color(QPalette::WindowText).lightness() >
-	       defaultPalette.color(QPalette::Window).lightness();
+// 按「得分 / 满分」比例为分数格着色（柠檬绿主题色板）
+static void applyScoreCellStyle(QTableWidgetItem *item, int score, int fullScore) {
+	if (fullScore <= 0)
+		return;
+
+	QColor bg;
+	QColor fg;
+
+	if (score >= fullScore) {
+		// 满分：深绿底白字
+		bg = QColor(QStringLiteral("#16A34A"));
+		fg = QColor(QStringLiteral("#FFFFFF"));
+	} else if (score * 10 >= fullScore * 7) {
+		// ≥70%：浅绿底深绿字
+		bg = QColor(QStringLiteral("#DCFCE7"));
+		fg = QColor(QStringLiteral("#15803D"));
+	} else if (score * 10 >= fullScore * 4) {
+		// ≥40%：浅黄底黄褐字
+		bg = QColor(QStringLiteral("#FEF9C3"));
+		fg = QColor(QStringLiteral("#A16207"));
+	} else if (score > 0) {
+		// >0%：浅橙底橙字
+		bg = QColor(QStringLiteral("#FFEDD5"));
+		fg = QColor(QStringLiteral("#C2410C"));
+	} else {
+		// 0 分：浅红底红字
+		bg = QColor(QStringLiteral("#FEE2E2"));
+		fg = QColor(QStringLiteral("#B91C1C"));
+	}
+
+	item->setBackground(bg);
+	item->setForeground(fg);
 }
 
 ResultViewer::ResultViewer(QWidget *parent) : QTableWidget(parent) {
@@ -112,23 +140,6 @@ void ResultViewer::refreshViewer() {
 	QStringList headerList;
 	headerList << tr("Rank") << tr("Name") << tr("Total Score");
 	QList<Task *> taskList = curContest->getTaskList();
-	Settings setting;
-	curContest->copySettings(setting);
-	ColorTheme colors = setting.getCurrentColorTheme();
-
-	// #if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
-	// 	if (QGuiApplication::styleHints()->colorScheme() == Qt::ColorScheme::Dark) {
-	// 		colors.invertLightness();
-	// 		LOG("Auto dark mode has been set");
-	// 	}
-	// #endif
-	// https://www.qt.io/blog/dark-mode-on-windows-11-with-qt-6.5
-	// Waiting QPalette::colorScheme implement
-	// So we use an alternative method.
-	if (shouldApplyDarkFrame()) {
-		colors.invertLightness();
-		LOG("Auto dark mode has been set");
-	}
 
 	for (auto &i : taskList) {
 		headerList << i->getProblemTitle();
@@ -160,21 +171,9 @@ void ResultViewer::refreshViewer() {
 
 			if (score != -1) {
 				item(i, j + 3)->setData(Qt::DisplayRole, score);
-				QColor bg = QColor::fromHsl(0, 0, 255);
-
-				if (taskList[j]->getTaskType() != Task::AnswersOnly &&
-				    contestantList[i]->getCompileState(j) != CompileSuccessfully) {
-					if (contestantList[i]->getCompileState(j) == NoValidSourceFile)
-						bg = colors.getColorNf();
-					else
-						bg = colors.getColorCe();
-				} else
-					bg = colors.getColorPer(score, fullScore[j]);
-
-				item(i, j + 3)->setBackground(bg);
-
-				// qDebug() << i << j << bg;
+				applyScoreCellStyle(item(i, j + 3), score, fullScore[j]);
 			} else {
+				// 未评测 / 无成绩：不着色
 				item(i, j + 3)->setText(tr("Invalid"));
 			}
 		}
@@ -187,7 +186,7 @@ void ResultViewer::refreshViewer() {
 
 		if (totalScore != -1) {
 			item(i, 2)->setData(Qt::DisplayRole, totalScore);
-			item(i, 2)->setBackground(colors.getColorGrand(totalScore, sfullScore));
+			applyScoreCellStyle(item(i, 2), totalScore, sfullScore);
 			QFont font;
 			font.setBold(true);
 			item(i, 2)->setFont(font);

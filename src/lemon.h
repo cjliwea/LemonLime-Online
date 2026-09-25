@@ -21,6 +21,7 @@ class Contest;
 class Settings;
 class OptionsDialog;
 class OnlineServerDialog;
+class QLabel;
 
 class LemonLime : public QMainWindow {
 	Q_OBJECT
@@ -38,6 +39,7 @@ class LemonLime : public QMainWindow {
 	Contest *curContest;
 	Settings *settings;
 	OnlineServerDialog *onlineServerDialog{};
+	QLabel *onlineSvcLabel{}; // 状态栏右侧的在线服务状态标签
 	QFileSystemWatcher *dataDirWatcher;
 	QString curFile;
 	QSignalMapper *signalMapper;

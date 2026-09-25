@@ -26,6 +26,7 @@
 #include "newcontestdialog.h"
 #include "opencontestdialog.h"
 #include "optionsdialog.h"
+#include "server/SubmissionServer.h"
 #include "server/onlineserverdialog.h"
 #include "statisticsbrowser.h"
 #include "welcomedialog.h"
@@ -34,11 +35,14 @@
 #include <QDesktopServices>
 #include <QFileDialog>
 #include <QInputDialog>
+#include <QLabel>
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QProgressDialog>
 #include <QStatusBar>
 #include <QTextBrowser>
+#include <QToolBar>
+#include <QToolButton>
 #include <QUrl>
 #include <algorithm>
 #include <chrono>
@@ -96,6 +100,27 @@ LemonLime::LemonLime(QWidget *parent) : QMainWindow(parent), ui(new Ui::LemonLim
 	connect(ui->actionMore, &QAction::triggered, this, &LemonLime::actionMore);
 	connect(ui->actionChangeContestName, &QAction::triggered, this, &LemonLime::changeContestName);
 	connect(ui->exitAction, &QAction::triggered, this, &LemonLime::close);
+
+	// 主工具栏：放常用操作（打开 / 保存 / 全部评测 / 在线提交服务）
+	auto *mainToolBar = addToolBar(tr("主工具栏"));
+	mainToolBar->setObjectName(QStringLiteral("mainToolBar"));
+	mainToolBar->setMovable(false);
+	mainToolBar->setFloatable(false);
+	mainToolBar->addAction(ui->openAction);
+	mainToolBar->addAction(ui->saveAction);
+	mainToolBar->addSeparator();
+	mainToolBar->addAction(ui->judgeAllAction);
+	mainToolBar->addSeparator();
+	mainToolBar->addAction(ui->actionOnlineServer);
+
+	// 「全部评测」作为主按钮高亮（QSS 中 QToolButton#PrimaryBtn）
+	if (auto *primaryBtn = qobject_cast<QToolButton *>(mainToolBar->widgetForAction(ui->judgeAllAction)))
+		primaryBtn->setObjectName(QStringLiteral("PrimaryBtn"));
+
+	// 状态栏右侧常驻：在线服务状态
+	onlineSvcLabel = new QLabel(tr("在线服务：未启动"), this);
+	onlineSvcLabel->setObjectName(QStringLiteral("onlineSvcLabel"));
+	ui->statusBar->addPermanentWidget(onlineSvcLabel);
 
 	QSettings settings("LemonLime", "lemon");
 	QSize _size = settings.value("WindowSize", size()).toSize();
@@ -259,6 +284,14 @@ void LemonLime::showOnlineServerDialog() {
 	}
 	if (! onlineServerDialog) {
 		onlineServerDialog = new OnlineServerDialog(this);
+		// 把服务启停状态回传到主窗口状态栏标签
+		connect(onlineServerDialog->server(), &SubmissionServer::started, this,
+		        [this](const QHostAddress &, quint16 port) {
+			        onlineSvcLabel->setText(tr("在线服务：运行中 :%1").arg(port));
+		        });
+		connect(onlineServerDialog->server(), &SubmissionServer::stopped, this, [this]() {
+			onlineSvcLabel->setText(tr("在线服务：未启动"));
+		});
 	}
 	onlineServerDialog->bindContest(curContest, QDir::currentPath());
 	onlineServerDialog->show();
