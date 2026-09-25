@@ -27,6 +27,7 @@
 #include "opencontestdialog.h"
 #include "optionsdialog.h"
 #include "server/SubmissionServer.h"
+#include "server/UserStore.h" // SubmissionServer.h 内联函数用到 QPointer<UserStore>::data()，MSVC 需要完整类型
 #include "server/onlineserverdialog.h"
 #include "statisticsbrowser.h"
 #include "welcomedialog.h"
