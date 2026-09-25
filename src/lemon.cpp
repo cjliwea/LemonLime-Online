@@ -102,11 +102,12 @@ LemonLime::LemonLime(QWidget *parent) : QMainWindow(parent), ui(new Ui::LemonLim
 	connect(ui->actionChangeContestName, &QAction::triggered, this, &LemonLime::changeContestName);
 	connect(ui->exitAction, &QAction::triggered, this, &LemonLime::close);
 
-	// 主工具栏：放常用操作（打开 / 保存 / 全部评测 / 在线提交服务）
+	// 主工具栏：放常用操作（打开 / 保存 / 全部评测 / 在线提交服务），纯文字按钮
 	auto *mainToolBar = addToolBar(tr("主工具栏"));
 	mainToolBar->setObjectName(QStringLiteral("mainToolBar"));
 	mainToolBar->setMovable(false);
 	mainToolBar->setFloatable(false);
+	mainToolBar->setToolButtonStyle(Qt::ToolButtonTextOnly);
 	mainToolBar->addAction(ui->openAction);
 	mainToolBar->addAction(ui->saveAction);
 	mainToolBar->addSeparator();
@@ -117,6 +118,19 @@ LemonLime::LemonLime(QWidget *parent) : QMainWindow(parent), ui(new Ui::LemonLim
 	// 「全部评测」作为主按钮高亮（QSS 中 QToolButton#PrimaryBtn）
 	if (auto *primaryBtn = qobject_cast<QToolButton *>(mainToolBar->widgetForAction(ui->judgeAllAction)))
 		primaryBtn->setObjectName(QStringLiteral("PrimaryBtn"));
+
+	// 工具栏右上角：红 / 黄 / 绿装饰圆点
+	auto *spacer = new QWidget(this);
+	spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+	mainToolBar->addWidget(spacer);
+	const QStringList dotColors = {QStringLiteral("#F87171"), QStringLiteral("#FBBF24"),
+	                               QStringLiteral("#34D399")};
+	for (const auto &c : dotColors) {
+		auto *dot = new QLabel(this);
+		dot->setFixedSize(12, 12);
+		dot->setStyleSheet(QStringLiteral("background-color:%1;border-radius:6px;").arg(c));
+		mainToolBar->addWidget(dot);
+	}
 
 	// 状态栏右侧常驻：在线服务状态
 	onlineSvcLabel = new QLabel(tr("在线服务：未启动"), this);
