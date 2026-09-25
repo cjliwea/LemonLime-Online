@@ -15,6 +15,7 @@
 #include "core/subtaskdependencelib.h"
 #include "core/task.h"
 #include "core/testcase.h"
+#include "titlebar.h"
 //
 #include <QGroupBox>
 #include <QHBoxLayout>
@@ -51,6 +52,9 @@ JudgingDialog::JudgingDialog(QWidget *parent) : QDialog(parent), ui(new Ui::Judg
 		}
 	});
 	blinkTimer->start();
+
+	// 无边框窗口：装自绘标题栏（只有关闭钮）
+	installTitleBar(this, false);
 }
 
 JudgingDialog::~JudgingDialog() {

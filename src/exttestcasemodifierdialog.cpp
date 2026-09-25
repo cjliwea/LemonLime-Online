@@ -9,6 +9,7 @@
 #include "ui_exttestcasemodifierdialog.h"
 //
 #include "core/task.h"
+#include "titlebar.h"
 //
 #include <QtWidgets>
 
@@ -20,6 +21,9 @@ ExtTestCaseModifierDialog::ExtTestCaseModifierDialog(QWidget *parent)
 	        &ExtTestCaseModifierDialog::accept);
 	connect(ui->buttonBox->button(QDialogButtonBox::Cancel), &QPushButton::clicked, this,
 	        &ExtTestCaseModifierDialog::reject);
+
+	// 无边框窗口：装自绘标题栏（只有关闭钮）
+	installTitleBar(this, false);
 }
 
 ExtTestCaseModifierDialog::~ExtTestCaseModifierDialog() { delete ui; }

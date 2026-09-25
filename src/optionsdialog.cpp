@@ -12,6 +12,7 @@
 //
 #include "base/LemonLog.hpp"
 #include "base/settings.h"
+#include "titlebar.h"
 //
 #include <QtWidgets>
 #define LEMON_MODULE_NAME "OptionsDialog"
@@ -21,6 +22,9 @@ OptionsDialog::OptionsDialog(QWidget *parent) : QDialog(parent), ui(new Ui::Opti
 	editSettings = new Settings();
 	connect(ui->buttonBox->button(QDialogButtonBox::Ok), &QPushButton::clicked, this,
 	        &OptionsDialog::okayButtonClicked);
+
+	// 无边框窗口：装自绘标题栏（只有关闭钮）
+	installTitleBar(this, false);
 }
 
 OptionsDialog::~OptionsDialog() { delete ui; }

@@ -9,6 +9,7 @@
 #include "SubmissionServer.h"
 #include "UserStore.h"
 #include "core/contest.h"
+#include "titlebar.h"
 
 #include <QCheckBox>
 #include <QClipboard>
@@ -44,8 +45,6 @@
 
 OnlineServerDialog::OnlineServerDialog(QWidget *parent) : QDialog(parent) {
 	setWindowTitle(tr("在线提交服务"));
-	// QDialog 默认只有关闭按钮，补上最小化/最大化
-	setWindowFlags(windowFlags() | Qt::WindowMinMaxButtonsHint);
 	resize(880, 640);
 	server_ = new SubmissionServer(this);
 	connect(server_, &SubmissionServer::logMessage, this, &OnlineServerDialog::appendLog);
@@ -55,6 +54,8 @@ OnlineServerDialog::OnlineServerDialog(QWidget *parent) : QDialog(parent) {
 		        refreshUsersTable();
 	        });
 	buildUi();
+	// 无边框窗口：装自绘标题栏（含最小化 / 最大化）
+	installTitleBar(this, true);
 }
 
 void OnlineServerDialog::bindContest(Contest *contest, const QString &contestDir) {

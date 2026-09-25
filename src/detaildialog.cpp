@@ -18,6 +18,7 @@
 #include "core/task.h"
 #include "core/testcase.h"
 #include "judgingdialog.h"
+#include "titlebar.h"
 //
 #include <QMessageBox>
 #include <QScrollBar>
@@ -25,6 +26,9 @@
 DetailDialog::DetailDialog(QWidget *parent) : QDialog(parent), ui(new Ui::DetailDialog) {
 	ui->setupUi(this);
 	connect(ui->detailViewer, &QTextBrowser::anchorClicked, this, &DetailDialog::anchorClicked);
+
+	// 无边框窗口：装自绘标题栏（只有关闭钮）
+	installTitleBar(this, false);
 }
 
 DetailDialog::~DetailDialog() { delete ui; }

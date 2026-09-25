@@ -10,6 +10,8 @@
 #include "welcomedialog.h"
 #include "ui_welcomedialog.h"
 //
+#include "titlebar.h"
+//
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QPushButton>
@@ -33,6 +35,9 @@ WelcomeDialog::WelcomeDialog(QWidget *parent) : QDialog(parent), ui(new Ui::Welc
 	        &WelcomeDialog::informationChanged);
 	connect(ui->tabWidget, &QTabWidget::currentChanged, this, &WelcomeDialog::tabIndexChanged);
 	connect(ui->openContestWidget, &OpenContestWidget::rowDoubleClicked, this, &WelcomeDialog::accept);
+
+	// 无边框窗口：装自绘标题栏（只有关闭钮，保留 welcomeBadge）
+	installTitleBar(this, false);
 }
 
 WelcomeDialog::~WelcomeDialog() { delete ui; }

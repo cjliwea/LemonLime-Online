@@ -29,6 +29,7 @@
 #include "server/SubmissionServer.h"
 #include "server/UserStore.h" // SubmissionServer.h 内联函数用到 QPointer<UserStore>::data()，MSVC 需要完整类型
 #include "server/onlineserverdialog.h"
+#include "titlebar.h"
 #include "statisticsbrowser.h"
 #include "welcomedialog.h"
 //
@@ -40,6 +41,7 @@
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QProgressDialog>
+#include <QSizeGrip>
 #include <QStatusBar>
 #include <QTextBrowser>
 #include <QToolBar>
@@ -136,6 +138,11 @@ LemonLime::LemonLime(QWidget *parent) : QMainWindow(parent), ui(new Ui::LemonLim
 	onlineSvcLabel = new QLabel(tr("在线服务：未启动"), this);
 	onlineSvcLabel->setObjectName(QStringLiteral("onlineSvcLabel"));
 	ui->statusBar->addPermanentWidget(onlineSvcLabel);
+	// 无边框窗口后靠右下角拉伸柄调整大小（放在在线服务标签之后）
+	ui->statusBar->addPermanentWidget(new QSizeGrip(this));
+
+	// 无边框窗口：装自绘标题栏（含最小化 / 最大化）
+	installTitleBar(this, true);
 
 	QSettings settings("LemonLime", "lemon");
 	QSize _size = settings.value("WindowSize", size()).toSize();

@@ -10,6 +10,7 @@
 //
 #include "base/settings.h"
 #include "core/task.h"
+#include "titlebar.h"
 //
 #include <QFileDialog>
 #include <QMessageBox>
@@ -24,6 +25,9 @@ ExtTestCaseUpdaterDialog::ExtTestCaseUpdaterDialog(QWidget *parent, Task *nowTas
       nowCaseNumber(nowCaseNumber), editScore(editScore), editData(editData), editTime(editTime),
       editMemory(editMemory), editDepend(editDepend) {
 	ui->setupUi(this);
+
+	// 无边框窗口：装自绘标题栏（只有关闭钮），放在 early return 之前保证必装
+	installTitleBar(this, false);
 
 	if (! nowTask)
 		return;

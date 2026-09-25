@@ -11,6 +11,7 @@
 #include "ui_addtaskdialog.h"
 //
 #include "base/settings.h"
+#include "titlebar.h"
 //
 
 AddTaskDialog::AddTaskDialog(QWidget *parent) : QDialog(parent), ui(new Ui::AddTaskDialog) {
@@ -23,6 +24,9 @@ AddTaskDialog::AddTaskDialog(QWidget *parent) : QDialog(parent), ui(new Ui::AddT
 	connect(ui->fullScore, &QLineEdit::textChanged, this, &AddTaskDialog::fullScoreChanged);
 	connect(ui->timeLimit, &QLineEdit::textChanged, this, &AddTaskDialog::timeLimitChanged);
 	connect(ui->memoryLimit, &QLineEdit::textChanged, this, &AddTaskDialog::memoryLimitChanged);
+
+	// 无边框窗口：装自绘标题栏（只有关闭钮）
+	installTitleBar(this, false);
 }
 
 AddTaskDialog::~AddTaskDialog() { delete ui; }

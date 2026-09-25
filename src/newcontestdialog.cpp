@@ -10,6 +10,8 @@
 #include "newcontestdialog.h"
 #include "ui_newcontestdialog.h"
 //
+#include "titlebar.h"
+//
 #include <QPushButton>
 
 NewContestDialog::NewContestDialog(QWidget *parent) : QDialog(parent), ui(new Ui::NewContestDialog) {
@@ -17,6 +19,9 @@ NewContestDialog::NewContestDialog(QWidget *parent) : QDialog(parent), ui(new Ui
 	ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
 	connect(ui->newContestWidget, &NewContestWidget::informationChanged, this,
 	        &NewContestDialog::informationChanged);
+
+	// 无边框窗口：装自绘标题栏（只有关闭钮）
+	installTitleBar(this, false);
 }
 
 NewContestDialog::~NewContestDialog() { delete ui; }
