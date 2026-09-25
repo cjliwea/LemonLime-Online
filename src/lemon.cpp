@@ -121,19 +121,6 @@ LemonLime::LemonLime(QWidget *parent) : QMainWindow(parent), ui(new Ui::LemonLim
 	if (auto *primaryBtn = qobject_cast<QToolButton *>(mainToolBar->widgetForAction(ui->judgeAllAction)))
 		primaryBtn->setObjectName(QStringLiteral("PrimaryBtn"));
 
-	// 工具栏右上角：红 / 黄 / 绿装饰圆点
-	auto *spacer = new QWidget(this);
-	spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-	mainToolBar->addWidget(spacer);
-	const QStringList dotColors = {QStringLiteral("#F87171"), QStringLiteral("#FBBF24"),
-	                               QStringLiteral("#34D399")};
-	for (const auto &c : dotColors) {
-		auto *dot = new QLabel(this);
-		dot->setFixedSize(12, 12);
-		dot->setStyleSheet(QStringLiteral("background-color:%1;border-radius:6px;").arg(c));
-		mainToolBar->addWidget(dot);
-	}
-
 	// 状态栏右侧常驻：在线服务状态
 	onlineSvcLabel = new QLabel(tr("在线服务：未启动"), this);
 	onlineSvcLabel->setObjectName(QStringLiteral("onlineSvcLabel"));
