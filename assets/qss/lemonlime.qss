@@ -192,7 +192,8 @@ QLabel#onlineSvcLabel {
 	padding-right: 8px;
 }
 
-/* 自绘标题栏（无边框窗口，macOS 红绿灯窗控） */
+/* 自绘标题栏（无边框窗口，macOS 红绿灯窗控）
+   圆点按钮样式在 titlebar.cpp 内联设置，避免被其他 QSS 级联污染 */
 TitleBar {
 	background: #F8FAFC;
 	border-bottom: 1px solid #E5E7EB;
@@ -202,45 +203,4 @@ TitleBar QLabel#TitleBarText {
 	color: #0F172A;
 	font-weight: 600;
 	padding-left: 6px;
-}
-
-TitleBar QPushButton {
-	border: none;
-	border-radius: 7px;
-	min-width: 14px;
-	max-width: 14px;
-	min-height: 14px;
-	max-height: 14px;
-	color: transparent;
-	font-size: 9px;
-	font-weight: 700;
-}
-
-/* 悬停标题栏时圆点内浮现符号 */
-TitleBar[hover="true"] QPushButton {
-	color: rgba(0, 0, 0, 0.55);
-}
-
-TitleBar QPushButton#TbMin {
-	background: #FBBF24;
-}
-
-TitleBar QPushButton#TbMin:pressed {
-	background: #D69E0B;
-}
-
-TitleBar QPushButton#TbMax {
-	background: #34D399;
-}
-
-TitleBar QPushButton#TbMax:pressed {
-	background: #0EA47A;
-}
-
-TitleBar QPushButton#TbClose {
-	background: #F87171;
-}
-
-TitleBar QPushButton#TbClose:pressed {
-	background: #DC2626;
 }

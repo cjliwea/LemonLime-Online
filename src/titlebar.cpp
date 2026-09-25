@@ -9,6 +9,7 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QMainWindow>
+#include <QMenuBar>
 #include <QMouseEvent>
 #include <QPushButton>
 #include <QStyle>
@@ -38,13 +39,16 @@ TitleBar::TitleBar(QWidget *window, bool withMinMax, QWidget *parent)
 
 	// 右侧：macOS 风格圆点（黄最小化 / 绿最大化 / 红关闭）
 	if (withMinMax_) {
-		minBtn_ = makeDot(QStringLiteral("TbMin"), QStringLiteral("–"));
-		maxBtn_ = makeDot(QStringLiteral("TbMax"), QStringLiteral("+"));
+		minBtn_ = makeDot(QStringLiteral("TbMin"), QStringLiteral("–"), QStringLiteral("#FBBF24"),
+		                  QStringLiteral("#D69E0B"));
+		maxBtn_ = makeDot(QStringLiteral("TbMax"), QStringLiteral("+"), QStringLiteral("#34D399"),
+		                  QStringLiteral("#0EA47A"));
 		lay->addWidget(minBtn_);
 		lay->addWidget(maxBtn_);
 	}
 
-	closeBtn_ = makeDot(QStringLiteral("TbClose"), QStringLiteral("×"));
+	closeBtn_ = makeDot(QStringLiteral("TbClose"), QStringLiteral("×"), QStringLiteral("#F87171"),
+	                    QStringLiteral("#DC2626"));
 	lay->addWidget(closeBtn_);
 
 	if (minBtn_)
@@ -66,29 +70,39 @@ TitleBar::TitleBar(QWidget *window, bool withMinMax, QWidget *parent)
 	window_->installEventFilter(this);
 }
 
-// 创建一个 14px 圆形窗控按钮：常态只显示纯色圆点，符号色由 QSS 控制
-QPushButton *TitleBar::makeDot(const QString &objectName, const QString &symbol) {
+// 生成圆点按钮的内联样式表（免疫外部 QSS 级联，保证永远是正圆）
+static QString dotStyleSheet(const QString &color, const QString &pressed, bool hover) {
+	return QStringLiteral(
+	           "QPushButton{background:%1;border:none;border-radius:7px;padding:0;margin:0;"
+	           "color:%2;font-size:9px;font-weight:700;}"
+	           "QPushButton:pressed{background:%3;}")
+	    .arg(color, hover ? QStringLiteral("rgba(0,0,0,0.55)") : QStringLiteral("transparent"), pressed);
+}
+
+// 创建一个 14px 圆形窗控按钮：常态只显示纯色圆点，悬停圆点组时浮现符号
+QPushButton *TitleBar::makeDot(const QString &objectName, const QString &symbol, const QString &color,
+                               const QString &pressed) {
 	auto *btn = new QPushButton(symbol, this);
 	btn->setObjectName(objectName);
 	btn->setFixedSize(14, 14);
 	btn->setFocusPolicy(Qt::NoFocus);
+	btn->setProperty("dotColor", color);
+	btn->setProperty("dotPressed", pressed);
+	btn->setStyleSheet(dotStyleSheet(color, pressed, false));
 	return btn;
 }
 
-// 悬停圆点组时浮现符号：切换 hover 动态属性并重刷自身与按钮样式
+// 悬停圆点组时浮现符号：直接重写各圆点的内联样式表
 void TitleBar::setHover(bool on) {
-	if (property("hover").toBool() == on)
+	if (hover_ == on)
 		return;
 
-	setProperty("hover", on);
-	style()->unpolish(this);
-	style()->polish(this);
+	hover_ = on;
 	const auto btns = findChildren<QPushButton *>();
 
-	for (auto *b : btns) {
-		b->style()->unpolish(b);
-		b->style()->polish(b);
-	}
+	for (auto *b : btns)
+		b->setStyleSheet(
+		    dotStyleSheet(b->property("dotColor").toString(), b->property("dotPressed").toString(), on));
 }
 
 bool TitleBar::event(QEvent *e) {
@@ -161,8 +175,17 @@ void installTitleBar(QWidget *w, bool withMinMax) {
 	tb->setObjectName(QStringLiteral("MainTitleBar"));
 
 	if (auto *mw = qobject_cast<QMainWindow *>(w)) {
-		// 主窗口：menuWidget 位于菜单栏之上，正好充当标题栏
-		mw->setMenuWidget(tb);
+		// 主窗口：menuWidget 会替换菜单栏区域，所以用一个容器装「标题栏 + 原菜单栏」，
+		// 保证原菜单栏保留在标题栏下方
+		auto *container = new QWidget(mw);
+		auto *v = new QVBoxLayout(container);
+		v->setContentsMargins(0, 0, 0, 0);
+		v->setSpacing(0);
+		v->addWidget(tb);
+		auto *mb = mw->menuBar();
+		mb->setParent(container);
+		v->addWidget(mb);
+		mw->setMenuWidget(container);
 		return;
 	}
 
