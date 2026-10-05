@@ -40,11 +40,13 @@
 #include <QDesktopServices>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QGuiApplication>
 #include <QInputDialog>
 #include <QLabel>
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QProgressDialog>
+#include <QScreen>
 #include <QSizeGrip>
 #include <QStatusBar>
 #include <QTextBrowser>
@@ -135,9 +137,35 @@ LemonLime::LemonLime(QWidget *parent) : QMainWindow(parent), ui(new Ui::LemonLim
 	// 无边框窗口：装自绘标题栏（含最小化 / 最大化）
 	installTitleBar(this, true);
 
-	QSettings settings("LemonLime", "lemon");
-	QSize _size = settings.value("WindowSize", size()).toSize();
-	resize(_size);
+	// 还原上次退出时的窗口位置与尺寸。
+	// 关键：还原出来的尺寸必须小于屏幕可用区域，否则「正常尺寸」本身就等于整屏，
+	// 最大化 / 还原按钮点下去在视觉上毫无变化（看起来就像失效）。
+	QSettings windowSettings("LemonLime", "lemon");
+	QRect savedGeometry = windowSettings.value("WindowGeometry").toRect();
+
+	if (! savedGeometry.isValid() || savedGeometry.width() < 400 || savedGeometry.height() < 300) {
+		const QSize savedSize = windowSettings.value("WindowSize", size()).toSize();
+		savedGeometry = QRect(QPoint(0, 0), savedSize);
+	}
+
+	const QScreen *curScreen = screen();
+
+	if (! curScreen)
+		curScreen = QGuiApplication::primaryScreen();
+
+	if (curScreen) {
+		const QRect available = curScreen->availableGeometry();
+		savedGeometry.setWidth(qMin(savedGeometry.width(), qMax(800, int(available.width() * 0.86))));
+		savedGeometry.setHeight(qMin(savedGeometry.height(), qMax(560, int(available.height() * 0.86))));
+
+		if (! available.intersects(savedGeometry))
+			savedGeometry.moveCenter(available.center());
+	}
+
+	setGeometry(savedGeometry);
+
+	if (windowSettings.value("WindowMaximized", false).toBool())
+		setWindowState(windowState() | Qt::WindowMaximized);
 
 	autoSaveTimer.callOnTimeout([this]() {
 		if (curContest)
@@ -170,8 +198,13 @@ void LemonLime::closeEvent(QCloseEvent * /*event*/) {
 		saveContest(curFile);
 
 	settings->saveSettings();
-	QSettings settings("LemonLime", "lemon");
-	settings.setValue("WindowSize", size());
+	QSettings windowSettings("LemonLime", "lemon");
+	const QRect normal = normalGeometry();
+	// 最大化时 size() 就是整屏，必须存 normalGeometry()，否则下次启动会「正常即整屏」
+	windowSettings.setValue("WindowGeometry",
+	                        normal.isValid() && normal.width() > 0 ? normal : geometry());
+	windowSettings.setValue("WindowMaximized", isMaximized() || bool(windowState() & Qt::WindowMaximized));
+	windowSettings.setValue("WindowSize", size()); // 兼容旧版本配置键
 }
 
 auto LemonLime::getSplashTime() -> int { return settings->getSplashTime(); }

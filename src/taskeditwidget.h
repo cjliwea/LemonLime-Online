@@ -10,6 +10,7 @@
 #pragma once
 //
 
+#include <QShowEvent>
 #include <QWidget>
 
 namespace Ui {
@@ -26,6 +27,7 @@ class TaskEditWidget : public QWidget {
 	explicit TaskEditWidget(QWidget *parent = nullptr);
 	~TaskEditWidget();
 	void changeEvent(QEvent *);
+	void showEvent(QShowEvent *);
 	void setEditTask(Task *);
 	void setSettings(Settings *);
 
@@ -34,6 +36,7 @@ class TaskEditWidget : public QWidget {
 	Settings *settings{};
 	Task *editTask;
 	void refreshWidgetState();
+	void refreshTaskInfo(); // 刷新顶部信息条（测试点 / 时限 / 内存 / 满分）
 	void addSourceFiles(const QString &, const QString &);
 	void addGraderFiles(const QString &, const QString &);
 	void rmSourceFilesAt(int);

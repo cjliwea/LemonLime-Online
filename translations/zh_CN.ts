@@ -2328,6 +2328,22 @@ p, li { white-space: pre-wrap; }
         <translation>试题类型</translation>
     </message>
     <message>
+        <source>Test Points</source>
+        <translation>测试点</translation>
+    </message>
+    <message>
+        <source>Time Limit</source>
+        <translation>时限</translation>
+    </message>
+    <message>
+        <source>Memory Limit</source>
+        <translation>内存</translation>
+    </message>
+    <message>
+        <source>Full Score</source>
+        <translation>满分</translation>
+    </message>
+    <message>
         <source>Traditional</source>
         <translation>传统题</translation>
     </message>
@@ -2516,6 +2532,25 @@ p, li { white-space: pre-wrap; }
         <source>Communication (Exec)</source>
         <translation>通信题（完整程序）</translation>
     </message>
+<context>
+    <name>TitleBar</name>
+    <message>
+        <source>Minimize</source>
+        <translation>最小化</translation>
+    </message>
+    <message>
+        <source>Maximize</source>
+        <translation>最大化</translation>
+    </message>
+    <message>
+        <source>Restore Down</source>
+        <translation>还原</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>关闭</translation>
+    </message>
+</context>
 </context>
 <context>
     <name>TaskJudger</name>

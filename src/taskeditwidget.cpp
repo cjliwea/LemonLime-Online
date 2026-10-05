@@ -13,6 +13,29 @@
 #include "base/compiler.h"
 #include "base/settings.h"
 #include "core/task.h"
+#include "core/testcase.h"
+
+namespace {
+// 把一组数值压成展示用文本：全空 -> “—”，同值 -> “值+单位”，多档 -> “最小 ~ 最大+单位”
+QString formatLimitRange(const QList<int> &values, const QString &unit) {
+	if (values.isEmpty())
+		return QStringLiteral("—");
+
+	QList<int> uniq;
+
+	for (int value : values) {
+		if (! uniq.contains(value))
+			uniq.append(value);
+	}
+
+	uniq.sort();
+
+	if (uniq.size() == 1)
+		return QStringLiteral("%1%2").arg(uniq.first()).arg(unit);
+
+	return QStringLiteral("%1 ~ %2%3").arg(uniq.first()).arg(uniq.last()).arg(unit);
+}
+} // namespace
 
 TaskEditWidget::TaskEditWidget(QWidget *parent) : QWidget(parent), ui(new Ui::TaskEditWidget) {
 	ui->setupUi(this);
@@ -81,7 +104,39 @@ void TaskEditWidget::changeEvent(QEvent *event) {
 		setEditTask(nullptr);
 		ui->retranslateUi(this);
 		setEditTask(bak);
+		refreshTaskInfo();
 	}
+}
+
+// 每次重新显示时刷新信息条：测试点数据是在「测试点」页编辑的，回到本页要能立刻看到最新统计
+void TaskEditWidget::showEvent(QShowEvent *event) {
+	QWidget::showEvent(event);
+	refreshTaskInfo();
+}
+
+void TaskEditWidget::refreshTaskInfo() {
+	if (! editTask) {
+		ui->taskInfoCaseValue->setText(QStringLiteral("—"));
+		ui->taskInfoTimeValue->setText(QStringLiteral("—"));
+		ui->taskInfoMemoryValue->setText(QStringLiteral("—"));
+		ui->taskInfoScoreValue->setText(QStringLiteral("—"));
+		return;
+	}
+
+	const auto &caseList = editTask->getTestCaseList();
+	QList<int> timeLimits;
+	QList<int> memoryLimits;
+
+	for (auto *testCase : caseList) {
+		timeLimits.append(testCase->getTimeLimit());
+		memoryLimits.append(testCase->getMemoryLimit());
+	}
+
+	ui->taskInfoCaseValue->setText(QString::number(caseList.size()));
+	ui->taskInfoTimeValue->setText(formatLimitRange(timeLimits, QStringLiteral(" ms")));
+	ui->taskInfoMemoryValue->setText(formatLimitRange(memoryLimits, QStringLiteral(" MiB")));
+	ui->taskInfoScoreValue->setText(caseList.isEmpty() ? QStringLiteral("—")
+	                                                   : QString::number(editTask->getTotalScore()));
 }
 
 void TaskEditWidget::setEditTask(Task *task) {
@@ -92,6 +147,7 @@ void TaskEditWidget::setEditTask(Task *task) {
 	}
 
 	editTask = task;
+	refreshTaskInfo();
 
 	if (! task)
 		return;

@@ -63,6 +63,23 @@ QLabel#SummaryText {
 	color: #334155;
 }
 
+/* 试题详情页顶部的题目信息条：测试点 / 时限 / 内存 / 满分 */
+QFrame#TaskInfoBar {
+	background-color: #F8FAFC;
+	border: 1px solid #E5E7EB;
+	border-radius: 10px;
+}
+
+QLabel#taskInfoCaseCaption, QLabel#taskInfoTimeCaption, QLabel#taskInfoMemoryCaption,
+QLabel#taskInfoScoreCaption {
+	color: #64748B;
+}
+
+QLabel#taskInfoCaseValue, QLabel#taskInfoTimeValue, QLabel#taskInfoMemoryValue,
+QLabel#taskInfoScoreValue {
+	color: #0F172A;
+}
+
 /* 拖放区由 DropArea::paintEvent 自绘圆角虚线框，这里必须让出绘制权 */
 QFrame#DropArea {
 	background: transparent;
