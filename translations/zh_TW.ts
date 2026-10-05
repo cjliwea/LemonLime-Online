@@ -2532,6 +2532,7 @@ p, li { white-space: pre-wrap; }
         <source>Communication (Exec)</source>
         <translation>通信題（完整程式）</translation>
     </message>
+</context>
 <context>
     <name>TitleBar</name>
     <message>
@@ -2550,7 +2551,6 @@ p, li { white-space: pre-wrap; }
         <source>Close</source>
         <translation>關閉</translation>
     </message>
-</context>
 </context>
 <context>
     <name>TaskJudger</name>
