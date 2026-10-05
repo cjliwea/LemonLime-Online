@@ -102,8 +102,7 @@ AddProblemWizard::AddProblemWizard(Settings *settings, QWidget *parent)
 
 	applyTypeVisibility();
 
-	// 无边框窗口：装自绘标题栏（只有关闭钮）
-	installTitleBar(this, false);
+	// 注意：不要给 QWizard 套自绘标题栏（同 NewContestWizard）。
 }
 
 auto AddProblemWizard::plans() -> QList<PlannedProblem> {
