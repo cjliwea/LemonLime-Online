@@ -131,6 +131,15 @@ TaskEditWidget::TaskEditWidget(QWidget *parent) : QWidget(parent), ui(new Ui::Ta
 	ui->taskTypeButton->setMenu(taskTypeMenu);
 	ui->taskTypeButton->setPopupMode(QToolButton::InstantPopup);
 	refreshTaskTypeButton();
+
+	// 高级卡片（交互 / 通信题设置）默认折叠：点击标题展开，展开箭头随状态旋转
+	ui->advancedToggle->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+	connect(ui->advancedToggle, &QToolButton::toggled, this, [this](bool expanded) {
+		ui->advancedToggle->setArrowType(expanded ? Qt::DownArrow : Qt::RightArrow);
+		ui->advancedContent->setVisible(expanded);
+	});
+	ui->advancedToggle->setArrowType(ui->advancedToggle->isChecked() ? Qt::DownArrow : Qt::RightArrow);
+	ui->advancedContent->setVisible(ui->advancedToggle->isChecked());
 }
 
 TaskEditWidget::~TaskEditWidget() { delete ui; }
@@ -332,6 +341,13 @@ void TaskEditWidget::refreshWidgetState() {
 		return;
 
 	int types = editTask->getTaskType();
+	// 卡片分组：编译设置不适用于提交答案题；高级卡片只有交互题 / 通信题才需要显示
+	const bool advanced = types == Task::Interaction || types == Task::Communication ||
+	                      types == Task::CommunicationExec;
+	ui->cardCompiler->setVisible(types != Task::AnswersOnly);
+	ui->cardAdvanced->setVisible(advanced);
+	if (advanced && ! ui->advancedToggle->isChecked())
+		ui->advancedToggle->setChecked(true);
 	ui->interactorPathLabel->setVisible(types == Task::Interaction);
 	ui->interactorPath->setVisible(types == Task::Interaction);
 	ui->graderPathLabel->setVisible(types == Task::Interaction);

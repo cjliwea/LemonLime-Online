@@ -548,17 +548,95 @@ QToolButton#taskTypeButton::menu-indicator {
 	height: 0;
 }
 
-/* 题目信息条卡片（沿用原 taskInfoBar 的结构，仅在此补上匹配的 ID 样式：
-   原文件中存在大小写不匹配的 QFrame#TaskInfoBar，故这里用正确的 #taskInfoBar） */
-QFrame#taskInfoBar {
+/* 卡片分组（对照 ui-preview/d13-taskdetail.html 的「新设计」屏）
+   头部卡左侧柠檬绿竖条，其余卡片为中性白卡 + 细边框 */
+QFrame#headCard,
+QFrame#cardProblemInfo,
+QFrame#cardFiles,
+QFrame#cardEval,
+QFrame#cardCompiler,
+QFrame#cardAdvanced {
 	background-color: #FFFFFF;
 	border: 1px solid #E5E7EB;
 	border-radius: 10px;
 }
 
-/* 评测 / 编译分区隔断线 */
-QFrame#sectionDividerEval, QFrame#sectionDividerCompiler {
+QFrame#headCard {
+	border-left: 4px solid #84CC16;
+}
+
+/* 卡片小标题 */
+QLabel#cardProblemInfoTitle,
+QLabel#cardFilesTitle,
+QLabel#cardEvalTitle {
+	color: #64748B;
+	font-size: 12px;
+	font-weight: 700;
+	letter-spacing: 0.5px;
+}
+
+/* 题目信息条：卡片内部不再自带边框，避免与卡片重复描边 */
+QFrame#taskInfoBar {
+	background-color: transparent;
+	border: none;
+}
+
+/* 题目信息小格：测试点只读（实线灰）、时限/内存/满分可编辑（虚线柠檬绿） */
+QFrame#infoBoxCase {
+	background-color: #F8FAFC;
+	border: 1px solid #E5E7EB;
+	border-radius: 8px;
+}
+
+QFrame#infoBoxTime,
+QFrame#infoBoxMemory,
+QFrame#infoBoxScore {
+	background-color: #FEFCE8;
+	border: 1px dashed #BEF264;
+	border-radius: 8px;
+}
+
+QFrame#infoBoxTime:hover,
+QFrame#infoBoxMemory:hover,
+QFrame#infoBoxScore:hover {
+	border-color: #65A30D;
+	background-color: #F7FEE7;
+}
+
+QFrame#infoBoxCase QLabel,
+QFrame#infoBoxTime QLabel,
+QFrame#infoBoxMemory QLabel,
+QFrame#infoBoxScore QLabel {
+	color: #94A3B8;
+}
+
+QLabel#taskInfoCaseValue {
+	color: #475569;
+}
+
+/* 可编辑格内的输入框去掉边框，直接融入虚线小格 */
+QFrame#infoBoxTime QLineEdit,
+QFrame#infoBoxMemory QLineEdit,
+QFrame#infoBoxScore QLineEdit {
 	background: transparent;
 	border: none;
-	border-top: 1px solid #E5E7EB;
+	color: #65A30D;
+	font-weight: 700;
+}
+
+QLabel#taskInfoHint {
+	color: #94A3B8;
+}
+
+/* 高级卡片标题按钮（可折叠） */
+QToolButton#advancedToggle {
+	background: transparent;
+	border: none;
+	color: #64748B;
+	padding: 0;
+	text-align: left;
+}
+
+QToolButton#advancedToggle:hover {
+	color: #65A30D;
 }
