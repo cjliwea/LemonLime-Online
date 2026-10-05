@@ -15,6 +15,8 @@
 #include "core/task.h"
 #include "core/testcase.h"
 
+#include <algorithm>
+
 namespace {
 // 把一组数值压成展示用文本：全空 -> “—”，同值 -> “值+单位”，多档 -> “最小 ~ 最大+单位”
 QString formatLimitRange(const QList<int> &values, const QString &unit) {
@@ -28,7 +30,7 @@ QString formatLimitRange(const QList<int> &values, const QString &unit) {
 			uniq.append(value);
 	}
 
-	uniq.sort();
+	std::sort(uniq.begin(), uniq.end());
 
 	if (uniq.size() == 1)
 		return QStringLiteral("%1%2").arg(uniq.first()).arg(unit);
