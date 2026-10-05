@@ -144,6 +144,13 @@ TaskEditWidget::TaskEditWidget(QWidget *parent) : QWidget(parent), ui(new Ui::Ta
 	// 输入列占满卡片剩余宽度：文件名三列均分，高级卡第二列（输入框）吃掉全部富余
 	for (int col = 0; col < 3; ++col) ui->fileGrid->setColumnStretch(col, 1);
 	ui->advancedGrid->setColumnStretch(1, 1);
+
+	// 编译语言列表横向标签条（对照预览版 langs 行）：从纵向列表改为从左到右流式排布
+	ui->compilersList->setFlow(QListView::LeftToRight);
+	ui->compilersList->setWrapping(true);
+	ui->compilersList->setResizeMode(QListView::Adjust);
+	ui->compilersList->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+	ui->compilersList->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
 }
 
 TaskEditWidget::~TaskEditWidget() { delete ui; }

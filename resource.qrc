@@ -44,5 +44,7 @@
         <file alias="quickopen-file.svg">assets/pics/quickopen-file.svg</file>
         <file alias="system-help.svg">assets/pics/system-help.svg</file>
         <file alias="acrobat.svg">assets/pics/acrobat.svg</file>
+        <file alias="switch-off.png">assets/pics/switch-off.png</file>
+        <file alias="switch-on.png">assets/pics/switch-on.png</file>
     </qresource>
 </RCC>
