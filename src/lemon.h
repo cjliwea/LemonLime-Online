@@ -10,6 +10,8 @@
 #pragma once
 //
 
+#include "contestscanner.h"
+
 #include <QMainWindow>
 #include <QtCore>
 
@@ -56,6 +58,8 @@ class LemonLime : public QMainWindow {
 	void addTask(const QString &, const QList<std::pair<QString, QString>> &, int, int, int);
 	void addTaskWithScoreScale(const QString &, const QList<std::pair<QString, QString>> &, int, int, int);
 	static bool compareFileName(const std::pair<QString, QString> &, const std::pair<QString, QString> &);
+	// 把向导确认过的题目统一落盘 + 挂到当前比赛（新建比赛与追加题目共用同一条路径）
+	void applyImportedProblems(const QList<PlannedProblem> &);
 
   private slots:
 	void summarySelectionChanged();

@@ -8,12 +8,42 @@
 //
 #include <QHBoxLayout>
 #include <QLabel>
+#include <QLibrary>
 #include <QMainWindow>
 #include <QMenuBar>
 #include <QMouseEvent>
 #include <QPushButton>
 #include <QStyle>
 #include <QVBoxLayout>
+
+namespace {
+
+// Win11 起支持给无边框窗口加系统级圆角：
+//   DwmSetWindowAttribute(hwnd, DWMWA_WINDOW_CORNER_PREFERENCE = 33, &DWMWCP_ROUND = 2, sizeof(int))
+// 用 QLibrary 动态解析，这样低版本 Windows 上只是不生效，不会链接失败。
+void applyRoundedCorners(QWidget *window) {
+	using SetWindowAttributeFn = long (*)(void *, unsigned long, const void *, unsigned long);
+
+	static QLibrary dwmapi(QStringLiteral("dwmapi"));
+	static SetWindowAttributeFn setWindowAttribute = nullptr;
+	static bool resolved = false;
+
+	if (! resolved) {
+		resolved = true;
+
+		if (dwmapi.load())
+			setWindowAttribute =
+			    reinterpret_cast<SetWindowAttributeFn>(dwmapi.resolve("DwmSetWindowAttribute"));
+	}
+
+	if (! setWindowAttribute || ! window)
+		return;
+
+	const int preference = 2; // DWMWCP_ROUND
+	setWindowAttribute(reinterpret_cast<void *>(window->winId()), 33, &preference, sizeof(preference));
+}
+
+} // namespace
 
 TitleBar::TitleBar(QWidget *window, bool withMinMax, QWidget *parent)
     : QWidget(parent), window_(window), withMinMax_(withMinMax) {
@@ -121,6 +151,8 @@ bool TitleBar::eventFilter(QObject *obj, QEvent *e) {
 			titleLabel_->setText(window_->windowTitle());
 		else if (e->type() == QEvent::WindowIconChange && ! window_->windowIcon().isNull())
 			iconLabel_->setPixmap(window_->windowIcon().pixmap(16, 16));
+		else if (e->type() == QEvent::Show)
+			applyRoundedCorners(window_);
 	}
 
 	return QWidget::eventFilter(obj, e);
@@ -196,4 +228,6 @@ void installTitleBar(QWidget *w, bool withMinMax) {
 		// 其他布局（如 QGridLayout）：用 QLayout::setMenuBar 兜底放到布局上方
 		w->layout()->setMenuBar(tb);
 	}
+
+	applyRoundedCorners(w);
 }

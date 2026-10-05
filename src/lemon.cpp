@@ -11,6 +11,7 @@
 #include "ui_lemon.h"
 //
 #include "addcompilerwizard.h"
+#include "addproblemwizard.h"
 #include "addtaskdialog.h"
 #include "base/LemonBase.hpp"
 #include "base/LemonLog.hpp"
@@ -24,8 +25,10 @@
 #include "core/testcase.h"
 #include "detaildialog.h"
 #include "newcontestdialog.h"
+#include "newcontestwizard.h"
 #include "opencontestdialog.h"
 #include "optionsdialog.h"
+#include "probleminstaller.h"
 #include "server/SubmissionServer.h"
 #include "server/UserStore.h" // SubmissionServer.h 内联函数用到 QPointer<UserStore>::data()，MSVC 需要完整类型
 #include "server/onlineserverdialog.h"
@@ -36,6 +39,7 @@
 #include <QByteArrayView>
 #include <QDesktopServices>
 #include <QFileDialog>
+#include <QFileInfo>
 #include <QInputDialog>
 #include <QLabel>
 #include <QLineEdit>
@@ -826,13 +830,27 @@ void LemonLime::newContest(const QString &title, const QString &savingName, cons
 }
 
 void LemonLime::newAction() {
-	auto *dialog = new NewContestDialog(this);
+	// 新版向导：比赛信息 → 拖入数据自动识别并装配题目 → 创建。
+	// 设与题在同一次向导里完成，所以不再需要「先手工建好 data/ 与题目文件夹」。
+	auto *wizard = new NewContestWizard(settings, this);
 
-	if (dialog->exec() == QDialog::Accepted) {
-		newContest(dialog->getContestTitle(), dialog->getSavingName(), dialog->getContestPath());
+	if (wizard->exec() != QDialog::Accepted) {
+		delete wizard;
+		return;
 	}
 
-	delete dialog;
+	const QString title = wizard->contestTitle();
+	const QString savingName = wizard->savingName();
+	const QString path = wizard->contestDir();
+	const QList<PlannedProblem> problems = wizard->plannedProblems();
+	delete wizard;
+
+	newContest(title, savingName, path);
+
+	if (! curContest)
+		return;
+
+	applyImportedProblems(problems);
 }
 
 void LemonLime::closeAction() {
@@ -951,83 +969,141 @@ auto LemonLime::compareFileName(const std::pair<QString, QString> &a,
 }
 
 void LemonLime::addTasksAction() {
-	QStringList list = QDir(Settings::dataPath()).entryList(QDir::Dirs | QDir::NoDotAndDotDot);
-	QSet<QString> nameSet;
-	QList<Task *> taskList = curContest->getTaskList();
-
-	for (auto &i : taskList) {
-		nameSet.insert(i->getSourceFileName());
-	}
-
-	QStringList nameList;
-	QList<QList<std::pair<QString, QString>>> testCases;
-
-	for (int i = 0; i < list.size(); i++) {
-		if (! nameSet.contains(list[i])) {
-			QStringList filters;
-			filters = settings->getInputFileExtensions();
-
-			if (filters.isEmpty())
-				filters << "in";
-
-			for (int j = 0; j < filters.size(); j++) {
-				filters[j] = QString("*.") + filters[j];
-			}
-
-			QMap<QString, QString> inputFiles;
-			getFiles(Settings::dataPath() + list[i], filters, inputFiles);
-			filters = settings->getOutputFileExtensions();
-
-			if (filters.isEmpty())
-				filters << "out" << "ans";
-
-			for (int j = 0; j < filters.size(); j++) {
-				filters[j] = QString("*.") + filters[j];
-			}
-
-			QMap<QString, QString> outputFiles;
-			getFiles(Settings::dataPath() + list[i], filters, outputFiles);
-			QList<std::pair<QString, QString>> cases;
-			QStringList baseNameList = inputFiles.keys();
-
-			for (int j = 0; j < baseNameList.size(); j++) {
-				if (outputFiles.contains(baseNameList[j])) {
-					cases.append(std::make_pair(inputFiles[baseNameList[j]], outputFiles[baseNameList[j]]));
-				}
-			}
-
-			std::sort(cases.begin(), cases.end(), compareFileName);
-
-			if (! cases.isEmpty()) {
-				nameList.append(list[i]);
-				testCases.append(cases);
-			}
-		}
-	}
-
-	if (nameList.isEmpty()) {
-		QMessageBox::warning(this, tr("LemonLime"), tr("No task found"), QMessageBox::Ok);
+	if (! curContest) {
+		QMessageBox::warning(this, tr("LemonLime"), tr("请先新建或打开一场比赛。"), QMessageBox::Ok);
 		return;
 	}
 
-	auto *dialog = new AddTaskDialog(this);
-	dialog->resize(dialog->sizeHint());
-	dialog->setMaximumSize(dialog->sizeHint());
-	dialog->setMinimumSize(dialog->sizeHint());
+	// 新版向导：先选题型，再按题型提示需要填什么、传什么。
+	// 打开时会先把当前比赛 data/ 里尚未导入的题目扫出来列好，保持原来的便利性。
+	auto *wizard = new AddProblemWizard(settings, this);
 
-	for (int i = 0; i < nameList.size(); i++) {
-		dialog->addTask(nameList[i], qMax(100, testCases[i].size()), settings->getDefaultTimeLimit(),
-		                settings->getDefaultMemoryLimit());
+	QStringList existingNames;
+
+	for (Task *task : curContest->getTaskList())
+		existingNames.append(task->getSourceFileName());
+
+	wizard->preloadFromDataDir(existingNames);
+
+	if (wizard->exec() != QDialog::Accepted) {
+		delete wizard;
+		return;
 	}
 
-	if (dialog->exec() == QDialog::Accepted) {
-		for (int i = 0; i < nameList.size(); i++) {
-			addTaskWithScoreScale(nameList[i], testCases[i], dialog->getFullScore(i), dialog->getTimeLimit(i),
-			                      dialog->getMemoryLimit(i));
+	const QList<PlannedProblem> plans = wizard->plans();
+	delete wizard;
+
+	applyImportedProblems(plans);
+}
+
+void LemonLime::applyImportedProblems(const QList<PlannedProblem> &problems) {
+	if (! curContest || problems.isEmpty())
+		return;
+
+	// 当前工作目录就是比赛目录（newContest / loadContest 都做过 setCurrent）
+	ProblemInstaller installer;
+	installer.setContestDir(QDir::currentPath());
+	installer.setOverwrite(ProblemInstaller::Skip);
+
+	int imported = 0;
+	int copiedFiles = 0;
+	int skippedFiles = 0;
+	QStringList failures;
+
+	for (const PlannedProblem &plan : problems) {
+		ProblemInstaller::Report report;
+		QString error;
+
+		if (! installer.install(plan.scan, &report, &error)) {
+			failures.append(QStringLiteral("%1：%2")
+			                    .arg(plan.scan.englishName.isEmpty() ? plan.scan.title
+			                                                         : plan.scan.englishName,
+			                         error));
+			continue;
 		}
+
+		copiedFiles += report.written;
+		skippedFiles += report.skipped;
+
+		auto *newTask = new Task;
+		newTask->setProblemTitle(plan.scan.title);
+		newTask->setSourceFileName(plan.scan.englishName);
+		newTask->setInputFileName(plan.scan.englishName + QStringLiteral(".in"));
+		newTask->setOutputFileName(plan.scan.englishName + QStringLiteral(".out"));
+		newTask->setSubFolderCheck(plan.subFolderCheck);
+		newTask->setTaskType(plan.taskType);
+		newTask->setComparisonMode(plan.comparisonMode);
+		newTask->setRealPrecision(plan.realPrecision);
+
+		if (! plan.diffArguments.isEmpty())
+			newTask->setDiffArguments(plan.diffArguments);
+
+		if (! plan.specialJudge.isEmpty())
+			newTask->setSpecialJudge(plan.specialJudge);
+
+		if (! plan.interactor.isEmpty()) {
+			newTask->setInteractor(plan.interactor);
+			newTask->setInteractorName(plan.interactorName.isEmpty()
+			                               ? QFileInfo(plan.interactor).fileName()
+			                               : plan.interactorName);
+		}
+
+		if (! plan.sourceFilesPath.isEmpty()) {
+			newTask->setSourceFilesPath(plan.sourceFilesPath);
+			newTask->setSourceFilesName(plan.sourceFilesName);
+		}
+
+		if (! plan.graderFilesPath.isEmpty()) {
+			newTask->setGraderFilesPath(plan.graderFilesPath);
+			newTask->setGraderFilesName(plan.graderFilesName);
+		}
+
+		newTask->refreshCompilerConfiguration(settings);
+		newTask->setAnswerFileExtension(plan.answerFileExtension.isEmpty()
+		                                    ? settings->getDefaultOutputFileExtension()
+		                                    : plan.answerFileExtension);
+
+		const int caseCount = static_cast<int>(plan.scan.cases.size());
+		const int scorePerCase = caseCount > 0 ? plan.fullScore / caseCount : 0;
+		const int scoreRemainder = caseCount > 0 ? plan.fullScore - scorePerCase * caseCount : 0;
+
+		for (int i = 0; i < caseCount; i++) {
+			const ScannedCase &one = plan.scan.cases.at(i);
+			auto *newTestCase = new TestCase;
+			newTestCase->setFullScore(scorePerCase + (i < scoreRemainder ? 1 : 0));
+			newTestCase->setTimeLimit(plan.timeLimit);
+			newTestCase->setMemoryLimit(plan.memoryLimit);
+			newTestCase->addSingleCase(plan.scan.englishName + QDir::separator() + one.inputRel,
+			                           plan.scan.englishName + QDir::separator() + one.outputRel);
+			newTask->addTestCase(newTestCase);
+		}
+
+		curContest->addTask(newTask);
+		++imported;
 	}
 
+	saveContest(curFile);
 	ui->summary->setContest(curContest);
+	ui->resultViewer->setContest(curContest);
+	ui->resultViewer->refreshViewer();
+	ui->statisticsBrowser->setContest(curContest);
+	ui->statisticsBrowser->refresh();
+	resetDataWatcher();
+	ui->cleanupAction->setEnabled(true);
+	ui->refreshAction->setEnabled(true);
+
+	if (! failures.isEmpty()) {
+		QMessageBox::warning(this, tr("导入结果"),
+		                     tr("有 %1 道题目没有导入成功：").arg(failures.size()) +
+		                         QStringLiteral("\n\n") + failures.join(QStringLiteral("\n")));
+	} else if (imported > 0) {
+		QString text = tr("已导入 %1 道题目，写入 %2 个测试点文件。").arg(imported).arg(copiedFiles);
+
+		if (skippedFiles > 0)
+			text += QLatin1Char('\n') + tr("另有 %1 个文件因已存在而跳过。").arg(skippedFiles);
+
+		QMessageBox::information(this, tr("导入完成"), text);
+	}
 }
 
 void LemonLime::exportResult() { ExportUtil::exportResult(this, curContest); }
