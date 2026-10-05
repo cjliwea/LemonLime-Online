@@ -70,13 +70,11 @@ QFrame#TaskInfoBar {
 	border-radius: 10px;
 }
 
-QLabel#taskInfoCaseCaption, QLabel#taskInfoTimeCaption, QLabel#taskInfoMemoryCaption,
-QLabel#taskInfoScoreCaption {
+QLabel#taskInfoCaseCaption, QLabel#taskInfoTimeCaption, QLabel#taskInfoMemoryCaption, QLabel#taskInfoScoreCaption {
 	color: #64748B;
 }
 
-QLabel#taskInfoCaseValue, QLabel#taskInfoTimeValue, QLabel#taskInfoMemoryValue,
-QLabel#taskInfoScoreValue {
+QLabel#taskInfoCaseValue, QLabel#taskInfoTimeValue, QLabel#taskInfoMemoryValue, QLabel#taskInfoScoreValue {
 	color: #0F172A;
 }
 
