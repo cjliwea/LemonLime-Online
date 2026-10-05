@@ -201,6 +201,10 @@ class WindowBorderResizer : public QObject {
 		if (! window_ || windowIsMaximized(window_) || window_->isFullScreen())
 			return {};
 
+		// 固定尺寸的窗口（min == max）不给拖边，免得把贴边控件的点击吃掉
+		if (! window_->minimumSize().isEmpty() && window_->minimumSize() == window_->maximumSize())
+			return {};
+
 		const QRect rect = window_->frameGeometry();
 		Qt::Edges edges;
 
