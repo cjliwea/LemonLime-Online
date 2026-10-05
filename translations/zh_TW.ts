@@ -2332,16 +2332,28 @@ p, li { white-space: pre-wrap; }
         <translation>測試點</translation>
     </message>
     <message>
-        <source>Time Limit</source>
-        <translation>時限</translation>
+        <source>Time Limit (ms)</source>
+        <translation>時限 (ms)</translation>
     </message>
     <message>
-        <source>Memory Limit</source>
-        <translation>記憶體</translation>
+        <source>Memory Limit (MiB)</source>
+        <translation>記憶體 (MiB)</translation>
     </message>
     <message>
         <source>Full Score</source>
         <translation>滿分</translation>
+    </message>
+    <message>
+        <source>Edit to apply the time limit to all test cases...</source>
+        <translation>編輯後按 Enter，將時限套用到全部測試點…</translation>
+    </message>
+    <message>
+        <source>Edit to apply the memory limit to all test cases...</source>
+        <translation>編輯後按 Enter，將記憶體限制套用到全部測試點…</translation>
+    </message>
+    <message>
+        <source>Edit to split the full score over all test cases...</source>
+        <translation>編輯後按 Enter，滿分將按測試點數均分…</translation>
     </message>
     <message>
         <source>Traditional</source>

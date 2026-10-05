@@ -37,6 +37,9 @@ class TaskEditWidget : public QWidget {
 	Task *editTask;
 	void refreshWidgetState();
 	void refreshTaskInfo(); // 刷新顶部信息条（测试点 / 时限 / 内存 / 满分）
+	void applyBulkTimeLimit();  // 信息条时限框编辑完成 -> 应用到全部测试点
+	void applyBulkMemoryLimit(); // 信息条内存框编辑完成 -> 应用到全部测试点
+	void applyBulkFullScore();  // 信息条满分框编辑完成 -> 按测试点数均分
 	void addSourceFiles(const QString &, const QString &);
 	void addGraderFiles(const QString &, const QString &);
 	void rmSourceFilesAt(int);

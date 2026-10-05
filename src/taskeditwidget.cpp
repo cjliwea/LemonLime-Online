@@ -16,10 +16,12 @@
 #include "core/testcase.h"
 
 #include <algorithm>
+#include <QIntValidator>
 
 namespace {
-// 把一组数值压成展示用文本：全空 -> “—”，同值 -> “值+单位”，多档 -> “最小 ~ 最大+单位”
-QString formatLimitRange(const QList<int> &values, const QString &unit) {
+// 把一组数值压成展示用文本：全空 -> “—”，同值 -> 单值，多档 -> “最小 ~ 最大”
+// （单位已并入标题文案，如 “时限 (ms)”，这里不再拼接）
+QString formatLimitRange(const QList<int> &values) {
 	if (values.isEmpty())
 		return QStringLiteral("—");
 
@@ -33,9 +35,9 @@ QString formatLimitRange(const QList<int> &values, const QString &unit) {
 	std::sort(uniq.begin(), uniq.end());
 
 	if (uniq.size() == 1)
-		return QStringLiteral("%1%2").arg(uniq.first()).arg(unit);
+		return QString::number(uniq.first());
 
-	return QStringLiteral("%1 ~ %2%3").arg(uniq.first()).arg(uniq.last()).arg(unit);
+	return QStringLiteral("%1 ~ %2").arg(uniq.first()).arg(uniq.last());
 }
 } // namespace
 
@@ -96,6 +98,17 @@ TaskEditWidget::TaskEditWidget(QWidget *parent) : QWidget(parent), ui(new Ui::Ta
 	connect(ui->graderFilesAppendButton, &QPushButton::clicked, this, &TaskEditWidget::addGraderFileClicked);
 	connect(ui->sourceFilesRemoveButton, &QPushButton::clicked, this, &TaskEditWidget::rmSourceFileClicked);
 	connect(ui->graderFilesRemoveButton, &QPushButton::clicked, this, &TaskEditWidget::rmGraderFileClicked);
+
+	// 信息条：时限 / 内存 / 满分可直接编辑，回车或失焦后批量应用到全部测试点
+	ui->taskInfoTimeValue->setValidator(new QIntValidator(1, Settings::upperBoundForTimeLimit(), this));
+	ui->taskInfoMemoryValue->setValidator(
+	    new QIntValidator(1, Settings::upperBoundForMemoryLimit(), this));
+	ui->taskInfoScoreValue->setValidator(new QIntValidator(1, Settings::upperBoundForFullScore(), this));
+	connect(ui->taskInfoTimeValue, &QLineEdit::editingFinished, this, &TaskEditWidget::applyBulkTimeLimit);
+	connect(ui->taskInfoMemoryValue, &QLineEdit::editingFinished, this,
+	        &TaskEditWidget::applyBulkMemoryLimit);
+	connect(ui->taskInfoScoreValue, &QLineEdit::editingFinished, this,
+	        &TaskEditWidget::applyBulkFullScore);
 }
 
 TaskEditWidget::~TaskEditWidget() { delete ui; }
@@ -117,15 +130,10 @@ void TaskEditWidget::showEvent(QShowEvent *event) {
 }
 
 void TaskEditWidget::refreshTaskInfo() {
-	if (! editTask) {
-		ui->taskInfoCaseValue->setText(QStringLiteral("—"));
-		ui->taskInfoTimeValue->setText(QStringLiteral("—"));
-		ui->taskInfoMemoryValue->setText(QStringLiteral("—"));
-		ui->taskInfoScoreValue->setText(QStringLiteral("—"));
-		return;
-	}
+	QList<TestCase *> caseList;
+	if (editTask)
+		caseList = editTask->getTestCaseList();
 
-	const auto &caseList = editTask->getTestCaseList();
 	QList<int> timeLimits;
 	QList<int> memoryLimits;
 
@@ -134,11 +142,94 @@ void TaskEditWidget::refreshTaskInfo() {
 		memoryLimits.append(testCase->getMemoryLimit());
 	}
 
-	ui->taskInfoCaseValue->setText(QString::number(caseList.size()));
-	ui->taskInfoTimeValue->setText(formatLimitRange(timeLimits, QStringLiteral(" ms")));
-	ui->taskInfoMemoryValue->setText(formatLimitRange(memoryLimits, QStringLiteral(" MiB")));
-	ui->taskInfoScoreValue->setText(caseList.isEmpty() ? QStringLiteral("—")
-	                                                   : QString::number(editTask->getTotalScore()));
+	ui->taskInfoCaseValue->setText(caseList.isEmpty() ? QStringLiteral("—")
+	                                                  : QString::number(caseList.size()));
+
+	const QString timeText = formatLimitRange(timeLimits);
+	const QString memoryText = formatLimitRange(memoryLimits);
+	const QString scoreText =
+	    caseList.isEmpty() ? QStringLiteral("—") : QString::number(editTask->getTotalScore());
+
+	// 时限 / 内存 / 满分是可编辑框：多档时先展示范围，编辑后批量应用到全部测试点；
+	// 程序化刷新 setText 不触发 editingFinished，不会被误当成用户输入
+	struct InfoEdit {
+		QLineEdit *edit;
+		const QString &text;
+	};
+
+	for (InfoEdit it : {InfoEdit{ui->taskInfoTimeValue, timeText},
+	                    InfoEdit{ui->taskInfoMemoryValue, memoryText},
+	                    InfoEdit{ui->taskInfoScoreValue, scoreText}}) {
+		const bool empty = it.text == QStringLiteral("—");
+		it.edit->setText(it.text);
+		it.edit->setEnabled(! empty);
+	}
+}
+
+// 信息条时限框：回车 / 失焦后把新值应用到全部测试点
+void TaskEditWidget::applyBulkTimeLimit() {
+	if (! editTask)
+		return;
+
+	bool ok = false;
+	const int value = ui->taskInfoTimeValue->text().toInt(&ok);
+
+	if (! ok || value <= 0)
+		return;
+
+	const int clamped = qBound(1, value, Settings::upperBoundForTimeLimit());
+
+	for (auto *testCase : editTask->getTestCaseList())
+		testCase->setTimeLimit(clamped);
+
+	refreshTaskInfo();
+}
+
+// 信息条内存框：同上
+void TaskEditWidget::applyBulkMemoryLimit() {
+	if (! editTask)
+		return;
+
+	bool ok = false;
+	const int value = ui->taskInfoMemoryValue->text().toInt(&ok);
+
+	if (! ok || value <= 0)
+		return;
+
+	const int clamped = qBound(1, value, Settings::upperBoundForMemoryLimit());
+
+	for (auto *testCase : editTask->getTestCaseList())
+		testCase->setMemoryLimit(clamped);
+
+	refreshTaskInfo();
+}
+
+// 信息条满分框：把总分按测试点数均分（除不尽的余数从第一个测试点起每个 +1）
+void TaskEditWidget::applyBulkFullScore() {
+	if (! editTask)
+		return;
+
+	bool ok = false;
+	const int total = ui->taskInfoScoreValue->text().toInt(&ok);
+
+	if (! ok || total <= 0)
+		return;
+
+	const QList<TestCase *> caseList = editTask->getTestCaseList();
+
+	if (caseList.isEmpty())
+		return;
+
+	const int count = caseList.size();
+	const int base = total / count;
+	const int remainder = total % count;
+
+	for (int i = 0; i < count; ++i) {
+		const int score = qBound(0, base + (i < remainder ? 1 : 0), Settings::upperBoundForFullScore());
+		caseList.at(i)->setFullScore(score);
+	}
+
+	refreshTaskInfo();
 }
 
 void TaskEditWidget::setEditTask(Task *task) {

@@ -74,8 +74,20 @@ QLabel#taskInfoCaseCaption, QLabel#taskInfoTimeCaption, QLabel#taskInfoMemoryCap
 	color: #64748B;
 }
 
-QLabel#taskInfoCaseValue, QLabel#taskInfoTimeValue, QLabel#taskInfoMemoryValue, QLabel#taskInfoScoreValue {
+QLabel#taskInfoCaseValue {
 	color: #0F172A;
+}
+
+/* 信息条里可编辑的时限 / 内存 / 满分输入框：比普通输入框紧凑 */
+QLineEdit#taskInfoTimeValue, QLineEdit#taskInfoMemoryValue, QLineEdit#taskInfoScoreValue {
+	background-color: #FFFFFF;
+	border: 1px solid #E5E7EB;
+	border-radius: 6px;
+	padding: 1px 6px;
+}
+
+QLineEdit#taskInfoTimeValue:focus, QLineEdit#taskInfoMemoryValue:focus, QLineEdit#taskInfoScoreValue:focus {
+	border: 1px solid #84CC16;
 }
 
 /* 拖放区由 DropArea::paintEvent 自绘圆角虚线框，这里必须让出绘制权 */
