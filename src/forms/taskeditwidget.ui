@@ -956,6 +956,9 @@
      </item>
      <item>
       <spacer name="taskTypeSpacer">
+       <property name="sizeType">
+        <enum>QSizePolicy::Expanding</enum>
+       </property>
        <property name="orientation">
         <enum>Qt::Orientation::Horizontal</enum>
        </property>
@@ -1095,6 +1098,9 @@
       </item>
       <item>
        <spacer name="taskInfoSpacer">
+        <property name="sizeType">
+         <enum>QSizePolicy::Expanding</enum>
+        </property>
         <property name="orientation">
          <enum>Qt::Orientation::Horizontal</enum>
         </property>
