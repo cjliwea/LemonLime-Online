@@ -209,9 +209,9 @@ auto AddProblemWizard::buildConfigPage() -> QWizardPage * {
 	    tr("可选：Special Judge 命令，例如 lemon-spj.exe %s %s %s（留空则按普通比对）"));
 	specialJudgeRow_ = specialJudgeEdit_;
 
-	auto *makeFileRowFunc = [this](QLineEdit **edit, const QString &placeholder,
-	                               const QString &buttonText,
-	                               void (AddProblemWizard::*slot)()) -> QWidget * {
+	auto makeFileRowFunc = [this](QLineEdit **edit, const QString &placeholder,
+	                              const QString &buttonText,
+	                              void (AddProblemWizard::*slot)()) -> QWidget * {
 		auto *row = new QWidget(extraCard_);
 		auto *layout = new QHBoxLayout(row);
 		layout->setContentsMargins(0, 0, 0, 0);
@@ -365,7 +365,7 @@ void AddProblemWizard::collect() {
 
 	table_->commitEdits();
 
-	const QList<PlannedProblem> problems = table_->plannedProblems();
+	QList<PlannedProblem> problems = table_->plannedProblems();
 
 	for (PlannedProblem &plan : problems) {
 		plan.taskType = currentType_;
