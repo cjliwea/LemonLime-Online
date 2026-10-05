@@ -640,3 +640,76 @@ QToolButton#advancedToggle {
 QToolButton#advancedToggle:hover {
 	color: #65A30D;
 }
+
+/* 文件与读写三个开关：滑动胶囊（灰色=关，柠檬绿=开） */
+QCheckBox#subFolderCheck,
+QCheckBox#standardInputCheck,
+QCheckBox#standardOutputCheck {
+	spacing: 10px;
+}
+
+QCheckBox#subFolderCheck::indicator,
+QCheckBox#standardInputCheck::indicator,
+QCheckBox#standardOutputCheck::indicator {
+	width: 36px;
+	height: 20px;
+	border-radius: 10px;
+	border: 1px solid #CBD5E1;
+	background-color: #E2E8F0;
+}
+
+QCheckBox#subFolderCheck::indicator:hover,
+QCheckBox#standardInputCheck::indicator:hover,
+QCheckBox#standardOutputCheck::indicator:hover {
+	border-color: #94A3B8;
+}
+
+QCheckBox#subFolderCheck::indicator:checked,
+QCheckBox#standardInputCheck::indicator:checked,
+QCheckBox#standardOutputCheck::indicator:checked {
+	border-color: #65A30D;
+	background-color: #84CC16;
+}
+
+QCheckBox#subFolderCheck::indicator:checked:hover,
+QCheckBox#standardInputCheck::indicator:checked:hover,
+QCheckBox#standardOutputCheck::indicator:checked:hover {
+	border-color: #4D7C0F;
+}
+
+/* 编译设置：语言列表做成圆角标签条 */
+QListWidget#compilersList {
+	padding: 6px;
+	border-radius: 8px;
+}
+
+QListWidget#compilersList::item {
+	padding: 8px 12px;
+	border-radius: 6px;
+	color: #334155;
+}
+
+QListWidget#compilersList::item:hover {
+	background-color: #F1F5F9;
+}
+
+QListWidget#compilersList::item:selected {
+	background-color: #ECFCCB;
+	color: #3F6212;
+	font-weight: 600;
+}
+
+/* 题目信息数值放大，避免小格内显得空瘪 */
+QLabel#taskInfoCaseValue {
+	font-size: 15px;
+}
+
+QFrame#infoBoxTime QLineEdit,
+QFrame#infoBoxMemory QLineEdit,
+QFrame#infoBoxScore QLineEdit {
+	background: transparent;
+	border: none;
+	color: #65A30D;
+	font-weight: 700;
+	font-size: 15px;
+}

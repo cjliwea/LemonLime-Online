@@ -140,6 +140,10 @@ TaskEditWidget::TaskEditWidget(QWidget *parent) : QWidget(parent), ui(new Ui::Ta
 	});
 	ui->advancedToggle->setArrowType(ui->advancedToggle->isChecked() ? Qt::DownArrow : Qt::RightArrow);
 	ui->advancedContent->setVisible(ui->advancedToggle->isChecked());
+
+	// 输入列占满卡片剩余宽度：文件名三列均分，高级卡第二列（输入框）吃掉全部富余
+	for (int col = 0; col < 3; ++col) ui->fileGrid->setColumnStretch(col, 1);
+	ui->advancedGrid->setColumnStretch(1, 1);
 }
 
 TaskEditWidget::~TaskEditWidget() { delete ui; }
