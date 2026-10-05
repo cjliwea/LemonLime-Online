@@ -25,6 +25,7 @@
 #include <QMessageBox>
 #include <QMimeData>
 #include <QPushButton>
+#include <QScrollArea>
 #include <QSet>
 #include <QStyle>
 #include <QToolButton>
@@ -170,11 +171,19 @@ auto NewContestWizard::buildImportPage() -> QWizardPage * {
 	page->setSubTitle(tr("把装着题目数据的文件夹拖到下面。程序会自动判断你拖的是整场比赛还是单道题目，"
 	                     "并把识别结果列出来让你确认。"));
 
+	importPanel_ = new ProblemTable(settings_, page);
+
+	// 面板内容（告警 + 拖拽区 + 题目表格 + 参数）总高度会超过向导页，
+	// 套一层滚动区，保证题目多的时候能滚动看全、下面的参数也不会被挤掉。
+	auto *scroll = new QScrollArea(page);
+	scroll->setWidgetResizable(true);
+	scroll->setFrameShape(QFrame::NoFrame);
+	scroll->setWidget(importPanel_);
+
 	auto *outer = new QVBoxLayout(page);
 	outer->setContentsMargins(0, 0, 0, 0);
 
-	importPanel_ = new ProblemTable(settings_, page);
-	outer->addWidget(importPanel_, 1);
+	outer->addWidget(scroll);
 
 	return page;
 }

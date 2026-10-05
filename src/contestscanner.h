@@ -21,7 +21,10 @@ struct ScannedCase {
 
 // 扫描出来的单道题目
 struct ScannedProblem {
-	QString dirPath;     // 题目目录（绝对路径）
+	QString dirPath;     // 数据目录（绝对路径）：测试点文件实际所在的那一层
+	QString metaDir;     // 题名目录（绝对路径）：通常是 dirPath 或它的父目录。
+	                     // HydroOJ 包结构 `题目名/{problem.yaml,testdata/}` 里
+	                     // dirPath 是 `题目名/testdata`，metaDir 是 `题目名`。
 	QString title;       // 展示用题目名，可以是中文
 	QString englishName; // 源文件名 / data 子目录名；推不出来时为空，由老师补
 	QList<ScannedCase> cases;

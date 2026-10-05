@@ -20,6 +20,7 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
+#include <QScrollArea>
 #include <QSet>
 #include <QSignalBlocker>
 #include <QTableWidget>
@@ -53,11 +54,22 @@ ProblemTable::ProblemTable(Settings *settings, QWidget *parent) : QWidget(parent
 	outer->setContentsMargins(0, 0, 0, 0);
 	outer->setSpacing(10);
 
-	warnLabel_ = new QLabel(this);
+	// 告警可能有很多条（每道题都可能带层级 / 配对提示），限高 + 内部滚动，
+	// 否则会把下面的题目表格挤到看不见。
+	warnLabel_ = new QLabel;
 	warnLabel_->setObjectName(QStringLiteral("WarnBanner"));
 	warnLabel_->setWordWrap(true);
-	warnLabel_->setVisible(false);
-	outer->addWidget(warnLabel_);
+	warnLabel_->setAlignment(Qt::AlignTop | Qt::AlignLeft);
+
+	warnScroll_ = new QScrollArea(this);
+	warnScroll_->setObjectName(QStringLiteral("WarnScroll"));
+	warnScroll_->setWidgetResizable(true);
+	warnScroll_->setFrameShape(QFrame::NoFrame);
+	warnScroll_->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+	warnScroll_->setWidget(warnLabel_);
+	warnScroll_->setMaximumHeight(120);
+	warnScroll_->setVisible(false);
+	outer->addWidget(warnScroll_);
 
 	dropArea_ = new DropArea(this);
 	outer->addWidget(dropArea_);
@@ -92,7 +104,11 @@ ProblemTable::ProblemTable(Settings *settings, QWidget *parent) : QWidget(parent
 	table_->horizontalHeader()->setSectionResizeMode(columnTime, QHeaderView::ResizeToContents);
 	table_->horizontalHeader()->setSectionResizeMode(columnMemory, QHeaderView::ResizeToContents);
 	table_->horizontalHeader()->setStretchLastSection(true);
-	table_->setMinimumHeight(190);
+	// 表格固定在一个合理高度区间：题目少时全部显示，题目多时表格内部滚动，
+	// 不会把下面的批量设置 / Special Judge 挤没。
+	table_->setMinimumHeight(200);
+	table_->setMaximumHeight(340);
+	table_->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
 	outer->addWidget(table_, 1);
 
 	auto *batchCard = new QFrame(this);
@@ -358,10 +374,18 @@ void ProblemTable::refreshTable() {
 		table_->setItem(i, columnTime, new QTableWidgetItem(QString::number(plan.timeLimit)));
 		table_->setItem(i, columnMemory, new QTableWidgetItem(QString::number(plan.memoryLimit)));
 
-		auto *sourceItem = readOnlyItem(QDir::toNativeSeparators(plan.scan.dirPath));
+		// 来源目录显示「题目目录」（metaDir）而不是数据目录（dirPath）：
+		// HydroOJ 包里 dirPath 是 题目名/testdata，显示 testdata 对老师没有意义。
+		const QString shownDir = plan.scan.metaDir.isEmpty() ? plan.scan.dirPath : plan.scan.metaDir;
+		auto *sourceItem = readOnlyItem(QDir::toNativeSeparators(shownDir));
 
-		if (! plan.scan.notes.isEmpty())
-			sourceItem->setToolTip(plan.scan.notes.join(QStringLiteral("\n")));
+		QStringList tips = plan.scan.notes;
+
+		if (! plan.scan.metaDir.isEmpty() && plan.scan.metaDir != plan.scan.dirPath)
+			tips.append(tr("数据目录：%1").arg(QDir::toNativeSeparators(plan.scan.dirPath)));
+
+		if (! tips.isEmpty())
+			sourceItem->setToolTip(tips.join(QStringLiteral("\n")));
 
 		table_->setItem(i, columnSource, sourceItem);
 	}
@@ -371,18 +395,18 @@ void ProblemTable::refreshTable() {
 }
 
 void ProblemTable::refreshWarnings() {
-	if (! warnLabel_)
+	if (! warnLabel_ || ! warnScroll_)
 		return;
 
 	if (warnings_.isEmpty()) {
 		warnLabel_->clear();
-		warnLabel_->setVisible(false);
+		warnScroll_->setVisible(false);
 		return;
 	}
 
-	warnLabel_->setText(tr("请留意：") + QStringLiteral("\n") +
-	                    QStringLiteral("· ") + warnings_.join(QStringLiteral("\n· ")));
-	warnLabel_->setVisible(true);
+	warnLabel_->setText(tr("请留意：") + QStringLiteral("\n") + QStringLiteral("· ") +
+	                    warnings_.join(QStringLiteral("\n· ")));
+	warnScroll_->setVisible(true);
 }
 
 void ProblemTable::refreshDropHint() {

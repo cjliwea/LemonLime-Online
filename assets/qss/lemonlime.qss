@@ -16,6 +16,16 @@ QDialog {
 	background-color: #FFFFFF;
 }
 
+/* 滚动容器透明：向导页 / 告警区套 QScrollArea 后，不要在浅灰外壳上盖出白块 */
+QScrollArea {
+	background: transparent;
+	border: none;
+}
+
+QScrollArea > QWidget > QWidget {
+	background: transparent;
+}
+
 /* 圆角卡片 */
 QFrame#Card {
 	background-color: #FFFFFF;

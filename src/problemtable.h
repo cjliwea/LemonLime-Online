@@ -15,6 +15,7 @@ class DropArea;
 class QComboBox;
 class QLabel;
 class QLineEdit;
+class QScrollArea;
 class QTableWidget;
 class Settings;
 
@@ -62,6 +63,7 @@ class ProblemTable : public QWidget {
 	Settings *settings_{};
 	DropArea *dropArea_{};
 	QLabel *warnLabel_{};
+	QScrollArea *warnScroll_{};
 	QTableWidget *table_{};
 	QComboBox *structureBox_{};
 	QLineEdit *batchScore_{};

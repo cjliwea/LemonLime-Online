@@ -25,10 +25,12 @@
 #include <QMessageBox>
 #include <QMimeData>
 #include <QPushButton>
+#include <QScrollArea>
 #include <QSet>
 #include <QStyle>
 #include <QToolButton>
 #include <QVBoxLayout>
+#include <QWidget>
 
 namespace {
 
@@ -189,14 +191,15 @@ auto AddProblemWizard::buildConfigPage() -> QWizardPage * {
 	page->setTitle(tr("题目配置"));
 	page->setSubTitle(tr("把题目数据文件夹拖到下面自动识别测试点；参数可以逐行改，也可以批量设置。"));
 
-	auto *outer = new QVBoxLayout(page);
+	auto *content = new QWidget;
+	auto *outer = new QVBoxLayout(content);
 	outer->setContentsMargins(0, 0, 0, 0);
 	outer->setSpacing(12);
 
-	table_ = new ProblemTable(settings_, page);
+	table_ = new ProblemTable(settings_, content);
 	outer->addWidget(table_, 1);
 
-	extraCard_ = new QFrame(page);
+	extraCard_ = new QFrame(content);
 	extraCard_->setObjectName(QStringLiteral("Card"));
 	extraForm_ = new QFormLayout(extraCard_);
 	extraForm_->setContentsMargins(16, 14, 16, 14);
@@ -250,6 +253,17 @@ auto AddProblemWizard::buildConfigPage() -> QWizardPage * {
 	outer->addWidget(extraCard_);
 
 	connect(table_, &ProblemTable::problemsChanged, this, &AddProblemWizard::applyTypeVisibility);
+
+	// 内容（告警 + 拖拽区 + 题目表格 + 题型参数卡片）会比向导页高，套一层滚动区，
+	// 题目多时能滚动看全，下面的参数卡片也不会被挤掉。
+	auto *scroll = new QScrollArea(page);
+	scroll->setWidgetResizable(true);
+	scroll->setFrameShape(QFrame::NoFrame);
+	scroll->setWidget(content);
+
+	auto *pageLayout = new QVBoxLayout(page);
+	pageLayout->setContentsMargins(0, 0, 0, 0);
+	pageLayout->addWidget(scroll);
 
 	return page;
 }
