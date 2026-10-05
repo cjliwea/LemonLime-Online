@@ -503,3 +503,62 @@ TitleBar QLabel#TitleBarText {
 	font-weight: 600;
 	padding-left: 6px;
 }
+
+/* ============================================================
+   试题详情面板（主窗口 · 题目 → 详情）：标题 / 题型按钮 / 信息条 / 分区
+   ============================================================ */
+
+/* 试题标题：无边框、大号加粗；聚焦时底部虚线下划线 */
+QLineEdit#problemTitle {
+	background: transparent;
+	border: none;
+	font-size: 18px;
+	font-weight: 700;
+	color: #0F172A;
+	padding: 4px 2px;
+}
+
+QLineEdit#problemTitle:focus {
+	border-bottom: 1px dashed #65A30D;
+}
+
+/* 题型下拉按钮：柠檬绿胶囊（ID 选择器优先于全局 QToolButton 规则） */
+QToolButton#taskTypeButton {
+	background-color: #84CC16;
+	color: #1A2E05;
+	border: 1px solid #65A30D;
+	border-radius: 8px;
+	padding: 6px 14px;
+	font-weight: 700;
+}
+
+QToolButton#taskTypeButton:hover {
+	background-color: #8FD420;
+}
+
+QToolButton#taskTypeButton:pressed {
+	background-color: #65A30D;
+	color: #FFFFFF;
+}
+
+/* 按钮文字里已带 ▾，隐藏 QToolButton 自带的菜单指示三角，避免重复 */
+QToolButton#taskTypeButton::menu-indicator {
+	image: none;
+	width: 0;
+	height: 0;
+}
+
+/* 题目信息条卡片（沿用原 taskInfoBar 的结构，仅在此补上匹配的 ID 样式：
+   原文件中存在大小写不匹配的 QFrame#TaskInfoBar，故这里用正确的 #taskInfoBar） */
+QFrame#taskInfoBar {
+	background-color: #FFFFFF;
+	border: 1px solid #E5E7EB;
+	border-radius: 10px;
+}
+
+/* 评测 / 编译分区隔断线 */
+QFrame#sectionDividerEval, QFrame#sectionDividerCompiler {
+	background: transparent;
+	border: none;
+	border-top: 1px solid #E5E7EB;
+}

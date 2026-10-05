@@ -123,7 +123,7 @@
      </column>
     </widget>
    </item>
-   <item row="0" column="1" colspan="2">
+   <item row="0" column="1">
     <widget class="QLineEdit" name="problemTitle">
      <property name="font">
       <font>
@@ -132,6 +132,22 @@
      </property>
      <property name="statusTip">
       <string>Problem Title (Not Source File Name)...</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="2">
+    <widget class="QToolButton" name="taskTypeButton">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>10</pointsize>
+       <bold>true</bold>
+      </font>
      </property>
     </widget>
    </item>
@@ -185,25 +201,6 @@
      </property>
      <property name="text">
       <string>Problem Title</string>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="0">
-    <widget class="QLabel" name="taskTypeLabel">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="font">
-      <font>
-       <pointsize>10</pointsize>
-       <bold>false</bold>
-      </font>
-     </property>
-     <property name="text">
-      <string>Task Type</string>
      </property>
     </widget>
    </item>
@@ -844,133 +841,188 @@
      </item>
     </layout>
    </item>
-   <item row="1" column="1" colspan="2">
-    <layout class="QHBoxLayout" name="taskTypeLayout">
-     <property name="spacing">
-      <number>22</number>
+   <item row="1" column="0" colspan="3">
+    <!-- 题型单选按钮不再直接展示：整组移入隐藏容器，仅由右侧 taskTypeButton 的下拉菜单驱动，
+         以复用 taskeditwidget.cpp 中既有的 toggled -> setTo* 业务逻辑（控件名不可改动） -->
+    <widget class="QWidget" name="taskTypeHiddenGroup">
+     <property name="visible">
+      <bool>false</bool>
      </property>
-     <item>
-      <widget class="QRadioButton" name="traditionalButton">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="font">
-        <font>
-         <pointsize>10</pointsize>
-        </font>
-       </property>
-       <property name="statusTip">
-        <string>Traditional Task...</string>
-       </property>
-       <property name="text">
-        <string>Traditional</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QRadioButton" name="answersOnlyButton">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="font">
-        <font>
-         <pointsize>10</pointsize>
-        </font>
-       </property>
-       <property name="statusTip">
-        <string>Answer-Only Task...</string>
-       </property>
-       <property name="text">
-        <string>Answers Only</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QRadioButton" name="interactionButton">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="font">
-        <font>
-         <pointsize>10</pointsize>
-        </font>
-       </property>
-       <property name="statusTip">
-        <string>Interaction Task...</string>
-       </property>
-       <property name="text">
-        <string>Interaction</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QRadioButton" name="communicationButton">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="font">
-        <font>
-         <pointsize>10</pointsize>
-        </font>
-       </property>
-       <property name="statusTip">
-        <string>Communication Task...</string>
-       </property>
-       <property name="text">
-        <string>Communication (Part)</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QRadioButton" name="communicationExecButton">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="font">
-        <font>
-         <pointsize>10</pointsize>
-        </font>
-       </property>
-       <property name="statusTip">
-        <string>Communication Task, judged by running exec...</string>
-       </property>
-       <property name="text">
-        <string>Communication (Exec)</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <spacer name="taskTypeSpacer">
-       <property name="sizeType">
-        <enum>QSizePolicy::Expanding</enum>
-       </property>
-       <property name="orientation">
-        <enum>Qt::Orientation::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>40</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-    </layout>
+     <layout class="QHBoxLayout" name="taskTypeLayout">
+      <property name="spacing">
+       <number>22</number>
+      </property>
+      <item>
+       <widget class="QRadioButton" name="traditionalButton">
+        <property name="visible">
+         <bool>false</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>10</pointsize>
+         </font>
+        </property>
+        <property name="statusTip">
+         <string>Traditional Task...</string>
+        </property>
+        <property name="text">
+         <string>Traditional</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="answersOnlyButton">
+        <property name="visible">
+         <bool>false</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>10</pointsize>
+         </font>
+        </property>
+        <property name="statusTip">
+         <string>Answer-Only Task...</string>
+        </property>
+        <property name="text">
+         <string>Answers Only</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="interactionButton">
+        <property name="visible">
+         <bool>false</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>10</pointsize>
+         </font>
+        </property>
+        <property name="statusTip">
+         <string>Interaction Task...</string>
+        </property>
+        <property name="text">
+         <string>Interaction</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="communicationButton">
+        <property name="visible">
+         <bool>false</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>10</pointsize>
+         </font>
+        </property>
+        <property name="statusTip">
+         <string>Communication Task...</string>
+        </property>
+        <property name="text">
+         <string>Communication (Part)</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="communicationExecButton">
+        <property name="visible">
+         <bool>false</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>10</pointsize>
+         </font>
+        </property>
+        <property name="statusTip">
+         <string>Communication Task, judged by running exec...</string>
+        </property>
+        <property name="text">
+         <string>Communication (Exec)</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="taskTypeSpacer">
+        <property name="sizeType">
+         <enum>QSizePolicy::Expanding</enum>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Orientation::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <!-- 分区隔断（P2 降级方案：不重排表格，仅用极细分割线做视觉分组） -->
+   <item row="16" column="0" colspan="3">
+    <widget class="QFrame" name="sectionDividerEval">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>1</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>1</height>
+      </size>
+     </property>
+    </widget>
+   </item>
+   <item row="20" column="0" colspan="3">
+    <widget class="QFrame" name="sectionDividerCompiler">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>1</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>1</height>
+      </size>
+     </property>
+    </widget>
    </item>
    <item row="2" column="0" colspan="3">
     <widget class="QFrame" name="taskInfoBar">
@@ -1198,6 +1250,7 @@
  </customwidgets>
  <tabstops>
   <tabstop>problemTitle</tabstop>
+  <tabstop>taskTypeButton</tabstop>
   <tabstop>sourceFileName</tabstop>
   <tabstop>subFolderCheck</tabstop>
   <tabstop>sourceFilesTable</tabstop>

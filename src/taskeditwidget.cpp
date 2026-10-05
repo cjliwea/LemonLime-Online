@@ -16,7 +16,11 @@
 #include "core/testcase.h"
 
 #include <algorithm>
+#include <QAction>
 #include <QIntValidator>
+#include <QMenu>
+#include <QRadioButton>
+#include <QToolButton>
 
 namespace {
 // 把一组数值压成展示用文本：全空 -> “—”，同值 -> 单值，多档 -> “最小 ~ 最大”
@@ -109,6 +113,24 @@ TaskEditWidget::TaskEditWidget(QWidget *parent) : QWidget(parent), ui(new Ui::Ta
 	        &TaskEditWidget::applyBulkMemoryLimit);
 	connect(ui->taskInfoScoreValue, &QLineEdit::editingFinished, this,
 	        &TaskEditWidget::applyBulkFullScore);
+
+	// 题型下拉菜单：菜单项与 5 个（隐藏的）QRadioButton 一一对应，
+	// 选中后 setChecked(true) 触发既有的 toggled -> setTo* 业务逻辑，不新增任何题型判断分支
+	// 菜单文字直接取自 radio 的 text()，沿用现有翻译，不新增 tr() 字符串
+	taskTypeMenu = new QMenu(this);
+
+	for (QRadioButton *button : {ui->traditionalButton, ui->answersOnlyButton, ui->interactionButton,
+	                             ui->communicationButton, ui->communicationExecButton}) {
+		QAction *action = taskTypeMenu->addAction(button->text());
+		connect(action, &QAction::triggered, this, [this, button] {
+			button->setChecked(true);
+			refreshTaskTypeButton();
+		});
+	}
+
+	ui->taskTypeButton->setMenu(taskTypeMenu);
+	ui->taskTypeButton->setPopupMode(QToolButton::InstantPopup);
+	refreshTaskTypeButton();
 }
 
 TaskEditWidget::~TaskEditWidget() { delete ui; }
@@ -119,6 +141,8 @@ void TaskEditWidget::changeEvent(QEvent *event) {
 		setEditTask(nullptr);
 		ui->retranslateUi(this);
 		setEditTask(bak);
+		refreshTaskTypeMenu();
+		refreshTaskTypeButton();
 		refreshTaskInfo();
 	}
 }
@@ -297,6 +321,8 @@ void TaskEditWidget::setEditTask(Task *task) {
 	}
 
 	refreshWidgetState();
+	// 载入题目后 radio 状态已就位，同步一次题型按钮文字（避免 setChecked 未发生变化时不触发 toggled）
+	refreshTaskTypeButton();
 }
 
 void TaskEditWidget::setSettings(Settings *_settings) { settings = _settings; }
@@ -386,6 +412,7 @@ void TaskEditWidget::setToTraditional(bool check) {
 	editTask->setTaskType(Task::Traditional);
 	// editTask->setStandardOutputCheck(false); //fix stdout not save
 	// ui->standardOutputCheck->setCheckState(Qt::Unchecked);
+	refreshTaskTypeButton();
 	refreshWidgetState();
 }
 
@@ -396,6 +423,7 @@ void TaskEditWidget::setToAnswersOnly(bool check) {
 	editTask->setTaskType(Task::AnswersOnly);
 	// editTask->setStandardOutputCheck(false);
 	// ui->standardOutputCheck->setCheckState(Qt::Unchecked);
+	refreshTaskTypeButton();
 	refreshWidgetState();
 }
 
@@ -406,6 +434,7 @@ void TaskEditWidget::setToInteraction(bool check) {
 	editTask->setTaskType(Task::Interaction);
 	// editTask->setStandardOutputCheck(true);
 	// ui->standardOutputCheck->setCheckState(Qt::Checked);
+	refreshTaskTypeButton();
 	refreshWidgetState();
 }
 
@@ -414,6 +443,7 @@ void TaskEditWidget::setToCommunication(bool check) {
 		return;
 
 	editTask->setTaskType(Task::Communication);
+	refreshTaskTypeButton();
 	refreshWidgetState();
 }
 
@@ -422,7 +452,33 @@ void TaskEditWidget::setToCommunicationExec(bool check) {
 		return;
 
 	editTask->setTaskType(Task::CommunicationExec);
+	refreshTaskTypeButton();
 	refreshWidgetState();
+}
+
+// 题型按钮文字直接取自当前选中的 radio 的 text()，沿用现有翻译，不新增 tr() 字符串
+void TaskEditWidget::refreshTaskTypeButton() {
+	for (QRadioButton *button : {ui->traditionalButton, ui->answersOnlyButton, ui->interactionButton,
+	                             ui->communicationButton, ui->communicationExecButton}) {
+		if (button->isChecked()) {
+			ui->taskTypeButton->setText(button->text() + QStringLiteral(" ▾"));
+			return;
+		}
+	}
+
+	// 尚未载入题目（无 radio 选中）时，按钮先显示默认题型，避免空白
+	ui->taskTypeButton->setText(ui->traditionalButton->text() + QStringLiteral(" ▾"));
+}
+
+// 语言切换后菜单项文字需跟随对应 radio 的翻译文本刷新
+void TaskEditWidget::refreshTaskTypeMenu() {
+	const QList<QRadioButton *> buttons = {ui->traditionalButton, ui->answersOnlyButton,
+	                                       ui->interactionButton, ui->communicationButton,
+	                                       ui->communicationExecButton};
+	const QList<QAction *> actions = taskTypeMenu->actions();
+
+	for (int i = 0; i < buttons.size() && i < actions.size(); ++i)
+		actions[i]->setText(buttons[i]->text());
 }
 
 void TaskEditWidget::sourceFileNameChanged(const QString &text) {
