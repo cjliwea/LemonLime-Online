@@ -68,8 +68,10 @@ NewContestWizard::NewContestWizard(Settings *settings, QWidget *parent)
 	parentEdit_->setText(QDir::toNativeSeparators(QDir::homePath()));
 	updatePathPreview();
 
-	// 无边框窗口：装自绘标题栏（只有关闭钮）
-	installTitleBar(this, false);
+	// 注意：不要给 QWizard 套自绘标题栏。
+	// QWizard 用的是私有 QWizardLayout，installTitleBar 把标题栏插进它的顶层布局会
+	// 破坏页面区/按钮区的渲染，结果就是向导「开出来了但看不见内容」。
+	// 向导保留系统原生标题栏即可；内部卡片由 QSS 圆角化，外观仍然统一。
 }
 
 auto NewContestWizard::contestTitle() const -> QString {
