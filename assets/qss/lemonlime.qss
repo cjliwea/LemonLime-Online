@@ -770,31 +770,30 @@ QPushButton#emptyOpenBtn:hover {
 }
 
 /* ============================================================
-   主窗口顶部标签条（预览版样式：满宽均布 + 绿色下划线）与底部服务状态条
+   主窗口顶部居中导航条（自绘按钮行）与底部服务状态条
    ============================================================ */
 
-QTabWidget#tabWidget::pane {
-	border: none;
-	background-color: transparent;
-	padding: 0;
-	top: 0;
+QWidget#navBar {
+	background: #FFFFFF;
+	border-bottom: 1px solid #E5E7EB;
 }
 
-QTabWidget#tabWidget QTabBar::tab {
+QPushButton#navTab {
 	background: transparent;
 	border: none;
 	border-bottom: 2px solid transparent;
 	border-radius: 0;
-	padding: 10px 15px;
+	padding: 10px 16px;
 	color: #64748B;
+	font-size: 13px;
 }
 
-QTabWidget#tabWidget QTabBar::tab:hover {
+QPushButton#navTab:hover {
 	background: transparent;
 	color: #0F172A;
 }
 
-QTabWidget#tabWidget QTabBar::tab:selected {
+QPushButton#navTab:checked {
 	background: transparent;
 	border: none;
 	border-bottom: 2px solid #84CC16;
@@ -802,9 +801,11 @@ QTabWidget#tabWidget QTabBar::tab:selected {
 	font-weight: 600;
 }
 
-QTabWidget#tabWidget QTabBar {
-	background: #FFFFFF;
-	border-bottom: 1px solid #E5E7EB;
+QTabWidget#tabWidget::pane {
+	border: none;
+	background-color: transparent;
+	padding: 0;
+	top: 0;
 }
 
 QStatusBar {

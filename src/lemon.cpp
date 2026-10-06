@@ -48,10 +48,12 @@
 #include <QMessageBox>
 #include <QProgressDialog>
 #include <QScreen>
+#include <QButtonGroup>
 #include <QColor>
 #include <QFont>
 #include <QHeaderView>
 #include <QProcess>
+#include <QPushButton>
 #include <QSizeGrip>
 #include <QStatusBar>
 #include <QTableWidget>
@@ -128,8 +130,41 @@ LemonLime::LemonLime(QWidget *parent) : QMainWindow(parent), ui(new Ui::LemonLim
 	connect(ui->actionChangeContestName, &QAction::triggered, this, &LemonLime::changeContestName);
 	connect(ui->exitAction, &QAction::triggered, this, &LemonLime::close);
 
-	// 顶部标签条：满宽均布（QSS 不支持居中偏移，均布是等价观感的稳妥实现）
-	ui->tabWidget->tabBar()->setExpanding(true);
+	// 顶部居中导航条（复刻预览版）：藏起 QTabBar，用自绘按钮行实现真正的居中。
+	// QTabWidget/QTabBar 原生不支持居中，setExpanding 只是均布，不是居中。
+	ui->tabWidget->tabBar()->hide();
+	auto *navBar = new QWidget(this);
+	navBar->setObjectName(QStringLiteral("navBar"));
+	auto *navLayout = new QHBoxLayout(navBar);
+	navLayout->setContentsMargins(0, 0, 0, 0);
+	navLayout->setSpacing(4);
+	navLayout->addStretch(1);
+	auto *navGroup = new QButtonGroup(navBar);
+	for (int i = 0; i < ui->tabWidget->count(); ++i) {
+		auto *tabBtn = new QPushButton(ui->tabWidget->tabText(i), navBar);
+		tabBtn->setObjectName(QStringLiteral("navTab"));
+		tabBtn->setCheckable(true);
+		tabBtn->setCursor(Qt::PointingHandCursor);
+		tabBtn->setChecked(i == 0);
+		navGroup->addButton(tabBtn, i);
+		navLayout->addWidget(tabBtn);
+	}
+	navLayout->addStretch(1);
+	// 点击 -> 切页；切页（含程序性 setCurrentIndex）-> 同步选中态
+	connect(navGroup, &QButtonGroup::idClicked, ui->tabWidget, &QTabWidget::setCurrentIndex);
+	connect(ui->tabWidget, &QTabWidget::currentChanged, navGroup, [navGroup](int idx) {
+		for (auto *b : navGroup->buttons())
+			b->setChecked(navGroup->id(b) == idx);
+	});
+	// 插到 mainPage 布局里 tabWidget 上方（空状态页不显示导航，与预览版一致）
+	if (auto *pageBox = qobject_cast<QBoxLayout *>(ui->tabWidget->parentWidget()->layout()))
+		pageBox->insertWidget(0, navBar);
+
+	// 在线服务面板：内容直接构建进各标签页（比赛设置/账号/公告须知/实时状况/日志）。
+	// 必须先于页脚按钮创建：面板容器先进比赛设置页布局，页脚才能垫底
+	onlinePanel = new OnlinePanel(ui->contestSettingsTab, ui->accountsTab, ui->noticeTab,
+	                              ui->liveTab, ui->logsTab, this);
+	setupOnlineStatusBar();
 
 	// 页内动作按钮：原菜单全部移除后，各动作收进对应标签页（复用 QAction 文案与快捷键）
 	auto pageBtn = [this](QAction *act) {
@@ -157,11 +192,6 @@ LemonLime::LemonLime(QWidget *parent) : QMainWindow(parent), ui(new Ui::LemonLim
 		footer->addWidget(pageBtn(ui->aboutAction));
 		ui->contestSettingsTabLayout->addLayout(footer);
 	}
-	// 在线服务面板：内容直接构建进各标签页（比赛设置/账号/公告须知/实时状况/日志）
-	onlinePanel = new OnlinePanel(ui->contestSettingsTab, ui->accountsTab, ui->noticeTab,
-	                              ui->liveTab, ui->logsTab, this);
-	setupOnlineStatusBar();
-
 	// 无边框窗口：装自绘标题栏（含最小化 / 最大化）
 	installTitleBar(this, true);
 

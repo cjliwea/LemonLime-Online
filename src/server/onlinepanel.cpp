@@ -137,8 +137,11 @@ void OnlinePanel::bindContest(Contest *contest, const QString &contestDir) {
 
 void OnlinePanel::buildSettingsPage(QWidget *page) {
 	page->setStyleSheet(QLatin1String(kPanelQss));
-	auto *layout = new QGridLayout(page);
-	layout->setContentsMargins(12, 12, 12, 12);
+	// 页面在 .ui 里已带 QVBoxLayout：直接 setLayout 会被 Qt 静默拒绝、内容全部不可见，
+	// 必须把内容装进容器再挂到页面已有布局
+	auto *host = new QWidget(page);
+	auto *layout = new QGridLayout(host);
+	layout->setContentsMargins(0, 0, 0, 0);
 	layout->setSpacing(12);
 
 	layout->addWidget(buildContestInfoGroup(page), 0, 0);
@@ -149,6 +152,8 @@ void OnlinePanel::buildSettingsPage(QWidget *page) {
 	layout->setRowStretch(2, 1);
 	layout->setColumnStretch(0, 1);
 	layout->setColumnStretch(1, 1);
+	if (auto *box = qobject_cast<QBoxLayout *>(page->layout()))
+		box->addWidget(host, 1);
 }
 
 QWidget *OnlinePanel::buildListenGroup(QWidget *parent) {
@@ -363,8 +368,9 @@ QWidget *OnlinePanel::buildStatementGroup(QWidget *parent) {
 
 void OnlinePanel::buildAccountsPage(QWidget *page) {
 	page->setStyleSheet(QLatin1String(kPanelQss));
-	auto *layout = new QVBoxLayout(page);
-	layout->setContentsMargins(12, 12, 12, 12);
+	auto *host = new QWidget(page); // 同 settings：挂进页面已有布局，勿直接 setLayout
+	auto *layout = new QVBoxLayout(host);
+	layout->setContentsMargins(0, 0, 0, 0);
 	layout->setSpacing(12);
 
 	// --- Generate
@@ -429,14 +435,17 @@ void OnlinePanel::buildAccountsPage(QWidget *page) {
 	layout->addWidget(genBox);
 	layout->addWidget(toolBox);
 	layout->addWidget(usersTable_, 1);
+	if (auto *box = qobject_cast<QBoxLayout *>(page->layout()))
+		box->addWidget(host, 1);
 }
 
 // ---------------------------------------------------------------- notice page
 
 void OnlinePanel::buildNoticePage(QWidget *page) {
 	page->setStyleSheet(QLatin1String(kPanelQss));
-	auto *layout = new QGridLayout(page);
-	layout->setContentsMargins(12, 12, 12, 12);
+	auto *host = new QWidget(page); // 同 settings：挂进页面已有布局
+	auto *layout = new QGridLayout(host);
+	layout->setContentsMargins(0, 0, 0, 0);
 	layout->setSpacing(12);
 
 	// --- 公告（即时广播，学生端 15 秒内可见）
@@ -496,14 +505,17 @@ void OnlinePanel::buildNoticePage(QWidget *page) {
 	layout->setColumnStretch(0, 1);
 	layout->setColumnStretch(1, 1);
 	layout->setRowStretch(1, 1);
+	if (auto *box = qobject_cast<QBoxLayout *>(page->layout()))
+		box->addWidget(host, 1);
 }
 
 // ---------------------------------------------------------------- live page
 
 void OnlinePanel::buildLivePage(QWidget *page) {
 	page->setStyleSheet(QLatin1String(kPanelQss));
-	auto *layout = new QVBoxLayout(page);
-	layout->setContentsMargins(12, 12, 12, 12);
+	auto *host = new QWidget(page); // 同 settings：挂进页面已有布局
+	auto *layout = new QVBoxLayout(host);
+	layout->setContentsMargins(0, 0, 0, 0);
 	layout->setSpacing(12);
 
 	// --- metrics
@@ -568,14 +580,17 @@ void OnlinePanel::buildLivePage(QWidget *page) {
 	splitRow->addWidget(feedBox, 2);
 
 	layout->addLayout(splitRow, 1);
+	if (auto *box = qobject_cast<QBoxLayout *>(page->layout()))
+		box->addWidget(host, 1);
 }
 
 // ---------------------------------------------------------------- logs page
 
 void OnlinePanel::buildLogsPage(QWidget *page) {
 	page->setStyleSheet(QLatin1String(kPanelQss));
-	auto *layout = new QVBoxLayout(page);
-	layout->setContentsMargins(12, 12, 12, 12);
+	auto *host = new QWidget(page); // 同 settings：挂进页面已有布局
+	auto *layout = new QVBoxLayout(host);
+	layout->setContentsMargins(0, 0, 0, 0);
 	layout->setSpacing(8);
 	logView_ = new QPlainTextEdit(page);
 	logView_->setReadOnly(true);
@@ -587,6 +602,8 @@ void OnlinePanel::buildLogsPage(QWidget *page) {
 	btnRow->addStretch();
 	btnRow->addWidget(clearBtn);
 	layout->addLayout(btnRow);
+	if (auto *box = qobject_cast<QBoxLayout *>(page->layout()))
+		box->addWidget(host, 1);
 }
 
 // ---------------------------------------------------------------- server control
