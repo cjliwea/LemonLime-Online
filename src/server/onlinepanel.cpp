@@ -42,6 +42,7 @@
 #include <QPoint>
 #include <QPushButton>
 #include <QRandomGenerator>
+#include <QScrollArea>
 #include <QSet>
 #include <QSpinBox>
 #include <QStringConverter>
@@ -61,7 +62,7 @@ const char *kPanelQss =
     "  margin-top: 4px; padding: 24px 12px 8px 12px; background: #FFFFFF; }"
     "QGroupBox::title { subcontrol-origin: border; subcontrol-position: top left; "
     "  left: 12px; top: 4px; padding: 0 4px; color: #475569; font-weight: 600; }"
-    "QPushButton { padding: 6px 14px; border: 1px solid #D4D4D8; "
+    "QPushButton { min-height: 20px; padding: 6px 16px; border: 1px solid #D4D4D8; "
     "  border-radius: 6px; background: #FFFFFF; }"
     "QPushButton:hover { background: #F4F4F5; }"
     "QPushButton:disabled { color: #A1A1AA; background: #FAFAFA; }"
@@ -72,7 +73,7 @@ const char *kPanelQss =
     "  border: 1px solid #FCA5A5; font-weight: 600; }"
     "QPushButton#DangerBtn:hover { background: #FECACA; }"
     "QLineEdit, QComboBox, QSpinBox, QDateTimeEdit, QPlainTextEdit { "
-    "  padding: 5px 8px; border: 1px solid #D4D4D8; border-radius: 6px; "
+    "  min-height: 20px; padding: 6px 10px; border: 1px solid #D4D4D8; border-radius: 6px; "
     "  background: #FFFFFF; }"
     "QLineEdit:focus, QComboBox:focus, QSpinBox:focus, QDateTimeEdit:focus { "
     "  border-color: #84CC16; }"
@@ -141,22 +142,28 @@ void OnlinePanel::bindContest(Contest *contest, const QString &contestDir) {
 void OnlinePanel::buildSettingsPage(QWidget *page) {
 	page->setStyleSheet(QLatin1String(kPanelQss));
 	// 页面在 .ui 里已带 QVBoxLayout：直接 setLayout 会被 Qt 静默拒绝、内容全部不可见，
-	// 必须把内容装进容器再挂到页面已有布局
-	auto *host = new QWidget(page);
+	// 必须把内容装进容器再挂到页面已有布局。
+	// 本页内容较多，矮窗口下会被纵向压缩，把输入框/按钮挤到显示不全；
+	// 因此套一层滚动区：控件保持自然尺寸，空间不够时向下滚动。
+	auto *scroll = new QScrollArea(page);
+	scroll->setWidgetResizable(true);
+	scroll->setFrameShape(QFrame::NoFrame);
+	auto *host = new QWidget();
 	auto *layout = new QGridLayout(host);
 	layout->setContentsMargins(0, 0, 0, 0);
 	layout->setSpacing(12);
 
-	layout->addWidget(buildContestInfoGroup(page), 0, 0);
-	layout->addWidget(buildListenGroup(page), 0, 1);
-	layout->addWidget(buildUiModeGroup(page), 1, 0);
-	layout->addWidget(buildJudgeGroup(page), 1, 1);
-	layout->addWidget(buildStatementGroup(page), 2, 0, 1, 2);
+	layout->addWidget(buildContestInfoGroup(host), 0, 0);
+	layout->addWidget(buildListenGroup(host), 0, 1);
+	layout->addWidget(buildUiModeGroup(host), 1, 0);
+	layout->addWidget(buildJudgeGroup(host), 1, 1);
+	layout->addWidget(buildStatementGroup(host), 2, 0, 1, 2);
 	layout->setRowStretch(2, 1);
 	layout->setColumnStretch(0, 1);
 	layout->setColumnStretch(1, 1);
+	scroll->setWidget(host);
 	if (auto *box = qobject_cast<QBoxLayout *>(page->layout()))
-		box->addWidget(host, 1);
+		box->addWidget(scroll, 1);
 }
 
 QWidget *OnlinePanel::buildListenGroup(QWidget *parent) {
@@ -166,6 +173,7 @@ QWidget *OnlinePanel::buildListenGroup(QWidget *parent) {
 	listenForm->setVerticalSpacing(8);
 
 	bindCombo_ = new QComboBox(listenBox);
+	bindCombo_->setMinimumHeight(30);
 	bindCombo_->addItem(tr("所有网卡 (0.0.0.0)"), QStringLiteral("0.0.0.0"));
 	bindCombo_->addItem(tr("仅本机 (127.0.0.1)"), QStringLiteral("127.0.0.1"));
 	const auto addrs = QNetworkInterface::allAddresses();
@@ -176,8 +184,12 @@ QWidget *OnlinePanel::buildListenGroup(QWidget *parent) {
 	portSpin_ = new QSpinBox(listenBox);
 	portSpin_->setRange(1024, 65535);
 	portSpin_->setValue(8080);
-	startStopBtn_ = new QPushButton(tr("启动服务"), listenBox);
+	portSpin_->setMinimumHeight(30);
+	startStopBtn_ = new QPushButton(tr("启动"), listenBox);
 	startStopBtn_->setObjectName(QStringLiteral("PrimaryBtn"));
+	// 按钮文字曾被挤到显示不全：给足高度与最小宽度
+	startStopBtn_->setMinimumHeight(32);
+	startStopBtn_->setMinimumWidth(96);
 	connect(startStopBtn_, &QPushButton::clicked, this, &OnlinePanel::toggleServer);
 
 	listenForm->addRow(tr("监听网卡"), bindCombo_);
@@ -195,6 +207,8 @@ QWidget *OnlinePanel::buildListenGroup(QWidget *parent) {
 
 	copyUrlBtn_ = new QPushButton(tr("复制"), listenBox);
 	openBrowserBtn_ = new QPushButton(tr("用浏览器打开"), listenBox);
+	copyUrlBtn_->setMinimumHeight(30);
+	openBrowserBtn_->setMinimumHeight(30);
 	copyUrlBtn_->setEnabled(false);
 	openBrowserBtn_->setEnabled(false);
 	connect(copyUrlBtn_, &QPushButton::clicked, this, [this]() {
@@ -220,6 +234,7 @@ QWidget *OnlinePanel::buildContestInfoGroup(QWidget *parent) {
 	form->setVerticalSpacing(8);
 
 	contestTitleLabel_ = new QLabel(tr("（尚未打开比赛）"), infoBox);
+	contestTitleLabel_->setWordWrap(true); // 长标题换行显示，避免被裁掉
 	form->addRow(tr("比赛标题"), contestTitleLabel_);
 
 	windowEnableBox_ = new QCheckBox(tr("启用比赛时间限制（窗口外不允许提交）"), infoBox);
@@ -231,11 +246,18 @@ QWidget *OnlinePanel::buildContestInfoGroup(QWidget *parent) {
 	endEdit_ = new QDateTimeEdit(QDateTime::currentDateTime().addSecs(3 * 3600), infoBox);
 	endEdit_->setDisplayFormat(QStringLiteral("yyyy-MM-dd HH:mm"));
 	endEdit_->setCalendarPopup(true);
+	// 时间框要放得下 "yyyy-MM-dd HH:mm"，并给足高度，否则文字被截断
+	startEdit_->setMinimumHeight(30);
+	startEdit_->setMinimumWidth(170);
+	endEdit_->setMinimumHeight(30);
+	endEdit_->setMinimumWidth(170);
 	form->addRow(tr("开始时间"), startEdit_);
 	form->addRow(tr("结束时间"), endEdit_);
 
 	applyWindowBtn_ = new QPushButton(tr("保存比赛时间"), infoBox);
 	applyWindowBtn_->setObjectName(QStringLiteral("PrimaryBtn"));
+	applyWindowBtn_->setMinimumHeight(32);
+	applyWindowBtn_->setMinimumWidth(132);
 	connect(applyWindowBtn_, &QPushButton::clicked, this, &OnlinePanel::onApplyContestWindow);
 	connect(windowEnableBox_, &QCheckBox::toggled, this, [this](bool on) {
 		startEdit_->setEnabled(on);
@@ -671,7 +693,7 @@ void OnlinePanel::toggleServer() {
 
 void OnlinePanel::refreshServerUi() {
 	const bool running = server_ && server_->isRunning();
-	startStopBtn_->setText(running ? tr("停止服务") : tr("启动服务"));
+	startStopBtn_->setText(running ? tr("停止服务") : tr("启动"));
 	startStopBtn_->setObjectName(running ? QStringLiteral("DangerBtn")
 	                                     : QStringLiteral("PrimaryBtn"));
 	startStopBtn_->style()->unpolish(startStopBtn_);

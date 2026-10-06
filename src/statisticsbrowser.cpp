@@ -332,6 +332,50 @@ void StatisticsBrowser::refresh() {
 	          "</style>";
 	buffer += "</head><body>";
 	buffer += "<h1>" + QString("%1 %2").arg(tr("Contest")).arg(curContest->getContestTitle()) + "</h1>";
+
+	// 各题目得分概况：整行铺满宽度的行式布局（对齐预览版统计页）——
+	// 题名 + AC 进度条 + AC 率 + 均分。表格显式 width=100%，避免内容只挤在右侧。
+	buffer += "<h2>" + tr("Overview") + "</h2>";
+	buffer += "<table width=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"2\">";
+
+	for (int i = 0; i < taskList.size(); i++) {
+		const int fullScore = taskList[i]->getTotalScore();
+		int judgedCount = 0;
+		int solvedCount = 0;
+		long long scoreSum = 0;
+
+		for (auto &j : contestantList) {
+			const int score = j->getTaskScore(i);
+
+			if (score < 0)
+				continue; // 未评测的不计入统计
+
+			judgedCount++;
+			scoreSum += score;
+
+			if (score >= fullScore)
+				solvedCount++;
+		}
+
+		const double acRate = judgedCount > 0 ? 100.00 * solvedCount / judgedCount : 0.00;
+		const double average = judgedCount > 0 ? 1.00 * scoreSum / judgedCount : 0.00;
+		buffer += "<tr>";
+		buffer += "<td width=\"180\"><nobr>" +
+		          QString("%1 %2: %3").arg(tr("Task")).arg(i + 1).arg(taskList[i]->getProblemTitle()) +
+		          "</nobr></td>";
+		// 进度条：内层两格按 AC 率分配百分比宽度（Qt 富文本支持嵌套表格与百分比宽度）
+		buffer += QString("<td><table width=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\">"
+		                  "<tr><td width=\"%1%\" bgcolor=\"#84CC16\">&nbsp;</td>"
+		                  "<td bgcolor=\"#F1F5F9\">&nbsp;</td></tr></table></td>")
+		              .arg(QString::number(acRate, 'f', 1));
+		buffer += "<td width=\"96\" align=\"right\"><nobr>" + tr("AC Rate") + " " +
+		          QString::number(acRate, 'f', 1) + "%</nobr></td>";
+		buffer += "<td width=\"96\" align=\"right\"><nobr>" + tr("Average") + " " +
+		          QString::number(average, 'f', 1) + "</nobr></td>";
+		buffer += "</tr>";
+	}
+
+	buffer += "</table>";
 	buffer += "<h2>" + tr("Overall") + "</h2>";
 	bool haveError = false;
 	QMap<int, int> scoreCount;
