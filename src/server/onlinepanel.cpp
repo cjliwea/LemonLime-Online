@@ -83,7 +83,15 @@ const char *kPanelQss =
     "  border: 0; border-bottom: 1px solid #E5E7EB; color: #475569; }"
     "QLabel#MetricValue { font-size: 21px; font-weight: 600; color: #0F172A; }"
     "QLabel#MetricLabel { font-size: 11px; color: #94A3B8; }"
-    "QLabel#Hint { color: #94A3B8; font-size: 11px; }";
+    "QLabel#Hint { color: #94A3B8; font-size: 11px; }"
+    // 日志页（对齐预览版）：白色卡片 + 标题行，深色等宽日志区
+    "QFrame#LogCard { background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 10px; }"
+    "QLabel#LogTitle { font-size: 13px; font-weight: 600; color: #0F172A; }"
+    "QPushButton#sbtn { border: 1px solid #E5E7EB; background: #FFFFFF; border-radius: 6px; "
+    "  padding: 3px 10px; font-size: 12px; color: #475569; }"
+    "QPushButton#sbtn:hover { border-color: #84CC16; color: #3F6212; background: #FFFFFF; }"
+    "QPlainTextEdit#LogView { background: #0F172A; color: #C7D2FE; border: 0; border-radius: 9px; "
+    "  padding: 11px 13px; font-family: Consolas, monospace; font-size: 12px; }";
 } // namespace
 
 OnlinePanel::OnlinePanel(QWidget *settingsPage, QWidget *accountsPage, QWidget *noticePage,
@@ -612,16 +620,33 @@ void OnlinePanel::buildLogsPage(QWidget *page) {
 	auto *layout = new QVBoxLayout(host);
 	layout->setContentsMargins(0, 0, 0, 0);
 	layout->setSpacing(8);
-	logView_ = new QPlainTextEdit(page);
+
+	// 卡片：标题行（服务日志 + 清空日志）在上，深色等宽日志区在下（对齐预览版日志页）
+	auto *card = new QFrame(page);
+	card->setObjectName(QStringLiteral("LogCard"));
+	auto *cardLayout = new QVBoxLayout(card);
+	cardLayout->setContentsMargins(14, 12, 14, 14);
+	cardLayout->setSpacing(10);
+
+	logView_ = new QPlainTextEdit(card);
+	logView_->setObjectName(QStringLiteral("LogView"));
 	logView_->setReadOnly(true);
 	logView_->setMaximumBlockCount(2000);
-	layout->addWidget(logView_);
-	auto *clearBtn = new QPushButton(tr("清空日志"), page);
+
+	auto *head = new QHBoxLayout();
+	auto *title = new QLabel(tr("服务日志"), card);
+	title->setObjectName(QStringLiteral("LogTitle"));
+	head->addWidget(title);
+	head->addStretch();
+	auto *clearBtn = new QPushButton(tr("清空日志"), card);
+	clearBtn->setObjectName(QStringLiteral("sbtn"));
 	connect(clearBtn, &QPushButton::clicked, logView_, &QPlainTextEdit::clear);
-	auto *btnRow = new QHBoxLayout();
-	btnRow->addStretch();
-	btnRow->addWidget(clearBtn);
-	layout->addLayout(btnRow);
+	head->addWidget(clearBtn);
+
+	cardLayout->addLayout(head);
+	cardLayout->addWidget(logView_, 1);
+	layout->addWidget(card, 1);
+
 	if (auto *box = qobject_cast<QBoxLayout *>(page->layout()))
 		box->addWidget(host, 1);
 }
@@ -702,8 +727,13 @@ void OnlinePanel::refreshServerUi() {
 }
 
 void OnlinePanel::appendLog(const QString &msg) {
-	if (logView_)
-		logView_->appendPlainText(QDateTime::currentDateTime().toString("hh:mm:ss") + "  " + msg);
+	if (!logView_)
+		return;
+	// 对齐预览版：时间戳灰色、正文柠檬绿，逐行追加（超出上限自动丢弃最旧的行）
+	logView_->appendHtml(QStringLiteral("<span style=\"color:#64748B;\">[%1]</span>"
+	                                    "<span style=\"color:#A3E635;\"> %2</span>")
+	                         .arg(QDateTime::currentDateTime().toString("hh:mm:ss"),
+	                              msg.toHtmlEscaped()));
 }
 
 QString OnlinePanel::detectLocalIp() const {

@@ -429,7 +429,13 @@ void LemonLime::setupOnlineStatusBar() {
 		statusCopyBtn->setEnabled(false);
 		statusBrowserBtn->setEnabled(false);
 		statusFirewallBtn->setEnabled(false);
+		statusOnlineLabel->setText(tr("在线 0"));
 	});
+	// 右下角在线人数：跟随服务端的登录/下线信号实时刷新（此前只在启动时写死「在线 0」）
+	connect(onlinePanel->server(), &SubmissionServer::onlineCountChanged, this, [this](int count) {
+		statusOnlineLabel->setText(tr("在线 %1").arg(count));
+	});
+	statusOnlineLabel->setText(tr("在线 %1").arg(onlinePanel->server()->onlineCount()));
 	connect(statusCopyBtn, &QPushButton::clicked, this, [this]() {
 		QGuiApplication::clipboard()->setText(statusAddrLabel->text());
 		ui->statusBar->showMessage(tr("已复制访问地址"), 2000);
