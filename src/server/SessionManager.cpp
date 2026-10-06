@@ -21,6 +21,7 @@ QString SessionManager::createSession(const QString &username) {
 	const auto token = QString::fromLatin1(buf.toHex());
 	Session s{username, QDateTime::currentDateTimeUtc().addSecs(ttlSeconds_)};
 	sessions_.insert(token, s);
+	lastLogin_[username] = QDateTime::currentDateTime();
 	emitIfChanged(before, onlineCount());
 	return token;
 }
@@ -81,6 +82,10 @@ QStringList SessionManager::onlineUsernames() {
 
 QDateTime SessionManager::lastSeenOf(const QString &username) const {
 	return lastSeen_.value(username);
+}
+
+QDateTime SessionManager::lastLoginOf(const QString &username) const {
+	return lastLogin_.value(username);
 }
 
 int SessionManager::emitIfChanged(int before, int after) {

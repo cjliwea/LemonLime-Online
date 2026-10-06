@@ -67,6 +67,7 @@ class SubmissionServer : public QObject {
 	int onlineCount() const;
 	QStringList onlineUsernames() const;
 	QDateTime lastSeenOf(const QString &username) const;
+	QDateTime lastLoginOf(const QString &username) const;
 	// 强制某用户下线（销毁其全部会话）
 	void forceLogout(const QString &username);
 

@@ -226,6 +226,10 @@ QDateTime SubmissionServer::lastSeenOf(const QString &username) const {
 	return sessions_ ? sessions_->lastSeenOf(username) : QDateTime{};
 }
 
+QDateTime SubmissionServer::lastLoginOf(const QString &username) const {
+	return sessions_ ? sessions_->lastLoginOf(username) : QDateTime{};
+}
+
 void SubmissionServer::forceLogout(const QString &username) {
 	if (sessions_)
 		sessions_->destroyAllForUser(username);

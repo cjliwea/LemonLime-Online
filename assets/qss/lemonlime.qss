@@ -293,13 +293,15 @@ QTabBar::tab:selected {
 QGroupBox {
 	border: 1px solid #E5E7EB;
 	border-radius: 10px;
-	margin-top: 12px;
-	padding-top: 6px;
+	margin-top: 4px;
+	padding-top: 24px;
 }
 
 QGroupBox::title {
-	subcontrol-origin: margin;
-	left: 10px;
+	subcontrol-origin: border;
+	subcontrol-position: top left;
+	left: 12px;
+	top: 4px;
 	padding: 0 4px;
 	color: #475569;
 	font-weight: bold;

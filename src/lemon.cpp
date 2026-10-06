@@ -450,60 +450,8 @@ void LemonLime::setupOnlineStatusBar() {
 	});
 }
 
-// 成绩标签页：选手 × 题目 得分表（未评测显示 —）
-void LemonLime::updateScoreTable() {
-	if (! scoreTable) {
-		scoreTable = new QTableWidget(ui->scoreTab);
-		scoreTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
-		scoreTable->setSelectionBehavior(QAbstractItemView::SelectRows);
-		scoreTable->verticalHeader()->setVisible(false);
-		scoreTable->setAlternatingRowColors(true);
-		scoreTable->setStyleSheet(QStringLiteral("alternate-background-color: #FAFAFA;"));
-		ui->scoreTabLayout->insertWidget(0, scoreTable);
-	}
-	if (! curContest) {
-		scoreTable->setRowCount(0);
-		scoreTable->setColumnCount(0);
-		return;
-	}
-	const auto contestants = curContest->getContestantList();
-	const auto tasks = curContest->getTaskList();
-	const int cols = tasks.size() + 2;
-	QStringList headers{tr("Contestant")};
-	for (const auto *t : tasks)
-		headers << t->getProblemTitle();
-	headers << tr("Total");
-	scoreTable->setColumnCount(cols);
-	scoreTable->setHorizontalHeaderLabels(headers);
-	scoreTable->setRowCount(contestants.size());
-	for (int r = 0; r < contestants.size(); ++r) {
-		const auto *c = contestants.at(r);
-		scoreTable->setItem(r, 0, new QTableWidgetItem(c->getContestantName()));
-		int total = 0;
-		bool any = false;
-		for (int k = 0; k < tasks.size(); ++k) {
-			const int s = c->getTaskScore(k);
-			if (s >= 0) {
-				total += s;
-				any = true;
-			}
-			auto *item = new QTableWidgetItem(s >= 0 ? QString::number(s) : QStringLiteral("—"));
-			item->setTextAlignment(Qt::AlignCenter);
-			if (s >= 100)
-				item->setForeground(QColor("#65A30D"));
-			else if (s == 0)
-				item->setForeground(QColor("#E24B4A"));
-			scoreTable->setItem(r, k + 1, item);
-		}
-		auto *tot = new QTableWidgetItem(any ? QString::number(total) : QStringLiteral("—"));
-		tot->setTextAlignment(Qt::AlignCenter);
-		QFont boldFont;
-		boldFont.setBold(true);
-		tot->setFont(boldFont);
-		scoreTable->setItem(r, cols - 1, tot);
-	}
-	scoreTable->resizeColumnsToContents();
-}
+// 成绩标签页直接使用 .ui 里的 resultViewer（原生成绩表，支持选中评测/右键菜单），
+// 不再额外自建得分表——之前两表并排显示属于重复。
 
 void LemonLime::judgeExtButtonFlip(bool stat) {
 	ui->judgeAllButton->setEnabled(stat);
@@ -785,8 +733,6 @@ void LemonLime::tabIndexChanged(int index) {
 		// 标签重排后不能再依赖索引：按控件判断
 		if (ui->tabWidget->currentWidget() == ui->statisticsTab)
 			ui->statisticsBrowser->refresh();
-		if (ui->tabWidget->currentWidget() == ui->scoreTab)
-			updateScoreTable(); // 评测完成后切过来时拿到最新得分
 	} else {
 		QList<QTableWidgetSelectionRange> selectionRange = ui->resultViewer->selectedRanges();
 
@@ -1068,10 +1014,9 @@ void LemonLime::updateContestCard() {
 	                             .arg(QDir::toNativeSeparators(QDir::currentPath())));
 	ui->contestCard->setVisible(true);
 	ui->mainStack->setCurrentIndex(0);
-	// 比赛变化后同步：服务绑定比赛、刷新成绩表
+	// 比赛变化后同步：服务绑定比赛
 	if (onlinePanel)
 		onlinePanel->bindContest(curContest, QDir::currentPath());
-	updateScoreTable();
 }
 
 void LemonLime::closeAction() {

@@ -319,7 +319,17 @@ void StatisticsBrowser::refresh() {
 
 	int totalScore = curContest->getTotalScore();
 	buffer += "<html><head>";
-	buffer += "<style type=\"text/css\">th, td {padding-left: 1em; padding-right: 1em;}</style>";
+	// 与主界面一致的轻量样式：卡片内阅读友好，表格用统一的浅灰描边
+	buffer += "<style type=\"text/css\">"
+	          "body { color: #1E293B; }"
+	          "h1 { color: #0F172A; }"
+	          "h2 { color: #334155; border-bottom: 1px solid #E5E7EB; padding-bottom: 4px; }"
+	          "h3 { color: #475569; }"
+	          "table { border-collapse: collapse; }"
+	          "th, td { padding-left: 1em; padding-right: 1em; padding-top: 3px; padding-bottom: 3px; "
+	          "border: 1px solid #E5E7EB; }"
+	          "th { background-color: #F8FAFC; color: #475569; }"
+	          "</style>";
 	buffer += "</head><body>";
 	buffer += "<h1>" + QString("%1 %2").arg(tr("Contest")).arg(curContest->getContestTitle()) + "</h1>";
 	buffer += "<h2>" + tr("Overall") + "</h2>";

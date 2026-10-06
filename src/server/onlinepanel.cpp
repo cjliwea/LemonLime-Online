@@ -42,10 +42,12 @@
 #include <QPoint>
 #include <QPushButton>
 #include <QRandomGenerator>
+#include <QSet>
 #include <QSpinBox>
 #include <QStringConverter>
 #include <QStyle>
 #include <QTableWidget>
+#include <QTcpServer>
 #include <QTime>
 #include <QTextStream>
 #include <QUrl>
@@ -56,9 +58,9 @@ using namespace Qt::StringLiterals;
 namespace {
 const char *kPanelQss =
     "QGroupBox { border: 1px solid #E5E7EB; border-radius: 10px; "
-    "  margin-top: 12px; padding: 10px 12px 8px 12px; background: #FFFFFF; }"
-    "QGroupBox::title { subcontrol-origin: margin; left: 10px; padding: 0 4px; "
-    "  color: #475569; font-weight: 600; }"
+    "  margin-top: 4px; padding: 24px 12px 8px 12px; background: #FFFFFF; }"
+    "QGroupBox::title { subcontrol-origin: border; subcontrol-position: top left; "
+    "  left: 12px; top: 4px; padding: 0 4px; color: #475569; font-weight: 600; }"
     "QPushButton { padding: 6px 14px; border: 1px solid #D4D4D8; "
     "  border-radius: 6px; background: #FFFFFF; }"
     "QPushButton:hover { background: #F4F4F5; }"
@@ -105,6 +107,7 @@ OnlinePanel::OnlinePanel(QWidget *settingsPage, QWidget *accountsPage, QWidget *
 	connect(server_, &SubmissionServer::onlineCountChanged, this, [this](int) {
 		refreshLive();
 		refreshOnlineTable();
+		refreshUsersTable(); // 账号表的「状态」列随登录/下线刷新
 	});
 
 	buildSettingsPage(settingsPage_);
@@ -423,8 +426,9 @@ void OnlinePanel::buildAccountsPage(QWidget *page) {
 	toolLayout->addLayout(addRow);
 
 	// --- Table
-	usersTable_ = new QTableWidget(0, 3, page);
-	usersTable_->setHorizontalHeaderLabels({tr("用户名"), tr("显示名"), tr("密码")});
+	usersTable_ = new QTableWidget(0, 5, page);
+	usersTable_->setHorizontalHeaderLabels(
+	    {tr("用户名"), tr("显示名"), tr("密码"), tr("状态"), tr("上次登录")});
 	usersTable_->horizontalHeader()->setStretchLastSection(true);
 	usersTable_->verticalHeader()->setVisible(false);
 	usersTable_->setSelectionBehavior(QAbstractItemView::SelectRows);
@@ -608,6 +612,15 @@ void OnlinePanel::buildLogsPage(QWidget *page) {
 
 // ---------------------------------------------------------------- server control
 
+// 探测 addr:port 当前是否可以监听（未被占用）
+static bool portAvailable(const QHostAddress &addr, quint16 port) {
+	QTcpServer probe;
+	const bool ok = probe.listen(addr, port);
+	if (ok)
+		probe.close();
+	return ok;
+}
+
 void OnlinePanel::toggleServer() {
 	if (server_->isRunning()) {
 		server_->stop();
@@ -616,10 +629,40 @@ void OnlinePanel::toggleServer() {
 	}
 	const auto addrStr = bindCombo_->currentData().toString();
 	QHostAddress addr(addrStr);
+	auto port = static_cast<quint16>(portSpin_->value());
 	QString err;
-	if (!server_->start(addr, static_cast<quint16>(portSpin_->value()), &err)) {
-		QMessageBox::critical(nullptr, tr("错误"), tr("启动失败：%1").arg(err));
-		return;
+	if (!server_->start(addr, port, &err)) {
+		if (portAvailable(addr, port)) {
+			// 端口本身空闲，是其他原因（权限/网卡等）
+			QMessageBox::critical(nullptr, tr("错误"), tr("启动失败：%1").arg(err));
+			return;
+		}
+		// 端口被占用：给出可操作的出口——自动换一个空闲端口重试
+		quint16 alt = 0;
+		for (int p = port + 1; p <= qMin<int>(port + 100, 65535); ++p) {
+			if (portAvailable(addr, static_cast<quint16>(p))) {
+				alt = static_cast<quint16>(p);
+				break;
+			}
+		}
+		QMessageBox box(QMessageBox::Warning, tr("端口被占用"),
+		                tr("端口 %1 已被占用（可能是上一个 LemonLime 实例仍在运行，"
+		                   "或其他程序占用了该端口）。\n关闭占用程序后重试，或改用其他端口。")
+		                    .arg(port),
+		                QMessageBox::Cancel);
+		QPushButton *retryBtn = nullptr;
+		if (alt != 0)
+			retryBtn = box.addButton(tr("改用端口 %1 重试").arg(alt), QMessageBox::AcceptRole);
+		box.exec();
+		if (!retryBtn || box.clickedButton() != retryBtn)
+			return;
+		err.clear();
+		if (!server_->start(addr, alt, &err)) {
+			QMessageBox::critical(nullptr, tr("错误"), tr("启动失败：%1").arg(err));
+			return;
+		}
+		port = alt;
+		portSpin_->setValue(alt);
 	}
 	const auto ip = (addrStr == QStringLiteral("0.0.0.0")) ? detectLocalIp() : addrStr;
 	serviceUrl_ = QStringLiteral("http://%1:%2").arg(ip).arg(server_->port());
@@ -927,6 +970,8 @@ void OnlinePanel::refreshUsersTable() {
 	if (!store)
 		return;
 	const auto names = store->allUsernames();
+	const auto onlineList = server_->onlineUsernames();
+	const QSet<QString> onlineSet(onlineList.cbegin(), onlineList.cend());
 	usersTable_->setRowCount(names.size());
 	for (int i = 0; i < names.size(); ++i) {
 		const auto &n = names.at(i);
@@ -938,6 +983,18 @@ void OnlinePanel::refreshUsersTable() {
 			pwItem->setForeground(QBrush(QColor("#94A3B8")));
 		pwItem->setFont(QFont(QStringLiteral("Consolas")));
 		usersTable_->setItem(i, 2, pwItem);
+		// 状态：是否在线
+		const bool online = onlineSet.contains(n);
+		auto *stItem = new QTableWidgetItem(online ? tr("在线") : tr("离线"));
+		stItem->setForeground(QBrush(QColor(online ? "#65A30D" : "#94A3B8")));
+		stItem->setTextAlignment(Qt::AlignCenter);
+		usersTable_->setItem(i, 3, stItem);
+		// 上次登录时间
+		const auto login = server_->lastLoginOf(n);
+		auto *loginItem = new QTableWidgetItem(login.isValid() ? login.toString("MM-dd hh:mm:ss")
+		                                                       : QStringLiteral("—"));
+		loginItem->setForeground(QBrush(QColor("#64748B")));
+		usersTable_->setItem(i, 4, loginItem);
 	}
 }
 

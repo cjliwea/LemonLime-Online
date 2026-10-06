@@ -29,6 +29,8 @@ class SessionManager : public QObject {
 	QStringList onlineUsernames();
 	// 某用户最近一次请求时间；从未见过则返回无效 QDateTime
 	QDateTime lastSeenOf(const QString &username) const;
+	// 某用户最近一次登录（创建会话）时间；从未登录过则返回无效 QDateTime
+	QDateTime lastLoginOf(const QString &username) const;
 
   signals:
 	// 在线人数（去重用户数）发生变化；仅增减时发出，纯活动刷新不发出
@@ -41,6 +43,7 @@ class SessionManager : public QObject {
 	};
 	QHash<QString, Session> sessions_;
 	QHash<QString, QDateTime> lastSeen_;
+	QHash<QString, QDateTime> lastLogin_;
 	int ttlSeconds_ = 6 * 60 * 60; // 6 hours
 
 	void purgeExpired();

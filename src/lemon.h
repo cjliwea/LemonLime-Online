@@ -50,7 +50,6 @@ class LemonLime : public QMainWindow {
 	QPushButton *statusCopyBtn{};
 	QPushButton *statusBrowserBtn{};
 	QPushButton *statusFirewallBtn{};
-	QTableWidget *scoreTable{}; // 成绩标签页的得分表（懒构建）
 	QFileSystemWatcher *dataDirWatcher;
 	QString curFile;
 	QSignalMapper *signalMapper;
@@ -79,7 +78,6 @@ class LemonLime : public QMainWindow {
 	void resetDataWatcher();
 	void showOptionsDialog();
 	void showOnlineServerDialog(); // 改为跳转到「比赛设置」标签页
-	void updateScoreTable();       // 成绩标签页：选手 × 题目 得分表
 	void setupOnlineStatusBar();   // 构建底部服务状态条
 	void refreshButtonClicked();
 	void cleanupButtonClicked();
