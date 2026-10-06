@@ -10,6 +10,7 @@
 #include "UserStore.h"
 #include "core/contest.h"
 #include "core/task.h"
+#include "core/testcase.h"
 
 #include <QCryptographicHash>
 #include <QDir>
