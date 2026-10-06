@@ -25,6 +25,7 @@
 #include <QFileInfo>
 #include <QFont>
 #include <QFrame>
+#include <QFormLayout>
 #include <QGridLayout>
 #include <QGroupBox>
 #include <QGuiApplication>
@@ -44,6 +45,7 @@
 #include <QSpinBox>
 #include <QStringConverter>
 #include <QStyle>
+#include <QTableWidget>
 #include <QTime>
 #include <QTextStream>
 #include <QUrl>
@@ -156,8 +158,8 @@ QWidget *OnlinePanel::buildListenGroup(QWidget *parent) {
 	listenForm->setVerticalSpacing(8);
 
 	bindCombo_ = new QComboBox(listenBox);
-	bindCombo_->addItem(tr("所有网卡 (0.0.0.0)")), QStringLiteral("0.0.0.0"));
-	bindCombo_->addItem(tr("仅本机 (127.0.0.1)")), QStringLiteral("127.0.0.1"));
+	bindCombo_->addItem(tr("所有网卡 (0.0.0.0)"), QStringLiteral("0.0.0.0"));
+	bindCombo_->addItem(tr("仅本机 (127.0.0.1)"), QStringLiteral("127.0.0.1"));
 	const auto addrs = QNetworkInterface::allAddresses();
 	for (const auto &a : addrs) {
 		if (a.protocol() == QAbstractSocket::IPv4Protocol && !a.isLoopback())
@@ -166,25 +168,25 @@ QWidget *OnlinePanel::buildListenGroup(QWidget *parent) {
 	portSpin_ = new QSpinBox(listenBox);
 	portSpin_->setRange(1024, 65535);
 	portSpin_->setValue(8080);
-	startStopBtn_ = new QPushButton(tr("启动服务")), listenBox);
+	startStopBtn_ = new QPushButton(tr("启动服务"), listenBox);
 	startStopBtn_->setObjectName(QStringLiteral("PrimaryBtn"));
 	connect(startStopBtn_, &QPushButton::clicked, this, &OnlinePanel::toggleServer);
 
-	listenForm->addRow(tr("监听网卡")), bindCombo_);
-	listenForm->addRow(tr("端口")), portSpin_);
+	listenForm->addRow(tr("监听网卡"), bindCombo_);
+	listenForm->addRow(tr("端口"), portSpin_);
 	auto *actionRow = new QHBoxLayout();
 	actionRow->addWidget(startStopBtn_);
 	actionRow->addStretch();
 	listenForm->addRow(QString(), actionRow);
 
-	statusLabel_ = new QLabel(tr("已停止")), listenBox);
-	listenForm->addRow(tr("状态")), statusLabel_);
+	statusLabel_ = new QLabel(tr("已停止"), listenBox);
+	listenForm->addRow(tr("状态"), statusLabel_);
 
 	urlLabel_ = new QLabel(QStringLiteral("—"), listenBox);
 	urlLabel_->setTextInteractionFlags(Qt::TextSelectableByMouse);
 
-	copyUrlBtn_ = new QPushButton(tr("复制")), listenBox);
-	openBrowserBtn_ = new QPushButton(tr("用浏览器打开")), listenBox);
+	copyUrlBtn_ = new QPushButton(tr("复制"), listenBox);
+	openBrowserBtn_ = new QPushButton(tr("用浏览器打开"), listenBox);
 	copyUrlBtn_->setEnabled(false);
 	openBrowserBtn_->setEnabled(false);
 	connect(copyUrlBtn_, &QPushButton::clicked, this, [this]() {
@@ -204,15 +206,15 @@ QWidget *OnlinePanel::buildListenGroup(QWidget *parent) {
 }
 
 QWidget *OnlinePanel::buildContestInfoGroup(QWidget *parent) {
-	auto *infoBox = new QGroupBox(tr("比赛信息")), parent);
+	auto *infoBox = new QGroupBox(tr("比赛信息"), parent);
 	auto *form = new QFormLayout(infoBox);
 	form->setHorizontalSpacing(12);
 	form->setVerticalSpacing(8);
 
 	contestTitleLabel_ = new QLabel(tr("（尚未打开比赛）"), infoBox);
-	form->addRow(tr("比赛标题")), contestTitleLabel_);
+	form->addRow(tr("比赛标题"), contestTitleLabel_);
 
-	windowEnableBox_ = new QCheckBox(tr("启用比赛时间限制（窗口外不允许提交）")), infoBox);
+	windowEnableBox_ = new QCheckBox(tr("启用比赛时间限制（窗口外不允许提交）"), infoBox);
 	form->addRow(QString(), windowEnableBox_);
 
 	startEdit_ = new QDateTimeEdit(QDateTime::currentDateTime(), infoBox);
@@ -221,10 +223,10 @@ QWidget *OnlinePanel::buildContestInfoGroup(QWidget *parent) {
 	endEdit_ = new QDateTimeEdit(QDateTime::currentDateTime().addSecs(3 * 3600), infoBox);
 	endEdit_->setDisplayFormat(QStringLiteral("yyyy-MM-dd HH:mm"));
 	endEdit_->setCalendarPopup(true);
-	form->addRow(tr("开始时间")), startEdit_);
-	form->addRow(tr("结束时间")), endEdit_);
+	form->addRow(tr("开始时间"), startEdit_);
+	form->addRow(tr("结束时间"), endEdit_);
 
-	applyWindowBtn_ = new QPushButton(tr("保存比赛时间")), infoBox);
+	applyWindowBtn_ = new QPushButton(tr("保存比赛时间"), infoBox);
 	applyWindowBtn_->setObjectName(QStringLiteral("PrimaryBtn"));
 	connect(applyWindowBtn_, &QPushButton::clicked, this, &OnlinePanel::onApplyContestWindow);
 	connect(windowEnableBox_, &QCheckBox::toggled, this, [this](bool on) {
@@ -237,20 +239,20 @@ QWidget *OnlinePanel::buildContestInfoGroup(QWidget *parent) {
 	form->addRow(QString(), applyRow);
 
 	windowStatusLabel_ = new QLabel(infoBox);
-	form->addRow(tr("当前")), windowStatusLabel_);
+	form->addRow(tr("当前"), windowStatusLabel_);
 
 	return infoBox;
 }
 
 QWidget *OnlinePanel::buildJudgeGroup(QWidget *parent) {
-	auto *judgeBox = new QGroupBox(tr("评测")), parent);
+	auto *judgeBox = new QGroupBox(tr("评测"), parent);
 	auto *judgeLayout = new QVBoxLayout(judgeBox);
-	autoJudgeBox_ = new QCheckBox(tr("学生提交后立即在本机评测")), judgeBox);
+	autoJudgeBox_ = new QCheckBox(tr("学生提交后立即在本机评测"), judgeBox);
 	autoJudgeBox_->setChecked(true);
 	connect(autoJudgeBox_, &QCheckBox::toggled, this, [this](bool on) {
 		if (server_) {
 			server_->setAutoJudge(on);
-			appendLog(on ? tr("已开启提交后自动评测")) : tr("已关闭提交后自动评测")));
+			appendLog(on ? tr("已开启提交后自动评测") : tr("已关闭提交后自动评测"));
 		}
 	});
 	judgeLayout->addWidget(autoJudgeBox_);
@@ -265,13 +267,13 @@ QWidget *OnlinePanel::buildJudgeGroup(QWidget *parent) {
 }
 
 QWidget *OnlinePanel::buildUiModeGroup(QWidget *parent) {
-	auto *modeBox = new QGroupBox(tr("默认答题界面")), parent);
+	auto *modeBox = new QGroupBox(tr("默认答题界面"), parent);
 	auto *modeLayout = new QVBoxLayout(modeBox);
 
-	const QString hintBase = tr("学生进入提交页时默认停留的界面；选双模式时学生可自行切换。"));
-	uiModeEditor_ = new QCheckBox(tr("代码编辑器")), modeBox);
-	uiModeUpload_ = new QCheckBox(tr("上传文件")), modeBox);
-	uiModeBoth_ = new QCheckBox(tr("双模式（学生自选）")), modeBox);
+	const QString hintBase = tr("学生进入提交页时默认停留的界面；选双模式时学生可自行切换。");
+	uiModeEditor_ = new QCheckBox(tr("代码编辑器"), modeBox);
+	uiModeUpload_ = new QCheckBox(tr("上传文件"), modeBox);
+	uiModeBoth_ = new QCheckBox(tr("双模式（学生自选）"), modeBox);
 	uiModeBoth_->setChecked(true);
 
 	auto sync = [this]() {
@@ -330,7 +332,7 @@ QWidget *OnlinePanel::buildUiModeGroup(QWidget *parent) {
 }
 
 QWidget *OnlinePanel::buildStatementGroup(QWidget *parent) {
-	auto *pdfBox = new QGroupBox(tr("题面及样例")), parent);
+	auto *pdfBox = new QGroupBox(tr("题面及样例"), parent);
 	auto *pdfLayout = new QVBoxLayout(pdfBox);
 	pdfLayout->setSpacing(8);
 
@@ -338,8 +340,8 @@ QWidget *OnlinePanel::buildStatementGroup(QWidget *parent) {
 	statementLabel_->setWordWrap(true);
 	statementLabel_->setStyleSheet(QStringLiteral("color: #475569;"));
 
-	setStatementBtn_ = new QPushButton(tr("选择文件...")), pdfBox);
-	clearStatementBtn_ = new QPushButton(tr("清除")), pdfBox);
+	setStatementBtn_ = new QPushButton(tr("选择文件..."), pdfBox);
+	clearStatementBtn_ = new QPushButton(tr("清除"), pdfBox);
 	connect(setStatementBtn_, &QPushButton::clicked, this, &OnlinePanel::onSetStatement);
 	connect(clearStatementBtn_, &QPushButton::clicked, this, &OnlinePanel::onClearStatement);
 
@@ -349,7 +351,7 @@ QWidget *OnlinePanel::buildStatementGroup(QWidget *parent) {
 	pdfRow->addWidget(clearStatementBtn_);
 	pdfLayout->addLayout(pdfRow);
 	auto *hint = new QLabel(
-	    tr("题面 PDF、大样例压缩包或任意单个文件均可在此下发，会原样提供给学生在“题面下载”处获取；重复选择会替换已下发的文件。")),
+	    tr("题面 PDF、大样例压缩包或任意单个文件均可在此下发，会原样提供给学生在“题面下载”处获取；重复选择会替换已下发的文件。"),
 	    pdfBox);
 	hint->setObjectName(QStringLiteral("Hint"));
 	pdfLayout->addWidget(hint);
@@ -366,32 +368,32 @@ void OnlinePanel::buildAccountsPage(QWidget *page) {
 	layout->setSpacing(12);
 
 	// --- Generate
-	auto *genBox = new QGroupBox(tr("批量生成")), page);
+	auto *genBox = new QGroupBox(tr("批量生成"), page);
 	auto *genLayout = new QHBoxLayout(genBox);
 	genCountSpin_ = new QSpinBox(genBox);
 	genCountSpin_->setRange(1, 500);
 	genCountSpin_->setValue(30);
 	genPrefixEdit_ = new QLineEdit(genBox);
-	genPrefixEdit_->setPlaceholderText(tr("用户名前缀，如 s2026_")));
+	genPrefixEdit_->setPlaceholderText(tr("用户名前缀，如 s2026_"));
 	genPrefixEdit_->setText(QStringLiteral("s_"));
-	genBtn_ = new QPushButton(tr("批量生成")), genBox);
+	genBtn_ = new QPushButton(tr("批量生成"), genBox);
 	genBtn_->setObjectName(QStringLiteral("PrimaryBtn"));
 	connect(genBtn_, &QPushButton::clicked, this, &OnlinePanel::onGenerateUsers);
-	genLayout->addWidget(new QLabel(tr("人数"))));
+	genLayout->addWidget(new QLabel(tr("人数")));
 	genLayout->addWidget(genCountSpin_);
 	genLayout->addSpacing(12);
-	genLayout->addWidget(new QLabel(tr("前缀"))));
+	genLayout->addWidget(new QLabel(tr("前缀")));
 	genLayout->addWidget(genPrefixEdit_, 1);
 	genLayout->addWidget(genBtn_);
 
 	// --- Import / Export / Single add row
-	auto *toolBox = new QGroupBox(tr("导入 / 导出 / 添加 / 删除")), page);
+	auto *toolBox = new QGroupBox(tr("导入 / 导出 / 添加 / 删除"), page);
 	auto *toolLayout = new QVBoxLayout(toolBox);
 	toolLayout->setSpacing(8);
 
 	auto *ioRow = new QHBoxLayout();
-	auto *importBtn = new QPushButton(tr("从 CSV 导入...")), toolBox);
-	auto *exportBtn = new QPushButton(tr("导出 CSV")), toolBox);
+	auto *importBtn = new QPushButton(tr("从 CSV 导入..."), toolBox);
+	auto *exportBtn = new QPushButton(tr("导出 CSV"), toolBox);
 	connect(importBtn, &QPushButton::clicked, this, &OnlinePanel::onImportCsv);
 	connect(exportBtn, &QPushButton::clicked, this, &OnlinePanel::onExportCsv);
 	ioRow->addWidget(importBtn);
@@ -401,11 +403,11 @@ void OnlinePanel::buildAccountsPage(QWidget *page) {
 
 	auto *addRow = new QHBoxLayout();
 	addNameEdit_ = new QLineEdit(toolBox);
-	addNameEdit_->setPlaceholderText(tr("用户名")));
+	addNameEdit_->setPlaceholderText(tr("用户名"));
 	addPwdEdit_ = new QLineEdit(toolBox);
-	addPwdEdit_->setPlaceholderText(tr("密码")));
-	auto *addBtn = new QPushButton(tr("添加")), toolBox);
-	auto *removeBtn = new QPushButton(tr("删除所选")), toolBox);
+	addPwdEdit_->setPlaceholderText(tr("密码"));
+	auto *addBtn = new QPushButton(tr("添加"), toolBox);
+	auto *removeBtn = new QPushButton(tr("删除所选"), toolBox);
 	connect(addBtn, &QPushButton::clicked, this, &OnlinePanel::onAddUser);
 	connect(removeBtn, &QPushButton::clicked, this, &OnlinePanel::onRemoveUser);
 	addRow->addWidget(addNameEdit_, 1);
@@ -416,7 +418,7 @@ void OnlinePanel::buildAccountsPage(QWidget *page) {
 
 	// --- Table
 	usersTable_ = new QTableWidget(0, 3, page);
-	usersTable_->setHorizontalHeaderLabels({tr("用户名")), tr("显示名")), tr("密码"))});
+	usersTable_->setHorizontalHeaderLabels({tr("用户名"), tr("显示名"), tr("密码")});
 	usersTable_->horizontalHeader()->setStretchLastSection(true);
 	usersTable_->verticalHeader()->setVisible(false);
 	usersTable_->setSelectionBehavior(QAbstractItemView::SelectRows);
@@ -438,47 +440,47 @@ void OnlinePanel::buildNoticePage(QWidget *page) {
 	layout->setSpacing(12);
 
 	// --- 公告（即时广播，学生端 15 秒内可见）
-	auto *annBox = new QGroupBox(tr("公告（即时广播）")), page);
+	auto *annBox = new QGroupBox(tr("公告（即时广播）"), page);
 	auto *annLayout = new QVBoxLayout(annBox);
 	annText_ = new QPlainTextEdit(annBox);
-	annText_->setPlaceholderText(tr("输入公告内容，例如：距离比赛结束还有 30 分钟…")));
+	annText_->setPlaceholderText(tr("输入公告内容，例如：距离比赛结束还有 30 分钟…"));
 	annText_->setFixedHeight(96);
 	annLayout->addWidget(annText_);
 	auto *annBtnRow = new QHBoxLayout();
-	auto *broadcastBtn = new QPushButton(tr("广播公告")), annBox);
+	auto *broadcastBtn = new QPushButton(tr("广播公告"), annBox);
 	broadcastBtn->setObjectName(QStringLiteral("PrimaryBtn"));
 	connect(broadcastBtn, &QPushButton::clicked, this, &OnlinePanel::onBroadcastAnnouncement);
-	auto *clearAnnBtn = new QPushButton(tr("清除公告")), annBox);
+	auto *clearAnnBtn = new QPushButton(tr("清除公告"), annBox);
 	connect(clearAnnBtn, &QPushButton::clicked, this, &OnlinePanel::onClearAnnouncement);
 	annBtnRow->addWidget(broadcastBtn);
 	annBtnRow->addWidget(clearAnnBtn);
 	annBtnRow->addStretch();
 	annLayout->addLayout(annBtnRow);
 	auto *annHint = new QLabel(
-	    tr("将以横幅显示在所有已登录学生的页面顶部（15 秒内可见）。")),
+	    tr("将以横幅显示在所有已登录学生的页面顶部（15 秒内可见）。"),
 	    annBox);
 	annHint->setObjectName(QStringLiteral("Hint"));
 	annHint->setWordWrap(true);
 	annLayout->addWidget(annHint);
 
 	// --- 历史
-	auto *historyBox = new QGroupBox(tr("历史公告")), page);
+	auto *historyBox = new QGroupBox(tr("历史公告"), page);
 	auto *historyLayout = new QVBoxLayout(historyBox);
 	annHistory_ = new QListWidget(historyBox);
 	historyLayout->addWidget(annHistory_);
 
 	// --- 开考须知（常驻）
-	auto *noticeBox = new QGroupBox(tr("开考须知（常驻显示）")), page);
+	auto *noticeBox = new QGroupBox(tr("开考须知（常驻显示）"), page);
 	auto *noticeLayout = new QVBoxLayout(noticeBox);
 	noticeEdit_ = new QPlainTextEdit(noticeBox);
 	noticeEdit_->setPlaceholderText(
-	    tr("常驻显示在所有学生页面的规则说明，例如：\"保持安静，独立作答…\"")));
+	    tr("常驻显示在所有学生页面的规则说明，例如：\"保持安静，独立作答…\""));
 	noticeLayout->addWidget(noticeEdit_);
 	auto *noticeBtnRow = new QHBoxLayout();
-	auto *saveNoticeBtn = new QPushButton(tr("保存须知")), noticeBox);
+	auto *saveNoticeBtn = new QPushButton(tr("保存须知"), noticeBox);
 	saveNoticeBtn->setObjectName(QStringLiteral("PrimaryBtn"));
 	connect(saveNoticeBtn, &QPushButton::clicked, this, &OnlinePanel::onSaveNotice);
-	auto *clearNoticeBtn = new QPushButton(tr("清除须知")), noticeBox);
+	auto *clearNoticeBtn = new QPushButton(tr("清除须知"), noticeBox);
 	connect(clearNoticeBtn, &QPushButton::clicked, this, [this]() {
 		noticeEdit_->clear();
 		onSaveNotice();
@@ -522,20 +524,20 @@ void OnlinePanel::buildLivePage(QWidget *page) {
 		v->addWidget(*value);
 		metricRow->addWidget(frame, 1);
 	};
-	makeMetric(&metricOnline_, tr("当前在线")));
-	makeMetric(&metricSubmissions_, tr("提交总数")));
-	makeMetric(&metricState_, tr("服务状态")));
+	makeMetric(&metricOnline_, tr("当前在线"));
+	makeMetric(&metricSubmissions_, tr("提交总数"));
+	makeMetric(&metricState_, tr("服务状态"));
 	layout->addLayout(metricRow);
 
 	// --- online table + feed
 	auto *splitRow = new QHBoxLayout();
 	splitRow->setSpacing(12);
 
-	auto *onlineBox = new QGroupBox(tr("在线学生")), page);
+	auto *onlineBox = new QGroupBox(tr("在线学生"), page);
 	auto *onlineLayout = new QVBoxLayout(onlineBox);
 	onlineTable_ = new QTableWidget(0, 3, onlineBox);
 	onlineTable_->setHorizontalHeaderLabels(
-	    {tr("用户名")), tr("显示名")), tr("最近活跃"))});
+	    {tr("用户名"), tr("显示名"), tr("最近活跃")});
 	onlineTable_->horizontalHeader()->setStretchLastSection(true);
 	onlineTable_->verticalHeader()->setVisible(false);
 	onlineTable_->setSelectionBehavior(QAbstractItemView::SelectRows);
@@ -548,18 +550,18 @@ void OnlinePanel::buildLivePage(QWidget *page) {
 			        return;
 		        const auto name = onlineTable_->item(rows.first().row(), 0)->text();
 		        QMenu menu(onlineTable_);
-		        QAction *kick = menu.addAction(tr("强制下线")));
+		        QAction *kick = menu.addAction(tr("强制下线"));
 		        QAction *chosen = menu.exec(onlineTable_->viewport()->mapToGlobal(pos));
 		        if (chosen == kick) {
 			        // 注销该用户全部会话；学生下次请求回到登录页
 			        server_->forceLogout(name);
-			        appendLog(tr("用户 %1 已被强制下线")).arg(name));
+			        appendLog(tr("用户 %1 已被强制下线").arg(name));
 		        }
 	        });
 	onlineLayout->addWidget(onlineTable_);
 	splitRow->addWidget(onlineBox, 3);
 
-	auto *feedBox = new QGroupBox(tr("提交动态")), page);
+	auto *feedBox = new QGroupBox(tr("提交动态"), page);
 	auto *feedLayout = new QVBoxLayout(feedBox);
 	feedList_ = new QListWidget(feedBox);
 	feedLayout->addWidget(feedList_);
@@ -579,7 +581,7 @@ void OnlinePanel::buildLogsPage(QWidget *page) {
 	logView_->setReadOnly(true);
 	logView_->setMaximumBlockCount(2000);
 	layout->addWidget(logView_);
-	auto *clearBtn = new QPushButton(tr("清空日志")), page);
+	auto *clearBtn = new QPushButton(tr("清空日志"), page);
 	connect(clearBtn, &QPushButton::clicked, logView_, &QPlainTextEdit::clear);
 	auto *btnRow = new QHBoxLayout();
 	btnRow->addStretch();
@@ -599,7 +601,7 @@ void OnlinePanel::toggleServer() {
 	QHostAddress addr(addrStr);
 	QString err;
 	if (!server_->start(addr, static_cast<quint16>(portSpin_->value()), &err)) {
-		QMessageBox::critical(nullptr, tr("错误")), tr("启动失败：%1")).arg(err));
+		QMessageBox::critical(nullptr, tr("错误"), tr("启动失败：%1").arg(err));
 		return;
 	}
 	const auto ip = (addrStr == QStringLiteral("0.0.0.0")) ? detectLocalIp() : addrStr;
@@ -609,14 +611,14 @@ void OnlinePanel::toggleServer() {
 
 void OnlinePanel::refreshServerUi() {
 	const bool running = server_ && server_->isRunning();
-	startStopBtn_->setText(running ? tr("停止服务")) : tr("启动服务")));
+	startStopBtn_->setText(running ? tr("停止服务") : tr("启动服务"));
 	startStopBtn_->setObjectName(running ? QStringLiteral("DangerBtn")
 	                                     : QStringLiteral("PrimaryBtn"));
 	startStopBtn_->style()->unpolish(startStopBtn_);
 	startStopBtn_->style()->polish(startStopBtn_);
 	bindCombo_->setEnabled(!running);
 	portSpin_->setEnabled(!running);
-	statusLabel_->setText(running ? tr("正在运行")) : tr("已停止")));
+	statusLabel_->setText(running ? tr("正在运行") : tr("已停止"));
 	urlLabel_->setText(running ? serviceUrl_ : QStringLiteral("—"));
 	copyUrlBtn_->setEnabled(running);
 	openBrowserBtn_->setEnabled(running);
@@ -640,7 +642,7 @@ QString OnlinePanel::detectLocalIp() const {
 
 void OnlinePanel::onGenerateUsers() {
 	if (!server_ || contestDir_.isEmpty()) {
-		QMessageBox::warning(nullptr, tr("提示")), tr("请先打开一场比赛。")));
+		QMessageBox::warning(nullptr, tr("提示"), tr("请先打开一场比赛。"));
 		return;
 	}
 	auto *store = server_->userStore();
@@ -648,11 +650,11 @@ void OnlinePanel::onGenerateUsers() {
 		return;
 	const auto batch = store->generateBatch(genCountSpin_->value(), genPrefixEdit_->text(), 8);
 	if (!store->saveToContestDir(contestDir_)) {
-		QMessageBox::critical(nullptr, tr("错误")), tr("无法保存 online_users.json")));
+		QMessageBox::critical(nullptr, tr("错误"), tr("无法保存 online_users.json"));
 		return;
 	}
 	refreshUsersTable();
-	appendLog(tr("已批量生成 %1 个账号")).arg(batch.size()));
+	appendLog(tr("已批量生成 %1 个账号").arg(batch.size()));
 	onSavePlaintextList();
 }
 
@@ -665,12 +667,12 @@ void OnlinePanel::onAddUser() {
 	const auto name = addNameEdit_->text().trimmed();
 	const auto pwd = addPwdEdit_->text();
 	if (name.isEmpty() || pwd.isEmpty()) {
-		QMessageBox::warning(nullptr, tr("提示")), tr("用户名和密码都不能为空。")));
+		QMessageBox::warning(nullptr, tr("提示"), tr("用户名和密码都不能为空。"));
 		return;
 	}
 	if (store->exists(name)) {
-		if (QMessageBox::question(nullptr, tr("确认")),
-		                          tr("用户 '%1' 已存在，是否覆盖其密码？")).arg(name)) !=
+		if (QMessageBox::question(nullptr, tr("确认"),
+		                          tr("用户 '%1' 已存在，是否覆盖其密码？").arg(name)) !=
 		    QMessageBox::Yes)
 			return;
 	}
@@ -679,7 +681,7 @@ void OnlinePanel::onAddUser() {
 	addNameEdit_->clear();
 	addPwdEdit_->clear();
 	refreshUsersTable();
-	appendLog(tr("已添加用户 %1")).arg(name));
+	appendLog(tr("已添加用户 %1").arg(name));
 }
 
 void OnlinePanel::onRemoveUser() {
@@ -691,8 +693,8 @@ void OnlinePanel::onRemoveUser() {
 	const auto rows = usersTable_->selectionModel()->selectedRows();
 	if (rows.isEmpty())
 		return;
-	if (QMessageBox::question(nullptr, tr("确认")),
-	                          tr("确定删除选中的 %1 个用户？")).arg(rows.size())) !=
+	if (QMessageBox::question(nullptr, tr("确认"),
+	                          tr("确定删除选中的 %1 个用户？").arg(rows.size())) !=
 	    QMessageBox::Yes)
 		return;
 	for (const auto &idx : rows) {
@@ -708,18 +710,18 @@ void OnlinePanel::onExportCsv() {
 		return;
 	auto *store = server_->userStore();
 	if (!store || store->count() == 0) {
-		QMessageBox::information(nullptr, tr("提示")), tr("当前没有可导出的账号。")));
+		QMessageBox::information(nullptr, tr("提示"), tr("当前没有可导出的账号。"));
 		return;
 	}
 	const auto path = QFileDialog::getSaveFileName(
-	    nullptr, tr("导出 CSV")),
+	    nullptr, tr("导出 CSV"),
 	    QDir(contestDir_).filePath(QStringLiteral("online_users_passwords.csv")),
-	    tr("CSV 文件 (*.csv)")));
+	    tr("CSV 文件 (*.csv)"));
 	if (path.isEmpty())
 		return;
 	QFile f(path);
 	if (!f.open(QFile::WriteOnly | QFile::Text)) {
-		QMessageBox::critical(nullptr, tr("错误")), f.errorString());
+		QMessageBox::critical(nullptr, tr("错误"), f.errorString());
 		return;
 	}
 	QTextStream ts(&f);
@@ -765,21 +767,21 @@ static QStringList parseCsvLine(const QString &line) {
 
 void OnlinePanel::onImportCsv() {
 	if (contestDir_.isEmpty() || !server_) {
-		QMessageBox::warning(nullptr, tr("提示")), tr("请先打开一场比赛。")));
+		QMessageBox::warning(nullptr, tr("提示"), tr("请先打开一场比赛。"));
 		return;
 	}
 	auto *store = server_->userStore();
 	if (!store)
 		return;
 
-	const auto path = QFileDialog::getOpenFileName(nullptr, tr("选择 CSV 文件")), contestDir_,
-	                                               tr("CSV 文件 (*.csv *.txt)")));
+	const auto path = QFileDialog::getOpenFileName(nullptr, tr("选择 CSV 文件"), contestDir_,
+	                                               tr("CSV 文件 (*.csv *.txt)"));
 	if (path.isEmpty())
 		return;
 
 	QFile f(path);
 	if (!f.open(QFile::ReadOnly | QFile::Text)) {
-		QMessageBox::critical(nullptr, tr("错误")), f.errorString());
+		QMessageBox::critical(nullptr, tr("错误"), f.errorString());
 		return;
 	}
 	QTextStream ts(&f);
@@ -845,12 +847,12 @@ void OnlinePanel::onImportCsv() {
 			if (!overwriteAll) {
 				QMessageBox box;
 				box.setIcon(QMessageBox::Question);
-				box.setWindowTitle(tr("用户已存在")));
-				box.setText(tr("用户 '%1' 已存在，是否覆盖其密码？")).arg(username));
-				auto *yes = box.addButton(tr("覆盖")), QMessageBox::YesRole);
-				auto *yesAll = box.addButton(tr("全部覆盖")), QMessageBox::AcceptRole);
-				auto *no = box.addButton(tr("跳过")), QMessageBox::NoRole);
-				auto *noAll = box.addButton(tr("全部跳过")), QMessageBox::RejectRole);
+				box.setWindowTitle(tr("用户已存在"));
+				box.setText(tr("用户 '%1' 已存在，是否覆盖其密码？").arg(username));
+				auto *yes = box.addButton(tr("覆盖"), QMessageBox::YesRole);
+				auto *yesAll = box.addButton(tr("全部覆盖"), QMessageBox::AcceptRole);
+				auto *no = box.addButton(tr("跳过"), QMessageBox::NoRole);
+				auto *noAll = box.addButton(tr("全部跳过"), QMessageBox::RejectRole);
 				box.exec();
 				if (box.clickedButton() == yesAll) {
 					overwriteAll = true;
@@ -879,7 +881,7 @@ void OnlinePanel::onImportCsv() {
 	              .arg(overwritten)
 	              .arg(skipped));
 	QMessageBox::information(
-	    nullptr, tr("导入结果")),
+	    nullptr, tr("导入结果"),
 	    tr("新增 %1 个账号，覆盖 %2 个已有账号，跳过 %3 行。").arg(added).arg(overwritten).arg(skipped));
 }
 
@@ -898,7 +900,7 @@ void OnlinePanel::onSavePlaintextList() {
 	ts << "username,display_name,password\n";
 	for (const auto &name : store->allUsernames())
 		ts << name << "," << store->displayNameOf(name) << "," << store->plaintextOf(name) << "\n";
-	appendLog(tr("已自动保存明文清单至 %1")).arg(path));
+	appendLog(tr("已自动保存明文清单至 %1").arg(path));
 }
 
 void OnlinePanel::refreshUsersTable() {
@@ -930,7 +932,7 @@ void OnlinePanel::refreshLive() {
 	if (metricSubmissions_)
 		metricSubmissions_->setText(QString::number(server_ ? server_->submissionCount() : 0));
 	if (metricState_)
-		metricState_->setText(server_ && server_->isRunning() ? tr("正在运行")) : tr("已停止")));
+		metricState_->setText(server_ && server_->isRunning() ? tr("正在运行") : tr("已停止"));
 }
 
 void OnlinePanel::refreshOnlineTable() {
@@ -975,12 +977,12 @@ void OnlinePanel::onSaveNotice() { server_->setNotice(noticeEdit_->toPlainText()
 
 void OnlinePanel::onSetStatement() {
 	if (contestDir_.isEmpty()) {
-		QMessageBox::warning(nullptr, tr("提示")), tr("请先打开一场比赛。")));
+		QMessageBox::warning(nullptr, tr("提示"), tr("请先打开一场比赛。"));
 		return;
 	}
 	const auto src = QFileDialog::getOpenFileName(
-	    nullptr, tr("选择题面及样例")), QString(),
-	    tr("题面与样例 (*.pdf *.zip *.7z *.rar *.tar.gz);;所有文件 (*)")));
+	    nullptr, tr("选择题面及样例"), QString(),
+	    tr("题面与样例 (*.pdf *.zip *.7z *.rar *.tar.gz);;所有文件 (*)"));
 	if (src.isEmpty())
 		return;
 	const QFileInfo srcInfo(src);
@@ -988,21 +990,21 @@ void OnlinePanel::onSetStatement() {
 	const QDir stmtDir(contestDir.filePath(QStringLiteral("statements")));
 	const auto dst = stmtDir.filePath(srcInfo.fileName());
 	if (srcInfo.canonicalFilePath() == QFileInfo(dst).canonicalFilePath()) {
-		appendLog(tr("题面及样例已是该文件，无需替换")));
+		appendLog(tr("题面及样例已是该文件，无需替换"));
 		refreshStatementHint();
 		return;
 	}
 	// 单槽位：新选择的文件会替换当前下发的文件
 	const auto current = SubmissionServer::findStatementFile(contestDir_);
 	if (!current.isEmpty() &&
-	    QMessageBox::question(nullptr, tr("确认")),
+	    QMessageBox::question(nullptr, tr("确认"),
 	                          tr("已下发 %1，是否替换为 %2？")
 	                              .arg(QFileInfo(current).fileName(), srcInfo.fileName())) !=
 	        QMessageBox::Yes)
 		return;
 	if (!stmtDir.exists() && !contestDir.mkpath(QStringLiteral("statements"))) {
-		QMessageBox::critical(nullptr, tr("错误")),
-		                      tr("无法创建目录：%1")).arg(stmtDir.absolutePath()));
+		QMessageBox::critical(nullptr, tr("错误"),
+		                      tr("无法创建目录：%1").arg(stmtDir.absolutePath()));
 		return;
 	}
 	// 先清掉旧的（statements/ 下的残留文件与旧版 statement.pdf），再放入新文件
@@ -1016,10 +1018,10 @@ void OnlinePanel::onSetStatement() {
 	if (QFile::exists(legacy))
 		QFile::remove(legacy);
 	if (!QFile::copy(src, dst)) {
-		QMessageBox::critical(nullptr, tr("错误")), tr("复制失败：%1")).arg(src));
+		QMessageBox::critical(nullptr, tr("错误"), tr("复制失败：%1").arg(src));
 		return;
 	}
-	appendLog(tr("已设定题面及样例：%1")).arg(dst));
+	appendLog(tr("已设定题面及样例：%1").arg(dst));
 	refreshStatementHint();
 }
 
@@ -1028,14 +1030,14 @@ void OnlinePanel::onClearStatement() {
 		return;
 	const auto current = SubmissionServer::findStatementFile(contestDir_);
 	if (current.isEmpty()) {
-		appendLog(tr("当前没有题面及样例，无需清除")));
+		appendLog(tr("当前没有题面及样例，无需清除"));
 		return;
 	}
-	if (QMessageBox::question(nullptr, tr("确认")), tr("是否删除 %1？")).arg(current)) !=
+	if (QMessageBox::question(nullptr, tr("确认"), tr("是否删除 %1？").arg(current)) !=
 	    QMessageBox::Yes)
 		return;
 	if (!QFile::remove(current)) {
-		QMessageBox::critical(nullptr, tr("错误")), tr("删除失败：%1")).arg(current));
+		QMessageBox::critical(nullptr, tr("错误"), tr("删除失败：%1").arg(current));
 		return;
 	}
 	// 清理 statements/ 下的残留文件与旧版 statement.pdf
@@ -1045,7 +1047,7 @@ void OnlinePanel::onClearStatement() {
 	const auto legacy = QDir(contestDir_).filePath(QStringLiteral("statement.pdf"));
 	if (QFile::exists(legacy))
 		QFile::remove(legacy);
-	appendLog(tr("已清除题面及样例")));
+	appendLog(tr("已清除题面及样例"));
 	refreshStatementHint();
 }
 
@@ -1065,9 +1067,9 @@ void OnlinePanel::refreshStatementHint() {
 	if (exists) {
 		const QFileInfo fi(p);
 		statementLabel_->setText(
-		    tr("已设定：%1（%2 KB）")).arg(p).arg(fi.size() / 1024.0, 0, 'f', 1));
+		    tr("已设定：%1（%2 KB）").arg(p).arg(fi.size() / 1024.0, 0, 'f', 1));
 	} else {
-		statementLabel_->setText(tr("未设定。点击右侧按钮选择文件。")));
+		statementLabel_->setText(tr("未设定。点击右侧按钮选择文件。"));
 	}
 	if (setStatementBtn_)
 		setStatementBtn_->setEnabled(true);
@@ -1084,8 +1086,8 @@ void OnlinePanel::onApplyContestWindow() {
 	const auto start = startEdit_->dateTime();
 	const auto end = endEdit_->dateTime();
 	if (enabled && start >= end) {
-		QMessageBox::warning(nullptr, tr("提示")),
-		                     tr("结束时间必须晚于开始时间。")));
+		QMessageBox::warning(nullptr, tr("提示"),
+		                     tr("结束时间必须晚于开始时间。"));
 		return;
 	}
 	server_->setContestWindow(enabled, start, end);
@@ -1094,7 +1096,7 @@ void OnlinePanel::onApplyContestWindow() {
 		appendLog(tr("已设定比赛时间：%1 ~ %2")
 		              .arg(start.toString("yyyy-MM-dd HH:mm"), end.toString("yyyy-MM-dd HH:mm")));
 	else
-		appendLog(tr("已关闭比赛时间限制")));
+		appendLog(tr("已关闭比赛时间限制"));
 }
 
 void OnlinePanel::refreshContestWindow() {
@@ -1111,7 +1113,7 @@ void OnlinePanel::refreshContestWindow() {
 	if (server_->endTime().isValid())
 		endEdit_->setDateTime(server_->endTime());
 	if (!en) {
-		windowStatusLabel_->setText(tr("当前：未启用，任何时间都允许提交")));
+		windowStatusLabel_->setText(tr("当前：未启用，任何时间都允许提交"));
 		return;
 	}
 	const auto now = QDateTime::currentDateTime();
@@ -1119,7 +1121,7 @@ void OnlinePanel::refreshContestWindow() {
 		windowStatusLabel_->setText(tr("当前：未开始（距离开始 %1 分钟）")
 		                                .arg(QString::number(now.secsTo(server_->startTime()) / 60)));
 	else if (server_->endTime().isValid() && now > server_->endTime())
-		windowStatusLabel_->setText(tr("当前：已结束")));
+		windowStatusLabel_->setText(tr("当前：已结束"));
 	else
-		windowStatusLabel_->setText(tr("正在运行")));
+		windowStatusLabel_->setText(tr("正在运行"));
 }
