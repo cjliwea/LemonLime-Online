@@ -41,6 +41,7 @@
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QGuiApplication>
+#include <QHBoxLayout>
 #include <QInputDialog>
 #include <QLabel>
 #include <QLineEdit>
@@ -131,7 +132,7 @@ LemonLime::LemonLime(QWidget *parent) : QMainWindow(parent), ui(new Ui::LemonLim
 	ui->tabWidget->tabBar()->setExpanding(true);
 
 	// 页内动作按钮：原菜单全部移除后，各动作收进对应标签页（复用 QAction 文案与快捷键）
-	auto *pageBtn = [this](QAction *act) {
+	auto pageBtn = [this](QAction *act) {
 		auto *btn = new QToolButton(this);
 		btn->setDefaultAction(act);
 		btn->setToolButtonStyle(Qt::ToolButtonTextOnly);
