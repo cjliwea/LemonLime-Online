@@ -657,34 +657,17 @@
                       </attribute>
                       <layout class="QVBoxLayout" name="statisticsTabLayout">
                         <property name="leftMargin">
-                          <number>12</number>
+                          <number>0</number>
                         </property>
                         <property name="topMargin">
-                          <number>12</number>
+                          <number>0</number>
                         </property>
                         <property name="rightMargin">
-                          <number>12</number>
+                          <number>0</number>
                         </property>
                         <property name="bottomMargin">
-                          <number>12</number>
+                          <number>0</number>
                         </property>
-                        <item>
-                          <layout class="QHBoxLayout" name="statisticsTopRow">
-                            <item>
-                              <spacer name="statisticsTopSpacer">
-                                <property name="orientation">
-                                  <enum>Qt::Orientation::Horizontal</enum>
-                                </property>
-                                <property name="sizeHint" stdset="0">
-                                  <size>
-                                    <width>40</width>
-                                    <height>20</height>
-                                  </size>
-                                </property>
-                              </spacer>
-                            </item>
-                          </layout>
-                        </item>
                         <item>
                           <widget class="StatisticsBrowser" name="statisticsBrowser" native="true">
                             <property name="font">

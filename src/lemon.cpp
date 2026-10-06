@@ -179,10 +179,9 @@ LemonLime::LemonLime(QWidget *parent) : QMainWindow(parent), ui(new Ui::LemonLim
 	ui->horizontalLayout_7->insertWidget(0, pageBtn(ui->addTasksAction));
 	// 成绩页：按钮行加 [导出成绩]（原 Control 菜单）
 	ui->horizontalLayout_4->insertWidget(1, pageBtn(ui->exportAction));
-	// 统计页：右上 [导出统计] 单独占一行靠右；浏览器占满整宽。
-	// 注意不要再往浏览器所在的横向布局里 insertStretch，否则整页内容会被挤到右侧、
+	// 统计页：动作按钮（导出统计）已收进统计页自身的页头，这里只保证浏览器占满整宽。
+	// 注意不要再往浏览器所在的布局里 insertStretch，否则整页内容会被挤到右侧、
 	// 左侧留出一大片空白（v1.8.8 的问题）。
-	ui->statisticsTopRow->insertWidget(1, pageBtn(ui->actionExportStatistics));
 	ui->statisticsTabLayout->setStretchFactor(ui->statisticsBrowser, 1);
 	// 比赛设置页底部：[选项设置] [使用手册] [更多指南] [关于]（原 Tools / Help 菜单）
 	{
