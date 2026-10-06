@@ -114,6 +114,20 @@
                   </property>
                 </widget>
               </item>
+              <item>
+                <widget class="QPushButton" name="cardSettingsBtn">
+                  <property name="text">
+                    <string>Contest Settings</string>
+                  </property>
+                </widget>
+              </item>
+              <item>
+                <widget class="QPushButton" name="cardCloseBtn">
+                  <property name="text">
+                    <string>Close Contest</string>
+                  </property>
+                </widget>
+              </item>
             </layout>
           </widget>
         </item>
@@ -293,227 +307,6 @@
                         </item>
                       </layout>
                     </widget>
-                    <widget class="QWidget" name="contestantsTab">
-                      <attribute name="title">
-                        <string>Contestants</string>
-                      </attribute>
-                      <layout class="QVBoxLayout" name="verticalLayout">
-                        <item>
-                          <widget class="ResultViewer" name="resultViewer">
-                            <property name="font">
-                              <font>
-                                <pointsize>10</pointsize>
-                                <bold>false</bold>
-                              </font>
-                            </property>
-                            <property name="statusTip">
-                              <string>Contestant List...</string>
-                            </property>
-                            <property name="editTriggers">
-                              <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
-                            </property>
-                            <property name="tabKeyNavigation">
-                              <bool>false</bool>
-                            </property>
-                            <property name="selectionMode">
-                              <enum>QAbstractItemView::SelectionMode::ExtendedSelection</enum>
-                            </property>
-                            <property name="selectionBehavior">
-                              <enum>QAbstractItemView::SelectionBehavior::SelectItems</enum>
-                            </property>
-                            <property name="verticalScrollMode">
-                              <enum>QAbstractItemView::ScrollMode::ScrollPerPixel</enum>
-                            </property>
-                            <property name="horizontalScrollMode">
-                              <enum>QAbstractItemView::ScrollMode::ScrollPerPixel</enum>
-                            </property>
-                            <property name="showGrid">
-                              <bool>false</bool>
-                            </property>
-                            <property name="sortingEnabled">
-                              <bool>true</bool>
-                            </property>
-                            <property name="cornerButtonEnabled">
-                              <bool>false</bool>
-                            </property>
-                            <attribute name="horizontalHeaderMinimumSectionSize">
-                              <number>75</number>
-                            </attribute>
-                            <attribute name="horizontalHeaderHighlightSections">
-                              <bool>false</bool>
-                            </attribute>
-                            <attribute name="verticalHeaderVisible">
-                              <bool>false</bool>
-                            </attribute>
-                            <attribute name="verticalHeaderMinimumSectionSize">
-                              <number>25</number>
-                            </attribute>
-                            <attribute name="verticalHeaderDefaultSectionSize">
-                              <number>27</number>
-                            </attribute>
-                          </widget>
-                        </item>
-                        <item>
-                          <layout class="QHBoxLayout" name="horizontalLayout_4">
-                            <item>
-                              <widget class="QPushButton" name="cleanupButton">
-                                <property name="minimumSize">
-                                  <size>
-                                    <width>120</width>
-                                    <height>0</height>
-                                  </size>
-                                </property>
-                                <property name="font">
-                                  <font>
-                                    <pointsize>10</pointsize>
-                                    <bold>false</bold>
-                                  </font>
-                                </property>
-                                <property name="statusTip">
-                                  <string>Cleanup the files of all contestants...</string>
-                                </property>
-                                <property name="text">
-                                  <string>Clean Up Files</string>
-                                </property>
-                                <property name="icon">
-                                  <iconset resource="../../resource.qrc">
-                                    <normaloff>:/icon/view-sort.svg</normaloff>:/icon/view-sort.svg</iconset>
-                                </property>
-                              </widget>
-                            </item>
-                            <item>
-                              <spacer name="horizontalSpacer">
-                                <property name="orientation">
-                                  <enum>Qt::Orientation::Horizontal</enum>
-                                </property>
-                                <property name="sizeHint" stdset="0">
-                                  <size>
-                                    <width>468</width>
-                                    <height>20</height>
-                                  </size>
-                                </property>
-                              </spacer>
-                            </item>
-                            <item>
-                              <widget class="QPushButton" name="refreshButton">
-                                <property name="minimumSize">
-                                  <size>
-                                    <width>120</width>
-                                    <height>0</height>
-                                  </size>
-                                </property>
-                                <property name="font">
-                                  <font>
-                                    <pointsize>10</pointsize>
-                                    <bold>false</bold>
-                                  </font>
-                                </property>
-                                <property name="statusTip">
-                                  <string>Refresh the contestant list...</string>
-                                </property>
-                                <property name="text">
-                                  <string>Refresh</string>
-                                </property>
-                                <property name="icon">
-                                  <iconset resource="../../resource.qrc">
-                                    <normaloff>:/icon/view-refresh.svg</normaloff>:/icon/view-refresh.svg</iconset>
-                                </property>
-                              </widget>
-                            </item>
-                            <item>
-                              <widget class="QPushButton" name="judgeUnjudgedButton">
-                                <property name="sizePolicy">
-                                  <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-                                    <horstretch>0</horstretch>
-                                    <verstretch>0</verstretch>
-                                  </sizepolicy>
-                                </property>
-                                <property name="minimumSize">
-                                  <size>
-                                    <width>120</width>
-                                    <height>0</height>
-                                  </size>
-                                </property>
-                                <property name="font">
-                                  <font>
-                                    <pointsize>10</pointsize>
-                                    <bold>false</bold>
-                                  </font>
-                                </property>
-                                <property name="statusTip">
-                                  <string>Judge unjudged...</string>
-                                </property>
-                                <property name="text">
-                                  <string>Judge Unjudged</string>
-                                </property>
-                                <property name="icon">
-                                  <iconset resource="../../resource.qrc">
-                                    <normaloff>:/icon/edit-find-replace.svg</normaloff>:/icon/edit-find-replace.svg</iconset>
-                                </property>
-                              </widget>
-                            </item>
-                            <item>
-                              <widget class="QPushButton" name="judgeButton">
-                                <property name="enabled">
-                                  <bool>false</bool>
-                                </property>
-                                <property name="minimumSize">
-                                  <size>
-                                    <width>120</width>
-                                    <height>0</height>
-                                  </size>
-                                </property>
-                                <property name="font">
-                                  <font>
-                                    <pointsize>10</pointsize>
-                                    <bold>false</bold>
-                                  </font>
-                                </property>
-                                <property name="statusTip">
-                                  <string>Judge selected area...</string>
-                                </property>
-                                <property name="text">
-                                  <string>Judge Selected</string>
-                                </property>
-                                <property name="icon">
-                                  <iconset resource="../../resource.qrc">
-                                    <normaloff>:/icon/edit-find.svg</normaloff>:/icon/edit-find.svg</iconset>
-                                </property>
-                              </widget>
-                            </item>
-                            <item>
-                              <widget class="QPushButton" name="judgeAllButton">
-                                <property name="enabled">
-                                  <bool>false</bool>
-                                </property>
-                                <property name="minimumSize">
-                                  <size>
-                                    <width>120</width>
-                                    <height>0</height>
-                                  </size>
-                                </property>
-                                <property name="font">
-                                  <font>
-                                    <pointsize>10</pointsize>
-                                    <bold>false</bold>
-                                  </font>
-                                </property>
-                                <property name="statusTip">
-                                  <string>Judge all contestants...</string>
-                                </property>
-                                <property name="text">
-                                  <string>Judge All</string>
-                                </property>
-                                <property name="icon">
-                                  <iconset resource="../../resource.qrc">
-                                    <normaloff>:/icon/code-function.svg</normaloff>:/icon/code-function.svg</iconset>
-                                </property>
-                              </widget>
-                            </item>
-                          </layout>
-                        </item>
-                      </layout>
-                    </widget>
                     <widget class="QWidget" name="scoreTab">
                       <attribute name="title">
                         <string>Scoreboard</string>
@@ -531,6 +324,222 @@
                         <property name="bottomMargin">
                           <number>12</number>
                         </property>
+                        <layout class="QVBoxLayout" name="verticalLayout">
+                          <item>
+                            <widget class="ResultViewer" name="resultViewer">
+                              <property name="font">
+                                <font>
+                                  <pointsize>10</pointsize>
+                                  <bold>false</bold>
+                                </font>
+                              </property>
+                              <property name="statusTip">
+                                <string>Contestant List...</string>
+                              </property>
+                              <property name="editTriggers">
+                                <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
+                              </property>
+                              <property name="tabKeyNavigation">
+                                <bool>false</bool>
+                              </property>
+                              <property name="selectionMode">
+                                <enum>QAbstractItemView::SelectionMode::ExtendedSelection</enum>
+                              </property>
+                              <property name="selectionBehavior">
+                                <enum>QAbstractItemView::SelectionBehavior::SelectItems</enum>
+                              </property>
+                              <property name="verticalScrollMode">
+                                <enum>QAbstractItemView::ScrollMode::ScrollPerPixel</enum>
+                              </property>
+                              <property name="horizontalScrollMode">
+                                <enum>QAbstractItemView::ScrollMode::ScrollPerPixel</enum>
+                              </property>
+                              <property name="showGrid">
+                                <bool>false</bool>
+                              </property>
+                              <property name="sortingEnabled">
+                                <bool>true</bool>
+                              </property>
+                              <property name="cornerButtonEnabled">
+                                <bool>false</bool>
+                              </property>
+                              <attribute name="horizontalHeaderMinimumSectionSize">
+                                <number>75</number>
+                              </attribute>
+                              <attribute name="horizontalHeaderHighlightSections">
+                                <bool>false</bool>
+                              </attribute>
+                              <attribute name="verticalHeaderVisible">
+                                <bool>false</bool>
+                              </attribute>
+                              <attribute name="verticalHeaderMinimumSectionSize">
+                                <number>25</number>
+                              </attribute>
+                              <attribute name="verticalHeaderDefaultSectionSize">
+                                <number>27</number>
+                              </attribute>
+                            </widget>
+                          </item>
+                          <item>
+                            <layout class="QHBoxLayout" name="horizontalLayout_4">
+                              <item>
+                                <widget class="QPushButton" name="cleanupButton">
+                                  <property name="minimumSize">
+                                    <size>
+                                      <width>120</width>
+                                      <height>0</height>
+                                    </size>
+                                  </property>
+                                  <property name="font">
+                                    <font>
+                                      <pointsize>10</pointsize>
+                                      <bold>false</bold>
+                                    </font>
+                                  </property>
+                                  <property name="statusTip">
+                                    <string>Cleanup the files of all contestants...</string>
+                                  </property>
+                                  <property name="text">
+                                    <string>Clean Up Files</string>
+                                  </property>
+                                  <property name="icon">
+                                    <iconset resource="../../resource.qrc">
+                                      <normaloff>:/icon/view-sort.svg</normaloff>:/icon/view-sort.svg</iconset>
+                                  </property>
+                                </widget>
+                              </item>
+                              <item>
+                                <spacer name="horizontalSpacer">
+                                  <property name="orientation">
+                                    <enum>Qt::Orientation::Horizontal</enum>
+                                  </property>
+                                  <property name="sizeHint" stdset="0">
+                                    <size>
+                                      <width>468</width>
+                                      <height>20</height>
+                                    </size>
+                                  </property>
+                                </spacer>
+                              </item>
+                              <item>
+                                <widget class="QPushButton" name="refreshButton">
+                                  <property name="minimumSize">
+                                    <size>
+                                      <width>120</width>
+                                      <height>0</height>
+                                    </size>
+                                  </property>
+                                  <property name="font">
+                                    <font>
+                                      <pointsize>10</pointsize>
+                                      <bold>false</bold>
+                                    </font>
+                                  </property>
+                                  <property name="statusTip">
+                                    <string>Refresh the contestant list...</string>
+                                  </property>
+                                  <property name="text">
+                                    <string>Refresh</string>
+                                  </property>
+                                  <property name="icon">
+                                    <iconset resource="../../resource.qrc">
+                                      <normaloff>:/icon/view-refresh.svg</normaloff>:/icon/view-refresh.svg</iconset>
+                                  </property>
+                                </widget>
+                              </item>
+                              <item>
+                                <widget class="QPushButton" name="judgeUnjudgedButton">
+                                  <property name="sizePolicy">
+                                    <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                                      <horstretch>0</horstretch>
+                                      <verstretch>0</verstretch>
+                                    </sizepolicy>
+                                  </property>
+                                  <property name="minimumSize">
+                                    <size>
+                                      <width>120</width>
+                                      <height>0</height>
+                                    </size>
+                                  </property>
+                                  <property name="font">
+                                    <font>
+                                      <pointsize>10</pointsize>
+                                      <bold>false</bold>
+                                    </font>
+                                  </property>
+                                  <property name="statusTip">
+                                    <string>Judge unjudged...</string>
+                                  </property>
+                                  <property name="text">
+                                    <string>Judge Unjudged</string>
+                                  </property>
+                                  <property name="icon">
+                                    <iconset resource="../../resource.qrc">
+                                      <normaloff>:/icon/edit-find-replace.svg</normaloff>:/icon/edit-find-replace.svg</iconset>
+                                  </property>
+                                </widget>
+                              </item>
+                              <item>
+                                <widget class="QPushButton" name="judgeButton">
+                                  <property name="enabled">
+                                    <bool>false</bool>
+                                  </property>
+                                  <property name="minimumSize">
+                                    <size>
+                                      <width>120</width>
+                                      <height>0</height>
+                                    </size>
+                                  </property>
+                                  <property name="font">
+                                    <font>
+                                      <pointsize>10</pointsize>
+                                      <bold>false</bold>
+                                    </font>
+                                  </property>
+                                  <property name="statusTip">
+                                    <string>Judge selected area...</string>
+                                  </property>
+                                  <property name="text">
+                                    <string>Judge Selected</string>
+                                  </property>
+                                  <property name="icon">
+                                    <iconset resource="../../resource.qrc">
+                                      <normaloff>:/icon/edit-find.svg</normaloff>:/icon/edit-find.svg</iconset>
+                                  </property>
+                                </widget>
+                              </item>
+                              <item>
+                                <widget class="QPushButton" name="judgeAllButton">
+                                  <property name="enabled">
+                                    <bool>false</bool>
+                                  </property>
+                                  <property name="minimumSize">
+                                    <size>
+                                      <width>120</width>
+                                      <height>0</height>
+                                    </size>
+                                  </property>
+                                  <property name="font">
+                                    <font>
+                                      <pointsize>10</pointsize>
+                                      <bold>false</bold>
+                                    </font>
+                                  </property>
+                                  <property name="statusTip">
+                                    <string>Judge all contestants...</string>
+                                  </property>
+                                  <property name="text">
+                                    <string>Judge All</string>
+                                  </property>
+                                  <property name="icon">
+                                    <iconset resource="../../resource.qrc">
+                                      <normaloff>:/icon/code-function.svg</normaloff>:/icon/code-function.svg</iconset>
+                                  </property>
+                                </widget>
+                              </item>
+                            </layout>
+                          </item>
+                        </layout>
                       </layout>
                     </widget>
                     <widget class="QWidget" name="contestSettingsTab">
@@ -800,101 +809,6 @@
           </widget>
         </item>
       </layout>
-    </widget>
-    <widget class="QMenuBar" name="menuBar">
-      <property name="geometry">
-        <rect>
-          <x>0</x>
-          <y>0</y>
-          <width>1183</width>
-          <height>21</height>
-        </rect>
-      </property>
-      <widget class="QMenu" name="fileMenu">
-        <property name="font">
-          <font>
-            <pointsize>10</pointsize>
-          </font>
-        </property>
-        <property name="statusTip">
-          <string>Open / Close / Rename contest and etc</string>
-        </property>
-        <property name="title">
-          <string>&amp;File</string>
-        </property>
-        <addaction name="newAction" />
-        <addaction name="openAction" />
-        <addaction name="saveAction" />
-        <addaction name="closeAction" />
-        <addaction name="separator" />
-        <addaction name="openFolderAction" />
-        <addaction name="actionChangeContestName" />
-        <addaction name="separator" />
-        <addaction name="exitAction" />
-      </widget>
-      <widget class="QMenu" name="controlMenu">
-        <property name="title">
-          <string>&amp;Control</string>
-        </property>
-        <addaction name="judgeAllAction" />
-        <addaction name="judgeAction" />
-        <addaction name="judgeUnjudgedAction" />
-        <addaction name="judgeGreyAction" />
-        <addaction name="judgeMagentaAction" />
-        <addaction name="separator" />
-        <addaction name="cleanupAction" />
-        <addaction name="refreshAction" />
-        <addaction name="separator" />
-        <addaction name="addTasksAction" />
-        <addaction name="exportAction" />
-        <addaction name="separator" />
-        <addaction name="actionExportStatistics" />
-      </widget>
-      <widget class="QMenu" name="toolsMenu">
-        <property name="font">
-          <font>
-            <pointsize>10</pointsize>
-          </font>
-        </property>
-        <property name="title">
-          <string>&amp;Tools</string>
-        </property>
-        <addaction name="actionOnlineServer" />
-        <addaction name="separator" />
-        <addaction name="optionsAction" />
-      </widget>
-      <widget class="QMenu" name="helpMenu">
-        <property name="font">
-          <font>
-            <pointsize>10</pointsize>
-          </font>
-        </property>
-        <property name="title">
-          <string>&amp;Help</string>
-        </property>
-        <widget class="QMenu" name="menuGuides">
-          <property name="statusTip">
-            <string>LemonLime Guides...</string>
-          </property>
-          <property name="title">
-            <string>&amp;Guides</string>
-          </property>
-          <property name="icon">
-            <iconset resource="../../resource.qrc">
-              <normaloff>:/icon/system-help.svg</normaloff>:/icon/system-help.svg</iconset>
-          </property>
-          <addaction name="actionManual" />
-          <addaction name="separator" />
-          <addaction name="actionMore" />
-        </widget>
-        <addaction name="menuGuides" />
-        <addaction name="separator" />
-        <addaction name="aboutAction" />
-      </widget>
-      <addaction name="fileMenu" />
-      <addaction name="controlMenu" />
-      <addaction name="toolsMenu" />
-      <addaction name="helpMenu" />
     </widget>
     <widget class="QStatusBar" name="statusBar" />
     <action name="newAction">

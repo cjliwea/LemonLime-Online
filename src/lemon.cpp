@@ -75,6 +75,11 @@ LemonLime::LemonLime(QWidget *parent) : QMainWindow(parent), ui(new Ui::LemonLim
 	connect(ui->emptyOpenBtn, &QPushButton::clicked, this, &LemonLime::loadAction);
 	connect(ui->cardOpenFolderBtn, &QPushButton::clicked, this, &LemonLime::openFolderAction);
 	connect(ui->cardRenameBtn, &QPushButton::clicked, this, &LemonLime::changeContestName);
+	connect(ui->cardSettingsBtn, &QPushButton::clicked, this, [this]() {
+		if (ui->mainStack->currentIndex() == 0)
+			ui->tabWidget->setCurrentWidget(ui->contestSettingsTab);
+	});
+	connect(ui->cardCloseBtn, &QPushButton::clicked, ui->closeAction, &QAction::trigger);
 	ui->closeAction->setEnabled(false);
 	ui->saveAction->setEnabled(false);
 	ui->openFolderAction->setEnabled(false);
@@ -122,25 +127,35 @@ LemonLime::LemonLime(QWidget *parent) : QMainWindow(parent), ui(new Ui::LemonLim
 	connect(ui->actionChangeContestName, &QAction::triggered, this, &LemonLime::changeContestName);
 	connect(ui->exitAction, &QAction::triggered, this, &LemonLime::close);
 
-	// 主工具栏：放常用操作（打开 / 保存 / 全部评测 / 在线提交服务），纯文字按钮
-	auto *mainToolBar = addToolBar(tr("主工具栏"));
-	mainToolBar->setObjectName(QStringLiteral("mainToolBar"));
-	mainToolBar->setMovable(false);
-	mainToolBar->setFloatable(false);
-	mainToolBar->setToolButtonStyle(Qt::ToolButtonTextOnly);
-	mainToolBar->addAction(ui->openAction);
-	mainToolBar->addAction(ui->saveAction);
-	mainToolBar->addSeparator();
-	mainToolBar->addAction(ui->judgeAllAction);
-	mainToolBar->addSeparator();
-	mainToolBar->addAction(ui->actionOnlineServer);
-
-	// 「全部评测」作为主按钮高亮（QSS 中 QToolButton#PrimaryBtn）
-	if (auto *primaryBtn = qobject_cast<QToolButton *>(mainToolBar->widgetForAction(ui->judgeAllAction)))
-		primaryBtn->setObjectName(QStringLiteral("PrimaryBtn"));
-
 	// 顶部标签条：满宽均布（QSS 不支持居中偏移，均布是等价观感的稳妥实现）
 	ui->tabWidget->tabBar()->setExpanding(true);
+
+	// 页内动作按钮：原菜单全部移除后，各动作收进对应标签页（复用 QAction 文案与快捷键）
+	auto *pageBtn = [this](QAction *act) {
+		auto *btn = new QToolButton(this);
+		btn->setDefaultAction(act);
+		btn->setToolButtonStyle(Qt::ToolButtonTextOnly);
+		btn->setObjectName(QStringLiteral("pageActionBtn"));
+		btn->setAutoRaise(true);
+		return btn;
+	};
+	// 试题页：题目列表底行 [添加题目]（原 Control 菜单）
+	ui->horizontalLayout_7->insertWidget(0, pageBtn(ui->addTasksAction));
+	// 成绩页：按钮行加 [导出成绩]（原 Control 菜单）
+	ui->horizontalLayout_4->insertWidget(1, pageBtn(ui->exportAction));
+	// 统计页：右上 [导出统计]（原 Control 菜单）
+	ui->horizontalLayout_3->insertStretch(0);
+	ui->horizontalLayout_3->insertWidget(1, pageBtn(ui->actionExportStatistics));
+	// 比赛设置页底部：[选项设置] [使用手册] [更多指南] [关于]（原 Tools / Help 菜单）
+	{
+		auto *footer = new QHBoxLayout();
+		footer->addStretch(1);
+		footer->addWidget(pageBtn(ui->optionsAction));
+		footer->addWidget(pageBtn(ui->actionManual));
+		footer->addWidget(pageBtn(ui->actionMore));
+		footer->addWidget(pageBtn(ui->aboutAction));
+		ui->contestSettingsTabLayout->addLayout(footer);
+	}
 	// 在线服务面板：内容直接构建进各标签页（比赛设置/账号/公告须知/实时状况/日志）
 	onlinePanel = new OnlinePanel(ui->contestSettingsTab, ui->accountsTab, ui->noticeTab,
 	                              ui->liveTab, ui->logsTab, this);
@@ -413,7 +428,7 @@ void LemonLime::updateScoreTable() {
 		scoreTable->verticalHeader()->setVisible(false);
 		scoreTable->setAlternatingRowColors(true);
 		scoreTable->setStyleSheet(QStringLiteral("alternate-background-color: #FAFAFA;"));
-		ui->scoreTabLayout->addWidget(scoreTable);
+		ui->scoreTabLayout->insertWidget(0, scoreTable);
 	}
 	if (! curContest) {
 		scoreTable->setRowCount(0);
@@ -728,7 +743,8 @@ void LemonLime::cleanupButtonClicked() {
 }
 
 void LemonLime::tabIndexChanged(int index) {
-	if (index != 1) {
+	Q_UNUSED(index)
+	if (ui->tabWidget->currentWidget() != ui->scoreTab) {
 		judgeExtButtonFlip(false);
 		ui->judgeAction->setEnabled(false);
 		ui->judgeButton->setEnabled(false);

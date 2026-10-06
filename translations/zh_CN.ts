@@ -1628,6 +1628,10 @@ Depends: </source>
         <translation>比赛设置</translation>
     </message>
     <message>
+        <source>Close Contest</source>
+        <translation>关闭比赛</translation>
+    </message>
+    <message>
         <source>Accounts</source>
         <translation>账号</translation>
     </message>

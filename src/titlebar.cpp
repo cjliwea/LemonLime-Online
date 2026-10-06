@@ -547,17 +547,22 @@ void installTitleBar(QWidget *w, bool withMinMax) {
 	tb->setObjectName(QStringLiteral("MainTitleBar"));
 
 	if (auto *mw = qobject_cast<QMainWindow *>(w)) {
-		// 主窗口：menuWidget 会替换菜单栏区域，所以用一个容器装「标题栏 + 原菜单栏」，
-		// 保证原菜单栏保留在标题栏下方
-		auto *container = new QWidget(mw);
-		auto *v = new QVBoxLayout(container);
-		v->setContentsMargins(0, 0, 0, 0);
-		v->setSpacing(0);
-		v->addWidget(tb);
-		auto *mb = mw->menuBar();
-		mb->setParent(container);
-		v->addWidget(mb);
-		mw->setMenuWidget(container);
+		if (auto *mb = mw->findChild<QMenuBar *>()) {
+			// 有菜单栏：menuWidget 会替换菜单栏区域，所以用一个容器装「标题栏 + 原菜单栏」，
+			// 保证原菜单栏保留在标题栏下方
+			auto *container = new QWidget(mw);
+			auto *v = new QVBoxLayout(container);
+			v->setContentsMargins(0, 0, 0, 0);
+			v->setSpacing(0);
+			v->addWidget(tb);
+			mb->setParent(container);
+			v->addWidget(mb);
+			mw->setMenuWidget(container);
+		} else {
+			// 无菜单栏（主窗口复刻预览版后不再有菜单栏）：标题栏直接作为菜单区。
+			// 不能调 mw->menuBar()——它会自动创建一个空菜单栏凭空多出一条。
+			mw->setMenuWidget(tb);
+		}
 	} else if (auto *vbox = qobject_cast<QVBoxLayout *>(w->layout())) {
 		// 对话框：插到顶层布局最上方
 		vbox->insertWidget(0, tb);

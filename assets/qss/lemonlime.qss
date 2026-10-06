@@ -830,3 +830,52 @@ QPushButton#statusBarBtn:disabled {
 	background: transparent;
 	border-color: transparent;
 }
+
+/* ============================================================
+   复刻预览版：卡片主按钮/关闭按钮 + 页内动作按钮
+   ============================================================ */
+
+QPushButton#cardSettingsBtn {
+	background: #84CC16;
+	border: 1px solid #84CC16;
+	border-radius: 7px;
+	padding: 5px 14px;
+	color: #1A2E05;
+	font-weight: 600;
+}
+
+QPushButton#cardSettingsBtn:hover {
+	background: #65A30D;
+	border-color: #65A30D;
+	color: #FFFFFF;
+}
+
+QPushButton#cardCloseBtn {
+	background: #FEE2E2;
+	border: 1px solid #FECACA;
+	border-radius: 7px;
+	padding: 5px 14px;
+	color: #991B1B;
+}
+
+QPushButton#cardCloseBtn:hover {
+	background: #FECACA;
+}
+
+QPushButton#cardCloseBtn:disabled {
+	color: #CBD5E1;
+	background: #F8FAFC;
+	border-color: #E5E7EB;
+}
+
+QToolButton#pageActionBtn {
+	border: 1px solid transparent;
+	border-radius: 6px;
+	padding: 3px 10px;
+	color: #475569;
+}
+
+QToolButton#pageActionBtn:hover {
+	border-color: #84CC16;
+	color: #3F6212;
+}
