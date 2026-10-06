@@ -1,1204 +1,1318 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <ui version="4.0">
- <class>LemonLime</class>
- <widget class="QMainWindow" name="LemonLime">
-  <property name="geometry">
-   <rect>
-    <x>0</x>
-    <y>0</y>
-    <width>800</width>
-    <height>600</height>
-   </rect>
-  </property>
-  <property name="minimumSize">
-   <size>
-    <width>725</width>
-    <height>510</height>
-   </size>
-  </property>
-  <property name="windowTitle">
-   <string>LemonLime</string>
-  </property>
-  <property name="windowIcon">
-   <iconset>
-    <normaloff>:/icon/icon.png</normaloff>:/icon/icon.png</iconset>
-  </property>
-  <widget class="QWidget" name="centralWidget">
-   <layout class="QVBoxLayout" name="centralLayout" stretch="0,1">
-    <item>
-     <widget class="QFrame" name="contestCard">
-      <property name="frameShape">
-       <enum>QFrame::Shape::NoFrame</enum>
-      </property>
-      <layout class="QHBoxLayout" name="contestCardLayout">
-       <property name="leftMargin">
-        <number>14</number>
-       </property>
-       <property name="topMargin">
-        <number>8</number>
-       </property>
-       <property name="rightMargin">
-        <number>14</number>
-       </property>
-       <property name="bottomMargin">
-        <number>8</number>
-       </property>
-       <property name="spacing">
-        <number>10</number>
-       </property>
-       <item>
-        <layout class="QVBoxLayout" name="contestInfoLayout">
-         <item>
-          <widget class="QLabel" name="contestTitle">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="font">
-            <font>
-             <pointsize>11</pointsize>
-             <bold>true</bold>
-            </font>
-           </property>
-           <property name="text">
-            <string notr="true">-</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLabel" name="contestMeta">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="font">
-            <font>
-             <pointsize>8</pointsize>
-            </font>
-           </property>
-           <property name="text">
-            <string notr="true">-</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <spacer name="contestCardSpacer">
-         <property name="orientation">
-          <enum>Qt::Orientation::Horizontal</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>40</width>
-           <height>20</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item>
-        <widget class="QPushButton" name="cardOpenFolderBtn">
-         <property name="text">
-          <string>Open Folder</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="cardRenameBtn">
-         <property name="text">
-          <string>Rename</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </widget>
-    </item>
-    <item>
-     <widget class="QStackedWidget" name="mainStack">
-      <widget class="QWidget" name="mainPage">
-       <layout class="QVBoxLayout" name="mainPageLayout">
+  <class>LemonLime</class>
+  <widget class="QMainWindow" name="LemonLime">
+    <property name="geometry">
+      <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>800</width>
+        <height>600</height>
+      </rect>
+    </property>
+    <property name="minimumSize">
+      <size>
+        <width>725</width>
+        <height>510</height>
+      </size>
+    </property>
+    <property name="windowTitle">
+      <string>LemonLime</string>
+    </property>
+    <property name="windowIcon">
+      <iconset>
+        <normaloff>:/icon/icon.png</normaloff>:/icon/icon.png</iconset>
+    </property>
+    <widget class="QWidget" name="centralWidget">
+      <layout class="QVBoxLayout" name="centralLayout" stretch="0,1">
         <item>
-         <widget class="QTabWidget" name="tabWidget">
-      <property name="enabled">
-       <bool>true</bool>
-      </property>
-      <property name="font">
-       <font>
-        <pointsize>10</pointsize>
-        <bold>true</bold>
-       </font>
-      </property>
-      <property name="autoFillBackground">
-       <bool>false</bool>
-      </property>
-      <property name="tabPosition">
-       <enum>QTabWidget::TabPosition::West</enum>
-      </property>
-      <property name="tabShape">
-       <enum>QTabWidget::TabShape::Rounded</enum>
-      </property>
-      <property name="currentIndex">
-       <number>0</number>
-      </property>
-      <property name="elideMode">
-       <enum>Qt::TextElideMode::ElideNone</enum>
-      </property>
-      <property name="documentMode">
-       <bool>false</bool>
-      </property>
-      <property name="tabsClosable">
-       <bool>false</bool>
-      </property>
-      <property name="movable">
-       <bool>false</bool>
-      </property>
-      <property name="tabBarAutoHide">
-       <bool>false</bool>
-      </property>
-      <widget class="QWidget" name="tasksTab">
-       <attribute name="title">
-        <string>Tasks</string>
-       </attribute>
-       <layout class="QHBoxLayout" name="horizontalLayout_2">
-        <item>
-         <widget class="QGroupBox" name="taskBox">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-            <horstretch>1</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>176</width>
-            <height>387</height>
-           </size>
-          </property>
-          <property name="title">
-           <string>Summary</string>
-          </property>
-          <layout class="QVBoxLayout" name="verticalLayout_2">
-           <item>
-            <widget class="SummaryTree" name="summary">
-             <property name="font">
-              <font>
-               <pointsize>10</pointsize>
-               <bold>false</bold>
-              </font>
-             </property>
-             <property name="contextMenuPolicy">
-              <enum>Qt::ContextMenuPolicy::DefaultContextMenu</enum>
-             </property>
-             <property name="statusTip">
-              <string>Viewing tasks...</string>
-             </property>
-             <attribute name="headerVisible">
-              <bool>false</bool>
-             </attribute>
-             <column>
-              <property name="text">
-               <string notr="true">1</string>
+          <widget class="QFrame" name="contestCard">
+            <property name="frameShape">
+              <enum>QFrame::Shape::NoFrame</enum>
+            </property>
+            <layout class="QHBoxLayout" name="contestCardLayout">
+              <property name="leftMargin">
+                <number>14</number>
               </property>
-             </column>
-            </widget>
-           </item>
-           <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_7">
-             <item>
-              <spacer name="horizontalSpacer_2">
-               <property name="orientation">
-                <enum>Qt::Orientation::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>40</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QToolButton" name="moveDownButton">
-               <property name="statusTip">
-                <string>Move down this task...</string>
-               </property>
-               <property name="text">
-                <string>Down</string>
-               </property>
-               <property name="icon">
-                <iconset resource="../../resource.qrc">
-                 <normaloff>:/icon/go-down.svg</normaloff>:/icon/go-down.svg</iconset>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QToolButton" name="moveUpButton">
-               <property name="statusTip">
-                <string>Move up this task...</string>
-               </property>
-               <property name="text">
-                <string>Up</string>
-               </property>
-               <property name="icon">
-                <iconset resource="../../resource.qrc">
-                 <normaloff>:/icon/go-up.svg</normaloff>:/icon/go-up.svg</iconset>
-               </property>
-              </widget>
-             </item>
+              <property name="topMargin">
+                <number>8</number>
+              </property>
+              <property name="rightMargin">
+                <number>14</number>
+              </property>
+              <property name="bottomMargin">
+                <number>8</number>
+              </property>
+              <property name="spacing">
+                <number>10</number>
+              </property>
+              <item>
+                <layout class="QVBoxLayout" name="contestInfoLayout">
+                  <item>
+                    <widget class="QLabel" name="contestTitle">
+                      <property name="sizePolicy">
+                        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                          <horstretch>0</horstretch>
+                          <verstretch>0</verstretch>
+                        </sizepolicy>
+                      </property>
+                      <property name="font">
+                        <font>
+                          <pointsize>11</pointsize>
+                          <bold>true</bold>
+                        </font>
+                      </property>
+                      <property name="text">
+                        <string notr="true">-</string>
+                      </property>
+                    </widget>
+                  </item>
+                  <item>
+                    <widget class="QLabel" name="contestMeta">
+                      <property name="sizePolicy">
+                        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                          <horstretch>0</horstretch>
+                          <verstretch>0</verstretch>
+                        </sizepolicy>
+                      </property>
+                      <property name="font">
+                        <font>
+                          <pointsize>8</pointsize>
+                        </font>
+                      </property>
+                      <property name="text">
+                        <string notr="true">-</string>
+                      </property>
+                    </widget>
+                  </item>
+                </layout>
+              </item>
+              <item>
+                <spacer name="contestCardSpacer">
+                  <property name="orientation">
+                    <enum>Qt::Orientation::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                    <size>
+                      <width>40</width>
+                      <height>20</height>
+                    </size>
+                  </property>
+                </spacer>
+              </item>
+              <item>
+                <widget class="QPushButton" name="cardOpenFolderBtn">
+                  <property name="text">
+                    <string>Open Folder</string>
+                  </property>
+                </widget>
+              </item>
+              <item>
+                <widget class="QPushButton" name="cardRenameBtn">
+                  <property name="text">
+                    <string>Rename</string>
+                  </property>
+                </widget>
+              </item>
             </layout>
-           </item>
-          </layout>
-         </widget>
+          </widget>
         </item>
         <item>
-         <widget class="QGroupBox" name="editBox">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-            <horstretch>3</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="font">
-           <font>
+          <widget class="QStackedWidget" name="mainStack">
+            <widget class="QWidget" name="mainPage">
+              <layout class="QVBoxLayout" name="mainPageLayout">
+                <item>
+                  <widget class="QTabWidget" name="tabWidget">
+                    <property name="enabled">
+                      <bool>true</bool>
+                    </property>
+                    <property name="font">
+                      <font>
+                        <pointsize>10</pointsize>
+                        <bold>true</bold>
+                      </font>
+                    </property>
+                    <property name="autoFillBackground">
+                      <bool>false</bool>
+                    </property>
+                    <property name="tabPosition">
+                      <enum>QTabWidget::TabPosition::North</enum>
+                    </property>
+                    <property name="tabShape">
+                      <enum>QTabWidget::TabShape::Rounded</enum>
+                    </property>
+                    <property name="currentIndex">
+                      <number>0</number>
+                    </property>
+                    <property name="elideMode">
+                      <enum>Qt::TextElideMode::ElideNone</enum>
+                    </property>
+                    <property name="documentMode">
+                      <bool>false</bool>
+                    </property>
+                    <property name="tabsClosable">
+                      <bool>false</bool>
+                    </property>
+                    <property name="movable">
+                      <bool>false</bool>
+                    </property>
+                    <property name="tabBarAutoHide">
+                      <bool>false</bool>
+                    </property>
+                    <widget class="QWidget" name="tasksTab">
+                      <attribute name="title">
+                        <string>Tasks</string>
+                      </attribute>
+                      <layout class="QHBoxLayout" name="horizontalLayout_2">
+                        <item>
+                          <widget class="QGroupBox" name="taskBox">
+                            <property name="sizePolicy">
+                              <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                                <horstretch>1</horstretch>
+                                <verstretch>0</verstretch>
+                              </sizepolicy>
+                            </property>
+                            <property name="minimumSize">
+                              <size>
+                                <width>176</width>
+                                <height>387</height>
+                              </size>
+                            </property>
+                            <property name="title">
+                              <string>Summary</string>
+                            </property>
+                            <layout class="QVBoxLayout" name="verticalLayout_2">
+                              <item>
+                                <widget class="SummaryTree" name="summary">
+                                  <property name="font">
+                                    <font>
+                                      <pointsize>10</pointsize>
+                                      <bold>false</bold>
+                                    </font>
+                                  </property>
+                                  <property name="contextMenuPolicy">
+                                    <enum>Qt::ContextMenuPolicy::DefaultContextMenu</enum>
+                                  </property>
+                                  <property name="statusTip">
+                                    <string>Viewing tasks...</string>
+                                  </property>
+                                  <attribute name="headerVisible">
+                                    <bool>false</bool>
+                                  </attribute>
+                                  <column>
+                                    <property name="text">
+                                      <string notr="true">1</string>
+                                    </property>
+                                  </column>
+                                </widget>
+                              </item>
+                              <item>
+                                <layout class="QHBoxLayout" name="horizontalLayout_7">
+                                  <item>
+                                    <spacer name="horizontalSpacer_2">
+                                      <property name="orientation">
+                                        <enum>Qt::Orientation::Horizontal</enum>
+                                      </property>
+                                      <property name="sizeHint" stdset="0">
+                                        <size>
+                                          <width>40</width>
+                                          <height>20</height>
+                                        </size>
+                                      </property>
+                                    </spacer>
+                                  </item>
+                                  <item>
+                                    <widget class="QToolButton" name="moveDownButton">
+                                      <property name="statusTip">
+                                        <string>Move down this task...</string>
+                                      </property>
+                                      <property name="text">
+                                        <string>Down</string>
+                                      </property>
+                                      <property name="icon">
+                                        <iconset resource="../../resource.qrc">
+                                          <normaloff>:/icon/go-down.svg</normaloff>:/icon/go-down.svg</iconset>
+                                      </property>
+                                    </widget>
+                                  </item>
+                                  <item>
+                                    <widget class="QToolButton" name="moveUpButton">
+                                      <property name="statusTip">
+                                        <string>Move up this task...</string>
+                                      </property>
+                                      <property name="text">
+                                        <string>Up</string>
+                                      </property>
+                                      <property name="icon">
+                                        <iconset resource="../../resource.qrc">
+                                          <normaloff>:/icon/go-up.svg</normaloff>:/icon/go-up.svg</iconset>
+                                      </property>
+                                    </widget>
+                                  </item>
+                                </layout>
+                              </item>
+                            </layout>
+                          </widget>
+                        </item>
+                        <item>
+                          <widget class="QGroupBox" name="editBox">
+                            <property name="sizePolicy">
+                              <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                                <horstretch>3</horstretch>
+                                <verstretch>0</verstretch>
+                              </sizepolicy>
+                            </property>
+                            <property name="font">
+                              <font>
+                                <pointsize>10</pointsize>
+                                <bold>false</bold>
+                              </font>
+                            </property>
+                            <property name="title">
+                              <string>Detail</string>
+                            </property>
+                            <layout class="QVBoxLayout" name="verticalLayout_8">
+                              <item>
+                                <widget class="QStackedWidget" name="editWidget">
+                                  <property name="contextMenuPolicy">
+                                    <enum>Qt::ContextMenuPolicy::NoContextMenu</enum>
+                                  </property>
+                                  <property name="statusTip">
+                                    <string>Editing task details...</string>
+                                  </property>
+                                  <property name="currentIndex">
+                                    <number>2</number>
+                                  </property>
+                                  <widget class="QWidget" name="nullPage" />
+                                  <widget class="TaskEditWidget" name="taskEdit" />
+                                  <widget class="TestCaseEditWidget" name="testCaseEdit" />
+                                </widget>
+                              </item>
+                            </layout>
+                          </widget>
+                        </item>
+                      </layout>
+                    </widget>
+                    <widget class="QWidget" name="contestantsTab">
+                      <attribute name="title">
+                        <string>Contestants</string>
+                      </attribute>
+                      <layout class="QVBoxLayout" name="verticalLayout">
+                        <item>
+                          <widget class="ResultViewer" name="resultViewer">
+                            <property name="font">
+                              <font>
+                                <pointsize>10</pointsize>
+                                <bold>false</bold>
+                              </font>
+                            </property>
+                            <property name="statusTip">
+                              <string>Contestant List...</string>
+                            </property>
+                            <property name="editTriggers">
+                              <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
+                            </property>
+                            <property name="tabKeyNavigation">
+                              <bool>false</bool>
+                            </property>
+                            <property name="selectionMode">
+                              <enum>QAbstractItemView::SelectionMode::ExtendedSelection</enum>
+                            </property>
+                            <property name="selectionBehavior">
+                              <enum>QAbstractItemView::SelectionBehavior::SelectItems</enum>
+                            </property>
+                            <property name="verticalScrollMode">
+                              <enum>QAbstractItemView::ScrollMode::ScrollPerPixel</enum>
+                            </property>
+                            <property name="horizontalScrollMode">
+                              <enum>QAbstractItemView::ScrollMode::ScrollPerPixel</enum>
+                            </property>
+                            <property name="showGrid">
+                              <bool>false</bool>
+                            </property>
+                            <property name="sortingEnabled">
+                              <bool>true</bool>
+                            </property>
+                            <property name="cornerButtonEnabled">
+                              <bool>false</bool>
+                            </property>
+                            <attribute name="horizontalHeaderMinimumSectionSize">
+                              <number>75</number>
+                            </attribute>
+                            <attribute name="horizontalHeaderHighlightSections">
+                              <bool>false</bool>
+                            </attribute>
+                            <attribute name="verticalHeaderVisible">
+                              <bool>false</bool>
+                            </attribute>
+                            <attribute name="verticalHeaderMinimumSectionSize">
+                              <number>25</number>
+                            </attribute>
+                            <attribute name="verticalHeaderDefaultSectionSize">
+                              <number>27</number>
+                            </attribute>
+                          </widget>
+                        </item>
+                        <item>
+                          <layout class="QHBoxLayout" name="horizontalLayout_4">
+                            <item>
+                              <widget class="QPushButton" name="cleanupButton">
+                                <property name="minimumSize">
+                                  <size>
+                                    <width>120</width>
+                                    <height>0</height>
+                                  </size>
+                                </property>
+                                <property name="font">
+                                  <font>
+                                    <pointsize>10</pointsize>
+                                    <bold>false</bold>
+                                  </font>
+                                </property>
+                                <property name="statusTip">
+                                  <string>Cleanup the files of all contestants...</string>
+                                </property>
+                                <property name="text">
+                                  <string>Clean Up Files</string>
+                                </property>
+                                <property name="icon">
+                                  <iconset resource="../../resource.qrc">
+                                    <normaloff>:/icon/view-sort.svg</normaloff>:/icon/view-sort.svg</iconset>
+                                </property>
+                              </widget>
+                            </item>
+                            <item>
+                              <spacer name="horizontalSpacer">
+                                <property name="orientation">
+                                  <enum>Qt::Orientation::Horizontal</enum>
+                                </property>
+                                <property name="sizeHint" stdset="0">
+                                  <size>
+                                    <width>468</width>
+                                    <height>20</height>
+                                  </size>
+                                </property>
+                              </spacer>
+                            </item>
+                            <item>
+                              <widget class="QPushButton" name="refreshButton">
+                                <property name="minimumSize">
+                                  <size>
+                                    <width>120</width>
+                                    <height>0</height>
+                                  </size>
+                                </property>
+                                <property name="font">
+                                  <font>
+                                    <pointsize>10</pointsize>
+                                    <bold>false</bold>
+                                  </font>
+                                </property>
+                                <property name="statusTip">
+                                  <string>Refresh the contestant list...</string>
+                                </property>
+                                <property name="text">
+                                  <string>Refresh</string>
+                                </property>
+                                <property name="icon">
+                                  <iconset resource="../../resource.qrc">
+                                    <normaloff>:/icon/view-refresh.svg</normaloff>:/icon/view-refresh.svg</iconset>
+                                </property>
+                              </widget>
+                            </item>
+                            <item>
+                              <widget class="QPushButton" name="judgeUnjudgedButton">
+                                <property name="sizePolicy">
+                                  <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                                    <horstretch>0</horstretch>
+                                    <verstretch>0</verstretch>
+                                  </sizepolicy>
+                                </property>
+                                <property name="minimumSize">
+                                  <size>
+                                    <width>120</width>
+                                    <height>0</height>
+                                  </size>
+                                </property>
+                                <property name="font">
+                                  <font>
+                                    <pointsize>10</pointsize>
+                                    <bold>false</bold>
+                                  </font>
+                                </property>
+                                <property name="statusTip">
+                                  <string>Judge unjudged...</string>
+                                </property>
+                                <property name="text">
+                                  <string>Judge Unjudged</string>
+                                </property>
+                                <property name="icon">
+                                  <iconset resource="../../resource.qrc">
+                                    <normaloff>:/icon/edit-find-replace.svg</normaloff>:/icon/edit-find-replace.svg</iconset>
+                                </property>
+                              </widget>
+                            </item>
+                            <item>
+                              <widget class="QPushButton" name="judgeButton">
+                                <property name="enabled">
+                                  <bool>false</bool>
+                                </property>
+                                <property name="minimumSize">
+                                  <size>
+                                    <width>120</width>
+                                    <height>0</height>
+                                  </size>
+                                </property>
+                                <property name="font">
+                                  <font>
+                                    <pointsize>10</pointsize>
+                                    <bold>false</bold>
+                                  </font>
+                                </property>
+                                <property name="statusTip">
+                                  <string>Judge selected area...</string>
+                                </property>
+                                <property name="text">
+                                  <string>Judge Selected</string>
+                                </property>
+                                <property name="icon">
+                                  <iconset resource="../../resource.qrc">
+                                    <normaloff>:/icon/edit-find.svg</normaloff>:/icon/edit-find.svg</iconset>
+                                </property>
+                              </widget>
+                            </item>
+                            <item>
+                              <widget class="QPushButton" name="judgeAllButton">
+                                <property name="enabled">
+                                  <bool>false</bool>
+                                </property>
+                                <property name="minimumSize">
+                                  <size>
+                                    <width>120</width>
+                                    <height>0</height>
+                                  </size>
+                                </property>
+                                <property name="font">
+                                  <font>
+                                    <pointsize>10</pointsize>
+                                    <bold>false</bold>
+                                  </font>
+                                </property>
+                                <property name="statusTip">
+                                  <string>Judge all contestants...</string>
+                                </property>
+                                <property name="text">
+                                  <string>Judge All</string>
+                                </property>
+                                <property name="icon">
+                                  <iconset resource="../../resource.qrc">
+                                    <normaloff>:/icon/code-function.svg</normaloff>:/icon/code-function.svg</iconset>
+                                </property>
+                              </widget>
+                            </item>
+                          </layout>
+                        </item>
+                      </layout>
+                    </widget>
+                    <widget class="QWidget" name="scoreTab">
+                      <attribute name="title">
+                        <string>Scoreboard</string>
+                      </attribute>
+                      <layout class="QVBoxLayout" name="scoreTabLayout">
+                        <property name="leftMargin">
+                          <number>12</number>
+                        </property>
+                        <property name="topMargin">
+                          <number>12</number>
+                        </property>
+                        <property name="rightMargin">
+                          <number>12</number>
+                        </property>
+                        <property name="bottomMargin">
+                          <number>12</number>
+                        </property>
+                      </layout>
+                    </widget>
+                    <widget class="QWidget" name="contestSettingsTab">
+                      <attribute name="title">
+                        <string>Contest Settings</string>
+                      </attribute>
+                      <layout class="QVBoxLayout" name="contestSettingsTabLayout">
+                        <property name="leftMargin">
+                          <number>12</number>
+                        </property>
+                        <property name="topMargin">
+                          <number>12</number>
+                        </property>
+                        <property name="rightMargin">
+                          <number>12</number>
+                        </property>
+                        <property name="bottomMargin">
+                          <number>12</number>
+                        </property>
+                      </layout>
+                    </widget>
+                    <widget class="QWidget" name="accountsTab">
+                      <attribute name="title">
+                        <string>Accounts</string>
+                      </attribute>
+                      <layout class="QVBoxLayout" name="accountsTabLayout">
+                        <property name="leftMargin">
+                          <number>12</number>
+                        </property>
+                        <property name="topMargin">
+                          <number>12</number>
+                        </property>
+                        <property name="rightMargin">
+                          <number>12</number>
+                        </property>
+                        <property name="bottomMargin">
+                          <number>12</number>
+                        </property>
+                      </layout>
+                    </widget>
+                    <widget class="QWidget" name="noticeTab">
+                      <attribute name="title">
+                        <string>Notice</string>
+                      </attribute>
+                      <layout class="QVBoxLayout" name="noticeTabLayout">
+                        <property name="leftMargin">
+                          <number>12</number>
+                        </property>
+                        <property name="topMargin">
+                          <number>12</number>
+                        </property>
+                        <property name="rightMargin">
+                          <number>12</number>
+                        </property>
+                        <property name="bottomMargin">
+                          <number>12</number>
+                        </property>
+                      </layout>
+                    </widget>
+                    <widget class="QWidget" name="liveTab">
+                      <attribute name="title">
+                        <string>Live Status</string>
+                      </attribute>
+                      <layout class="QVBoxLayout" name="liveTabLayout">
+                        <property name="leftMargin">
+                          <number>12</number>
+                        </property>
+                        <property name="topMargin">
+                          <number>12</number>
+                        </property>
+                        <property name="rightMargin">
+                          <number>12</number>
+                        </property>
+                        <property name="bottomMargin">
+                          <number>12</number>
+                        </property>
+                      </layout>
+                    </widget>
+                    <widget class="QWidget" name="logsTab">
+                      <attribute name="title">
+                        <string>Logs</string>
+                      </attribute>
+                      <layout class="QVBoxLayout" name="logsTabLayout">
+                        <property name="leftMargin">
+                          <number>12</number>
+                        </property>
+                        <property name="topMargin">
+                          <number>12</number>
+                        </property>
+                        <property name="rightMargin">
+                          <number>12</number>
+                        </property>
+                        <property name="bottomMargin">
+                          <number>12</number>
+                        </property>
+                      </layout>
+                    </widget>
+                    <widget class="QWidget" name="statisticsTab">
+                      <attribute name="title">
+                        <string>Statistics</string>
+                      </attribute>
+                      <layout class="QHBoxLayout" name="horizontalLayout_3">
+                        <item>
+                          <widget class="StatisticsBrowser" name="statisticsBrowser" native="true">
+                            <property name="font">
+                              <font>
+                                <pointsize>10</pointsize>
+                                <bold>false</bold>
+                              </font>
+                            </property>
+                            <property name="statusTip">
+                              <string>The Statistics Browser...</string>
+                            </property>
+                          </widget>
+                        </item>
+                      </layout>
+                    </widget>
+                  </widget>
+                </item>
+              </layout>
+            </widget>
+            <widget class="QWidget" name="emptyPage">
+              <layout class="QVBoxLayout" name="emptyPageLayout">
+                <item>
+                  <spacer name="emptyTopSpacer">
+                    <property name="orientation">
+                      <enum>Qt::Orientation::Vertical</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                      <size>
+                        <width>20</width>
+                        <height>120</height>
+                      </size>
+                    </property>
+                  </spacer>
+                </item>
+                <item alignment="Qt::AlignmentFlag::AlignHCenter">
+                  <widget class="QFrame" name="emptyState">
+                    <property name="maximumSize">
+                      <size>
+                        <width>560</width>
+                        <height>200</height>
+                      </size>
+                    </property>
+                    <property name="frameShape">
+                      <enum>QFrame::Shape::NoFrame</enum>
+                    </property>
+                    <layout class="QVBoxLayout" name="emptyStateLayout">
+                      <property name="leftMargin">
+                        <number>26</number>
+                      </property>
+                      <property name="topMargin">
+                        <number>18</number>
+                      </property>
+                      <property name="rightMargin">
+                        <number>26</number>
+                      </property>
+                      <property name="bottomMargin">
+                        <number>20</number>
+                      </property>
+                      <property name="spacing">
+                        <number>8</number>
+                      </property>
+                      <item>
+                        <widget class="QLabel" name="emptyTitle">
+                          <property name="font">
+                            <font>
+                              <pointsize>12</pointsize>
+                              <bold>true</bold>
+                            </font>
+                          </property>
+                          <property name="text">
+                            <string>No Contest Open</string>
+                          </property>
+                          <property name="alignment">
+                            <set>Qt::AlignmentFlag::AlignCenter</set>
+                          </property>
+                        </widget>
+                      </item>
+                      <item>
+                        <widget class="QLabel" name="emptyHint">
+                          <property name="text">
+                            <string>Create a new contest, or open an existing one (.cdf).</string>
+                          </property>
+                          <property name="alignment">
+                            <set>Qt::AlignmentFlag::AlignCenter</set>
+                          </property>
+                        </widget>
+                      </item>
+                      <item>
+                        <layout class="QHBoxLayout" name="emptyBtnLayout">
+                          <property name="spacing">
+                            <number>12</number>
+                          </property>
+                          <item>
+                            <spacer name="emptyLeftSpacer">
+                              <property name="orientation">
+                                <enum>Qt::Orientation::Horizontal</enum>
+                              </property>
+                              <property name="sizeHint" stdset="0">
+                                <size>
+                                  <width>40</width>
+                                  <height>20</height>
+                                </size>
+                              </property>
+                            </spacer>
+                          </item>
+                          <item>
+                            <widget class="QPushButton" name="emptyNewBtn">
+                              <property name="minimumSize">
+                                <size>
+                                  <width>128</width>
+                                  <height>32</height>
+                                </size>
+                              </property>
+                              <property name="text">
+                                <string>Create Contest</string>
+                              </property>
+                            </widget>
+                          </item>
+                          <item>
+                            <widget class="QPushButton" name="emptyOpenBtn">
+                              <property name="minimumSize">
+                                <size>
+                                  <width>128</width>
+                                  <height>32</height>
+                                </size>
+                              </property>
+                              <property name="text">
+                                <string>Open Contest...</string>
+                              </property>
+                            </widget>
+                          </item>
+                          <item>
+                            <spacer name="emptyRightSpacer">
+                              <property name="orientation">
+                                <enum>Qt::Orientation::Horizontal</enum>
+                              </property>
+                              <property name="sizeHint" stdset="0">
+                                <size>
+                                  <width>40</width>
+                                  <height>20</height>
+                                </size>
+                              </property>
+                            </spacer>
+                          </item>
+                        </layout>
+                      </item>
+                    </layout>
+                  </widget>
+                </item>
+                <item>
+                  <spacer name="emptyBottomSpacer">
+                    <property name="orientation">
+                      <enum>Qt::Orientation::Vertical</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                      <size>
+                        <width>20</width>
+                        <height>120</height>
+                      </size>
+                    </property>
+                  </spacer>
+                </item>
+              </layout>
+            </widget>
+          </widget>
+        </item>
+      </layout>
+    </widget>
+    <widget class="QMenuBar" name="menuBar">
+      <property name="geometry">
+        <rect>
+          <x>0</x>
+          <y>0</y>
+          <width>1183</width>
+          <height>21</height>
+        </rect>
+      </property>
+      <widget class="QMenu" name="fileMenu">
+        <property name="font">
+          <font>
             <pointsize>10</pointsize>
-            <bold>false</bold>
-           </font>
+          </font>
+        </property>
+        <property name="statusTip">
+          <string>Open / Close / Rename contest and etc</string>
+        </property>
+        <property name="title">
+          <string>&amp;File</string>
+        </property>
+        <addaction name="newAction" />
+        <addaction name="openAction" />
+        <addaction name="saveAction" />
+        <addaction name="closeAction" />
+        <addaction name="separator" />
+        <addaction name="openFolderAction" />
+        <addaction name="actionChangeContestName" />
+        <addaction name="separator" />
+        <addaction name="exitAction" />
+      </widget>
+      <widget class="QMenu" name="controlMenu">
+        <property name="title">
+          <string>&amp;Control</string>
+        </property>
+        <addaction name="judgeAllAction" />
+        <addaction name="judgeAction" />
+        <addaction name="judgeUnjudgedAction" />
+        <addaction name="judgeGreyAction" />
+        <addaction name="judgeMagentaAction" />
+        <addaction name="separator" />
+        <addaction name="cleanupAction" />
+        <addaction name="refreshAction" />
+        <addaction name="separator" />
+        <addaction name="addTasksAction" />
+        <addaction name="exportAction" />
+        <addaction name="separator" />
+        <addaction name="actionExportStatistics" />
+      </widget>
+      <widget class="QMenu" name="toolsMenu">
+        <property name="font">
+          <font>
+            <pointsize>10</pointsize>
+          </font>
+        </property>
+        <property name="title">
+          <string>&amp;Tools</string>
+        </property>
+        <addaction name="actionOnlineServer" />
+        <addaction name="separator" />
+        <addaction name="optionsAction" />
+      </widget>
+      <widget class="QMenu" name="helpMenu">
+        <property name="font">
+          <font>
+            <pointsize>10</pointsize>
+          </font>
+        </property>
+        <property name="title">
+          <string>&amp;Help</string>
+        </property>
+        <widget class="QMenu" name="menuGuides">
+          <property name="statusTip">
+            <string>LemonLime Guides...</string>
           </property>
           <property name="title">
-           <string>Detail</string>
+            <string>&amp;Guides</string>
           </property>
-          <layout class="QVBoxLayout" name="verticalLayout_8">
-           <item>
-            <widget class="QStackedWidget" name="editWidget">
-             <property name="contextMenuPolicy">
-              <enum>Qt::ContextMenuPolicy::NoContextMenu</enum>
-             </property>
-             <property name="statusTip">
-              <string>Editing task details...</string>
-             </property>
-             <property name="currentIndex">
-              <number>2</number>
-             </property>
-             <widget class="QWidget" name="nullPage"/>
-             <widget class="TaskEditWidget" name="taskEdit"/>
-             <widget class="TestCaseEditWidget" name="testCaseEdit"/>
-            </widget>
-           </item>
-          </layout>
-         </widget>
-        </item>
-       </layout>
+          <property name="icon">
+            <iconset resource="../../resource.qrc">
+              <normaloff>:/icon/system-help.svg</normaloff>:/icon/system-help.svg</iconset>
+          </property>
+          <addaction name="actionManual" />
+          <addaction name="separator" />
+          <addaction name="actionMore" />
+        </widget>
+        <addaction name="menuGuides" />
+        <addaction name="separator" />
+        <addaction name="aboutAction" />
       </widget>
-      <widget class="QWidget" name="contestantsTab">
-       <attribute name="title">
-        <string>Contestants</string>
-       </attribute>
-       <layout class="QVBoxLayout" name="verticalLayout">
-        <item>
-         <widget class="ResultViewer" name="resultViewer">
-          <property name="font">
-           <font>
-            <pointsize>10</pointsize>
-            <bold>false</bold>
-           </font>
-          </property>
-          <property name="statusTip">
-           <string>Contestant List...</string>
-          </property>
-          <property name="editTriggers">
-           <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
-          </property>
-          <property name="tabKeyNavigation">
-           <bool>false</bool>
-          </property>
-          <property name="selectionMode">
-           <enum>QAbstractItemView::SelectionMode::ExtendedSelection</enum>
-          </property>
-          <property name="selectionBehavior">
-           <enum>QAbstractItemView::SelectionBehavior::SelectItems</enum>
-          </property>
-          <property name="verticalScrollMode">
-           <enum>QAbstractItemView::ScrollMode::ScrollPerPixel</enum>
-          </property>
-          <property name="horizontalScrollMode">
-           <enum>QAbstractItemView::ScrollMode::ScrollPerPixel</enum>
-          </property>
-          <property name="showGrid">
-           <bool>false</bool>
-          </property>
-          <property name="sortingEnabled">
-           <bool>true</bool>
-          </property>
-          <property name="cornerButtonEnabled">
-           <bool>false</bool>
-          </property>
-          <attribute name="horizontalHeaderMinimumSectionSize">
-           <number>75</number>
-          </attribute>
-          <attribute name="horizontalHeaderHighlightSections">
-           <bool>false</bool>
-          </attribute>
-          <attribute name="verticalHeaderVisible">
-           <bool>false</bool>
-          </attribute>
-          <attribute name="verticalHeaderMinimumSectionSize">
-           <number>25</number>
-          </attribute>
-          <attribute name="verticalHeaderDefaultSectionSize">
-           <number>27</number>
-          </attribute>
-         </widget>
-        </item>
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_4">
-          <item>
-           <widget class="QPushButton" name="cleanupButton">
-            <property name="minimumSize">
-             <size>
-              <width>120</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="font">
-             <font>
-              <pointsize>10</pointsize>
-              <bold>false</bold>
-             </font>
-            </property>
-            <property name="statusTip">
-             <string>Cleanup the files of all contestants...</string>
-            </property>
-            <property name="text">
-             <string>Clean Up Files</string>
-            </property>
-            <property name="icon">
-             <iconset resource="../../resource.qrc">
-              <normaloff>:/icon/view-sort.svg</normaloff>:/icon/view-sort.svg</iconset>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <spacer name="horizontalSpacer">
-            <property name="orientation">
-             <enum>Qt::Orientation::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>468</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-          <item>
-           <widget class="QPushButton" name="refreshButton">
-            <property name="minimumSize">
-             <size>
-              <width>120</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="font">
-             <font>
-              <pointsize>10</pointsize>
-              <bold>false</bold>
-             </font>
-            </property>
-            <property name="statusTip">
-             <string>Refresh the contestant list...</string>
-            </property>
-            <property name="text">
-             <string>Refresh</string>
-            </property>
-            <property name="icon">
-             <iconset resource="../../resource.qrc">
-              <normaloff>:/icon/view-refresh.svg</normaloff>:/icon/view-refresh.svg</iconset>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="judgeUnjudgedButton">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>120</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="font">
-             <font>
-              <pointsize>10</pointsize>
-              <bold>false</bold>
-             </font>
-            </property>
-            <property name="statusTip">
-             <string>Judge unjudged...</string>
-            </property>
-            <property name="text">
-             <string>Judge Unjudged</string>
-            </property>
-            <property name="icon">
-             <iconset resource="../../resource.qrc">
-              <normaloff>:/icon/edit-find-replace.svg</normaloff>:/icon/edit-find-replace.svg</iconset>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="judgeButton">
-            <property name="enabled">
-             <bool>false</bool>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>120</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="font">
-             <font>
-              <pointsize>10</pointsize>
-              <bold>false</bold>
-             </font>
-            </property>
-            <property name="statusTip">
-             <string>Judge selected area...</string>
-            </property>
-            <property name="text">
-             <string>Judge Selected</string>
-            </property>
-            <property name="icon">
-             <iconset resource="../../resource.qrc">
-              <normaloff>:/icon/edit-find.svg</normaloff>:/icon/edit-find.svg</iconset>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="judgeAllButton">
-            <property name="enabled">
-             <bool>false</bool>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>120</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="font">
-             <font>
-              <pointsize>10</pointsize>
-              <bold>false</bold>
-             </font>
-            </property>
-            <property name="statusTip">
-             <string>Judge all contestants...</string>
-            </property>
-            <property name="text">
-             <string>Judge All</string>
-            </property>
-            <property name="icon">
-             <iconset resource="../../resource.qrc">
-              <normaloff>:/icon/code-function.svg</normaloff>:/icon/code-function.svg</iconset>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-       </layout>
-      </widget>
-      <widget class="QWidget" name="statisticsTab">
-       <attribute name="title">
-        <string>Statistics</string>
-       </attribute>
-       <layout class="QHBoxLayout" name="horizontalLayout_3">
-        <item>
-         <widget class="StatisticsBrowser" name="statisticsBrowser" native="true">
-          <property name="font">
-           <font>
-            <pointsize>10</pointsize>
-            <bold>false</bold>
-           </font>
-          </property>
-          <property name="statusTip">
-           <string>The Statistics Browser...</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </widget>
-         </widget>
-        </item>
-       </layout>
-      </widget>
-      <widget class="QWidget" name="emptyPage">
-       <layout class="QVBoxLayout" name="emptyPageLayout">
-        <item>
-         <spacer name="emptyTopSpacer">
-          <property name="orientation">
-           <enum>Qt::Orientation::Vertical</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>120</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item alignment="Qt::AlignmentFlag::AlignHCenter">
-         <widget class="QFrame" name="emptyState">
-          <property name="maximumSize">
-           <size>
-            <width>560</width>
-            <height>200</height>
-           </size>
-          </property>
-          <property name="frameShape">
-           <enum>QFrame::Shape::NoFrame</enum>
-          </property>
-          <layout class="QVBoxLayout" name="emptyStateLayout">
-           <property name="leftMargin">
-            <number>26</number>
-           </property>
-           <property name="topMargin">
-            <number>18</number>
-           </property>
-           <property name="rightMargin">
-            <number>26</number>
-           </property>
-           <property name="bottomMargin">
-            <number>20</number>
-           </property>
-           <property name="spacing">
-            <number>8</number>
-           </property>
-           <item>
-            <widget class="QLabel" name="emptyTitle">
-             <property name="font">
-              <font>
-               <pointsize>12</pointsize>
-               <bold>true</bold>
-              </font>
-             </property>
-             <property name="text">
-              <string>No Contest Open</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignmentFlag::AlignCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLabel" name="emptyHint">
-             <property name="text">
-              <string>Create a new contest, or open an existing one (.cdf).</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignmentFlag::AlignCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <layout class="QHBoxLayout" name="emptyBtnLayout">
-             <property name="spacing">
-              <number>12</number>
-             </property>
-             <item>
-              <spacer name="emptyLeftSpacer">
-               <property name="orientation">
-                <enum>Qt::Orientation::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>40</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QPushButton" name="emptyNewBtn">
-               <property name="minimumSize">
-                <size>
-                 <width>128</width>
-                 <height>32</height>
-                </size>
-               </property>
-               <property name="text">
-                <string>Create Contest</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QPushButton" name="emptyOpenBtn">
-               <property name="minimumSize">
-                <size>
-                 <width>128</width>
-                 <height>32</height>
-                </size>
-               </property>
-               <property name="text">
-                <string>Open Contest...</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="emptyRightSpacer">
-               <property name="orientation">
-                <enum>Qt::Orientation::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>40</width>
-                 <height>20</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-            </layout>
-           </item>
-          </layout>
-         </widget>
-        </item>
-        <item>
-         <spacer name="emptyBottomSpacer">
-          <property name="orientation">
-           <enum>Qt::Orientation::Vertical</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>120</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-       </layout>
-      </widget>
-     </widget>
-    </item>
-   </layout>
-  </widget>
-  <widget class="QMenuBar" name="menuBar">
-   <property name="geometry">
-    <rect>
-     <x>0</x>
-     <y>0</y>
-     <width>1183</width>
-     <height>21</height>
-    </rect>
-   </property>
-   <widget class="QMenu" name="fileMenu">
-    <property name="font">
-     <font>
-      <pointsize>10</pointsize>
-     </font>
-    </property>
-    <property name="statusTip">
-     <string>Open / Close / Rename contest and etc</string>
-    </property>
-    <property name="title">
-     <string>&amp;File</string>
-    </property>
-    <addaction name="newAction"/>
-    <addaction name="openAction"/>
-    <addaction name="saveAction"/>
-    <addaction name="closeAction"/>
-    <addaction name="separator"/>
-    <addaction name="openFolderAction"/>
-    <addaction name="actionChangeContestName"/>
-    <addaction name="separator"/>
-    <addaction name="exitAction"/>
-   </widget>
-   <widget class="QMenu" name="controlMenu">
-    <property name="title">
-     <string>&amp;Control</string>
-    </property>
-    <addaction name="judgeAllAction"/>
-    <addaction name="judgeAction"/>
-    <addaction name="judgeUnjudgedAction"/>
-    <addaction name="judgeGreyAction"/>
-    <addaction name="judgeMagentaAction"/>
-    <addaction name="separator"/>
-    <addaction name="cleanupAction"/>
-    <addaction name="refreshAction"/>
-    <addaction name="separator"/>
-    <addaction name="addTasksAction"/>
-    <addaction name="exportAction"/>
-    <addaction name="separator"/>
-    <addaction name="actionExportStatistics"/>
-   </widget>
-   <widget class="QMenu" name="toolsMenu">
-    <property name="font">
-     <font>
-      <pointsize>10</pointsize>
-     </font>
-    </property>
-    <property name="title">
-     <string>&amp;Tools</string>
-    </property>
-    <addaction name="actionOnlineServer"/>
-    <addaction name="separator"/>
-    <addaction name="optionsAction"/>
-   </widget>
-   <widget class="QMenu" name="helpMenu">
-    <property name="font">
-     <font>
-      <pointsize>10</pointsize>
-     </font>
-    </property>
-    <property name="title">
-     <string>&amp;Help</string>
-    </property>
-    <widget class="QMenu" name="menuGuides">
-     <property name="statusTip">
-      <string>LemonLime Guides...</string>
-     </property>
-     <property name="title">
-      <string>&amp;Guides</string>
-     </property>
-     <property name="icon">
-      <iconset resource="../../resource.qrc">
-       <normaloff>:/icon/system-help.svg</normaloff>:/icon/system-help.svg</iconset>
-     </property>
-     <addaction name="actionManual"/>
-     <addaction name="separator"/>
-     <addaction name="actionMore"/>
+      <addaction name="fileMenu" />
+      <addaction name="controlMenu" />
+      <addaction name="toolsMenu" />
+      <addaction name="helpMenu" />
     </widget>
-    <addaction name="menuGuides"/>
-    <addaction name="separator"/>
-    <addaction name="aboutAction"/>
-   </widget>
-   <addaction name="fileMenu"/>
-   <addaction name="controlMenu"/>
-   <addaction name="toolsMenu"/>
-   <addaction name="helpMenu"/>
+    <widget class="QStatusBar" name="statusBar" />
+    <action name="newAction">
+      <property name="icon">
+        <iconset resource="../../resource.qrc">
+          <normaloff>:/icon/document-new.svg</normaloff>:/icon/document-new.svg</iconset>
+      </property>
+      <property name="text">
+        <string>&amp;New Contest</string>
+      </property>
+      <property name="statusTip">
+        <string>Make a new contest...</string>
+      </property>
+    </action>
+    <action name="openAction">
+      <property name="icon">
+        <iconset resource="../../resource.qrc">
+          <normaloff>:/icon/quickopen-file.svg</normaloff>:/icon/quickopen-file.svg</iconset>
+      </property>
+      <property name="text">
+        <string>&amp;Open Existing Contest</string>
+      </property>
+      <property name="statusTip">
+        <string>Open an existing contest...</string>
+      </property>
+    </action>
+    <action name="exitAction">
+      <property name="icon">
+        <iconset resource="../../resource.qrc">
+          <normaloff>:/icon/application-exit.svg</normaloff>:/icon/application-exit.svg</iconset>
+      </property>
+      <property name="text">
+        <string>E&amp;xit</string>
+      </property>
+      <property name="statusTip">
+        <string>Exit LemonLime...</string>
+      </property>
+    </action>
+    <action name="optionsAction">
+      <property name="icon">
+        <iconset resource="../../resource.qrc">
+          <normaloff>:/icon/configure.svg</normaloff>:/icon/configure.svg</iconset>
+      </property>
+      <property name="text">
+        <string>&amp;Settings</string>
+      </property>
+      <property name="statusTip">
+        <string>LemonLime Settings...</string>
+      </property>
+    </action>
+    <action name="actionOnlineServer">
+      <property name="icon">
+        <iconset resource="../../resource.qrc">
+          <normaloff>:/icon/globe.svg</normaloff>:/icon/globe.svg</iconset>
+      </property>
+      <property name="text">
+        <string>在线提交服务...</string>
+      </property>
+      <property name="statusTip">
+        <string>启动 HTTP 服务，让学生通过浏览器提交代码</string>
+      </property>
+    </action>
+    <action name="aboutAction">
+      <property name="icon">
+        <iconset resource="../../resource.qrc">
+          <normaloff>:/icon/help-about.svg</normaloff>:/icon/help-about.svg</iconset>
+      </property>
+      <property name="text">
+        <string>&amp;About</string>
+      </property>
+      <property name="statusTip">
+        <string>About LemonLime...</string>
+      </property>
+    </action>
+    <action name="judgeAction">
+      <property name="enabled">
+        <bool>false</bool>
+      </property>
+      <property name="icon">
+        <iconset resource="../../resource.qrc">
+          <normaloff>:/icon/edit-find.svg</normaloff>:/icon/edit-find.svg</iconset>
+      </property>
+      <property name="text">
+        <string>&amp;Judge Selected</string>
+      </property>
+      <property name="statusTip">
+        <string>Judge selected area...</string>
+      </property>
+    </action>
+    <action name="judgeAllAction">
+      <property name="enabled">
+        <bool>false</bool>
+      </property>
+      <property name="icon">
+        <iconset resource="../../resource.qrc">
+          <normaloff>:/icon/code-function.svg</normaloff>:/icon/code-function.svg</iconset>
+      </property>
+      <property name="text">
+        <string>Judge &amp;All</string>
+      </property>
+      <property name="statusTip">
+        <string>Judge all contestants...</string>
+      </property>
+    </action>
+    <action name="closeAction">
+      <property name="icon">
+        <iconset resource="../../resource.qrc">
+          <normaloff>:/icon/document-close.svg</normaloff>:/icon/document-close.svg</iconset>
+      </property>
+      <property name="text">
+        <string>&amp;Close Current Contest</string>
+      </property>
+      <property name="statusTip">
+        <string>Close this contest...</string>
+      </property>
+    </action>
+    <action name="setEnglishAction">
+      <property name="text">
+        <string notr="true">&amp;English</string>
+      </property>
+    </action>
+    <action name="addTasksAction">
+      <property name="enabled">
+        <bool>false</bool>
+      </property>
+      <property name="icon">
+        <iconset resource="../../resource.qrc">
+          <normaloff>:/icon/layer-new.svg</normaloff>:/icon/layer-new.svg</iconset>
+      </property>
+      <property name="text">
+        <string>Add &amp;Tasks Automatically</string>
+      </property>
+      <property name="statusTip">
+        <string>Find your tasks in ./data and add them automatically...</string>
+      </property>
+    </action>
+    <action name="makeSelfTestAction">
+      <property name="enabled">
+        <bool>false</bool>
+      </property>
+      <property name="text">
+        <string>&amp;Make Self-testing Folder</string>
+      </property>
+    </action>
+    <action name="exportAction">
+      <property name="enabled">
+        <bool>false</bool>
+      </property>
+      <property name="icon">
+        <iconset resource="../../resource.qrc">
+          <normaloff>:/icon/document-export.svg</normaloff>:/icon/document-export.svg</iconset>
+      </property>
+      <property name="text">
+        <string>&amp;Export Result</string>
+      </property>
+      <property name="statusTip">
+        <string>Export the result...</string>
+      </property>
+    </action>
+    <action name="judgeUnjudgedAction">
+      <property name="enabled">
+        <bool>false</bool>
+      </property>
+      <property name="icon">
+        <iconset resource="../../resource.qrc">
+          <normaloff>:/icon/edit-find-replace.svg</normaloff>:/icon/edit-find-replace.svg</iconset>
+      </property>
+      <property name="text">
+        <string>Judge &amp;Unjudged</string>
+      </property>
+      <property name="statusTip">
+        <string>Judge unjudged...</string>
+      </property>
+    </action>
+    <action name="openFolderAction">
+      <property name="icon">
+        <iconset resource="../../resource.qrc">
+          <normaloff>:/icon/go-parent-folder.svg</normaloff>:/icon/go-parent-folder.svg</iconset>
+      </property>
+      <property name="text">
+        <string>Open Current Contest &amp;Folder</string>
+      </property>
+      <property name="statusTip">
+        <string>Open the folder of this contest with file manager...</string>
+      </property>
+    </action>
+    <action name="saveAction">
+      <property name="icon">
+        <iconset resource="../../resource.qrc">
+          <normaloff>:/icon/document-save.svg</normaloff>:/icon/document-save.svg</iconset>
+      </property>
+      <property name="text">
+        <string>&amp;Save Current Contest</string>
+      </property>
+      <property name="statusTip">
+        <string>Save this contest...</string>
+      </property>
+    </action>
+    <action name="actionInteraction">
+      <property name="text">
+        <string>Interaction</string>
+      </property>
+      <property name="statusTip">
+        <string>How to make Interaction Tasks...</string>
+      </property>
+    </action>
+    <action name="actionSubTasks">
+      <property name="text">
+        <string>Subtasks</string>
+      </property>
+      <property name="statusTip">
+        <string>How to make Subtasks...</string>
+      </property>
+    </action>
+    <action name="actionCleanupFiles">
+      <property name="text">
+        <string>Clean up Files</string>
+      </property>
+      <property name="statusTip">
+        <string>What is Cleanup Files...</string>
+      </property>
+    </action>
+    <action name="actionCompileFeatures">
+      <property name="text">
+        <string>Compile Features</string>
+      </property>
+      <property name="statusTip">
+        <string>The difference in compiling between Lemon and LemonLime...</string>
+      </property>
+    </action>
+    <action name="actionSkip">
+      <property name="text">
+        <string>Skip</string>
+      </property>
+      <property name="statusTip">
+        <string>What is Skip...</string>
+      </property>
+    </action>
+    <action name="actionSpecialJudge">
+      <property name="text">
+        <string>Special Judge</string>
+      </property>
+      <property name="statusTip">
+        <string>How to write Special Judge...</string>
+      </property>
+    </action>
+    <action name="actionSingle_Judge">
+      <property name="text">
+        <string>Single &amp;Judge</string>
+      </property>
+    </action>
+    <action name="actionExportResult">
+      <property name="text">
+        <string>Export Result</string>
+      </property>
+      <property name="statusTip">
+        <string>New features of Exporting Result...</string>
+      </property>
+    </action>
+    <action name="actionMore">
+      <property name="icon">
+        <iconset resource="../../resource.qrc">
+          <normaloff>:/icon/globe.svg</normaloff>:/icon/globe.svg</iconset>
+      </property>
+      <property name="text">
+        <string>More</string>
+      </property>
+      <property name="statusTip">
+        <string>Online Guides...</string>
+      </property>
+    </action>
+    <action name="judgeGreyAction">
+      <property name="enabled">
+        <bool>false</bool>
+      </property>
+      <property name="icon">
+        <iconset resource="../../resource.qrc">
+          <normaloff>:/icon/paint-unknown.svg</normaloff>:/icon/paint-unknown.svg</iconset>
+      </property>
+      <property name="text">
+        <string>Judge &amp;No Source</string>
+      </property>
+      <property name="statusTip">
+        <string>Judge "No Source"...</string>
+      </property>
+    </action>
+    <action name="judgeMagentaAction">
+      <property name="enabled">
+        <bool>false</bool>
+      </property>
+      <property name="icon">
+        <iconset resource="../../resource.qrc">
+          <normaloff>:/icon/deletecell.svg</normaloff>:/icon/deletecell.svg</iconset>
+      </property>
+      <property name="text">
+        <string>Judge &amp;Compile Failed</string>
+      </property>
+      <property name="statusTip">
+        <string>Judge "Compile Error", "Compile Time Limit Exceeded", etc...</string>
+      </property>
+    </action>
+    <action name="actionChangeContestName">
+      <property name="icon">
+        <iconset resource="../../resource.qrc">
+          <normaloff>:/icon/document-edit.svg</normaloff>:/icon/document-edit.svg</iconset>
+      </property>
+      <property name="text">
+        <string>C&amp;hange Contest Name</string>
+      </property>
+      <property name="statusTip">
+        <string>Change the name of this contest...</string>
+      </property>
+    </action>
+    <action name="cleanupAction">
+      <property name="enabled">
+        <bool>false</bool>
+      </property>
+      <property name="icon">
+        <iconset resource="../../resource.qrc">
+          <normaloff>:/icon/view-sort.svg</normaloff>:/icon/view-sort.svg</iconset>
+      </property>
+      <property name="text">
+        <string>Clean Up &amp;Files</string>
+      </property>
+      <property name="statusTip">
+        <string>Cleanup the files of all contestants...</string>
+      </property>
+    </action>
+    <action name="refreshAction">
+      <property name="enabled">
+        <bool>false</bool>
+      </property>
+      <property name="icon">
+        <iconset resource="../../resource.qrc">
+          <normaloff>:/icon/view-refresh.svg</normaloff>:/icon/view-refresh.svg</iconset>
+      </property>
+      <property name="text">
+        <string>&amp;Refresh</string>
+      </property>
+      <property name="statusTip">
+        <string>Refresh the contestant list...</string>
+      </property>
+    </action>
+    <action name="actionCommunication">
+      <property name="text">
+        <string>Communication</string>
+      </property>
+      <property name="statusTip">
+        <string>How to make Communication Tasks...</string>
+      </property>
+    </action>
+    <action name="actionExportStatistics">
+      <property name="enabled">
+        <bool>false</bool>
+      </property>
+      <property name="icon">
+        <iconset resource="../../resource.qrc">
+          <normaloff>:/icon/document-export.svg</normaloff>:/icon/document-export.svg</iconset>
+      </property>
+      <property name="text">
+        <string>Export &amp;Statistics</string>
+      </property>
+    </action>
+    <action name="actionManual">
+      <property name="icon">
+        <iconset resource="../../resource.qrc">
+          <normaloff>:/icon/acrobat.svg</normaloff>:/icon/acrobat.svg</iconset>
+      </property>
+      <property name="text">
+        <string>Manual</string>
+      </property>
+    </action>
   </widget>
-  <widget class="QStatusBar" name="statusBar"/>
-  <action name="newAction">
-   <property name="icon">
-    <iconset resource="../../resource.qrc">
-     <normaloff>:/icon/document-new.svg</normaloff>:/icon/document-new.svg</iconset>
-   </property>
-   <property name="text">
-    <string>&amp;New Contest</string>
-   </property>
-   <property name="statusTip">
-    <string>Make a new contest...</string>
-   </property>
-  </action>
-  <action name="openAction">
-   <property name="icon">
-    <iconset resource="../../resource.qrc">
-     <normaloff>:/icon/quickopen-file.svg</normaloff>:/icon/quickopen-file.svg</iconset>
-   </property>
-   <property name="text">
-    <string>&amp;Open Existing Contest</string>
-   </property>
-   <property name="statusTip">
-    <string>Open an existing contest...</string>
-   </property>
-  </action>
-  <action name="exitAction">
-   <property name="icon">
-    <iconset resource="../../resource.qrc">
-     <normaloff>:/icon/application-exit.svg</normaloff>:/icon/application-exit.svg</iconset>
-   </property>
-   <property name="text">
-    <string>E&amp;xit</string>
-   </property>
-   <property name="statusTip">
-    <string>Exit LemonLime...</string>
-   </property>
-  </action>
-  <action name="optionsAction">
-   <property name="icon">
-    <iconset resource="../../resource.qrc">
-     <normaloff>:/icon/configure.svg</normaloff>:/icon/configure.svg</iconset>
-   </property>
-   <property name="text">
-    <string>&amp;Settings</string>
-   </property>
-   <property name="statusTip">
-    <string>LemonLime Settings...</string>
-   </property>
-  </action>
-  <action name="actionOnlineServer">
-   <property name="icon">
-    <iconset resource="../../resource.qrc">
-     <normaloff>:/icon/globe.svg</normaloff>:/icon/globe.svg</iconset>
-   </property>
-   <property name="text">
-    <string>在线提交服务...</string>
-   </property>
-   <property name="statusTip">
-    <string>启动 HTTP 服务，让学生通过浏览器提交代码</string>
-   </property>
-  </action>
-  <action name="aboutAction">
-   <property name="icon">
-    <iconset resource="../../resource.qrc">
-     <normaloff>:/icon/help-about.svg</normaloff>:/icon/help-about.svg</iconset>
-   </property>
-   <property name="text">
-    <string>&amp;About</string>
-   </property>
-   <property name="statusTip">
-    <string>About LemonLime...</string>
-   </property>
-  </action>
-  <action name="judgeAction">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="../../resource.qrc">
-     <normaloff>:/icon/edit-find.svg</normaloff>:/icon/edit-find.svg</iconset>
-   </property>
-   <property name="text">
-    <string>&amp;Judge Selected</string>
-   </property>
-   <property name="statusTip">
-    <string>Judge selected area...</string>
-   </property>
-  </action>
-  <action name="judgeAllAction">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="../../resource.qrc">
-     <normaloff>:/icon/code-function.svg</normaloff>:/icon/code-function.svg</iconset>
-   </property>
-   <property name="text">
-    <string>Judge &amp;All</string>
-   </property>
-   <property name="statusTip">
-    <string>Judge all contestants...</string>
-   </property>
-  </action>
-  <action name="closeAction">
-   <property name="icon">
-    <iconset resource="../../resource.qrc">
-     <normaloff>:/icon/document-close.svg</normaloff>:/icon/document-close.svg</iconset>
-   </property>
-   <property name="text">
-    <string>&amp;Close Current Contest</string>
-   </property>
-   <property name="statusTip">
-    <string>Close this contest...</string>
-   </property>
-  </action>
-  <action name="setEnglishAction">
-   <property name="text">
-    <string notr="true">&amp;English</string>
-   </property>
-  </action>
-  <action name="addTasksAction">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="../../resource.qrc">
-     <normaloff>:/icon/layer-new.svg</normaloff>:/icon/layer-new.svg</iconset>
-   </property>
-   <property name="text">
-    <string>Add &amp;Tasks Automatically</string>
-   </property>
-   <property name="statusTip">
-    <string>Find your tasks in ./data and add them automatically...</string>
-   </property>
-  </action>
-  <action name="makeSelfTestAction">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>&amp;Make Self-testing Folder</string>
-   </property>
-  </action>
-  <action name="exportAction">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="../../resource.qrc">
-     <normaloff>:/icon/document-export.svg</normaloff>:/icon/document-export.svg</iconset>
-   </property>
-   <property name="text">
-    <string>&amp;Export Result</string>
-   </property>
-   <property name="statusTip">
-    <string>Export the result...</string>
-   </property>
-  </action>
-  <action name="judgeUnjudgedAction">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="../../resource.qrc">
-     <normaloff>:/icon/edit-find-replace.svg</normaloff>:/icon/edit-find-replace.svg</iconset>
-   </property>
-   <property name="text">
-    <string>Judge &amp;Unjudged</string>
-   </property>
-   <property name="statusTip">
-    <string>Judge unjudged...</string>
-   </property>
-  </action>
-  <action name="openFolderAction">
-   <property name="icon">
-    <iconset resource="../../resource.qrc">
-     <normaloff>:/icon/go-parent-folder.svg</normaloff>:/icon/go-parent-folder.svg</iconset>
-   </property>
-   <property name="text">
-    <string>Open Current Contest &amp;Folder</string>
-   </property>
-   <property name="statusTip">
-    <string>Open the folder of this contest with file manager...</string>
-   </property>
-  </action>
-  <action name="saveAction">
-   <property name="icon">
-    <iconset resource="../../resource.qrc">
-     <normaloff>:/icon/document-save.svg</normaloff>:/icon/document-save.svg</iconset>
-   </property>
-   <property name="text">
-    <string>&amp;Save Current Contest</string>
-   </property>
-   <property name="statusTip">
-    <string>Save this contest...</string>
-   </property>
-  </action>
-  <action name="actionInteraction">
-   <property name="text">
-    <string>Interaction</string>
-   </property>
-   <property name="statusTip">
-    <string>How to make Interaction Tasks...</string>
-   </property>
-  </action>
-  <action name="actionSubTasks">
-   <property name="text">
-    <string>Subtasks</string>
-   </property>
-   <property name="statusTip">
-    <string>How to make Subtasks...</string>
-   </property>
-  </action>
-  <action name="actionCleanupFiles">
-   <property name="text">
-    <string>Clean up Files</string>
-   </property>
-   <property name="statusTip">
-    <string>What is Cleanup Files...</string>
-   </property>
-  </action>
-  <action name="actionCompileFeatures">
-   <property name="text">
-    <string>Compile Features</string>
-   </property>
-   <property name="statusTip">
-    <string>The difference in compiling between Lemon and LemonLime...</string>
-   </property>
-  </action>
-  <action name="actionSkip">
-   <property name="text">
-    <string>Skip</string>
-   </property>
-   <property name="statusTip">
-    <string>What is Skip...</string>
-   </property>
-  </action>
-  <action name="actionSpecialJudge">
-   <property name="text">
-    <string>Special Judge</string>
-   </property>
-   <property name="statusTip">
-    <string>How to write Special Judge...</string>
-   </property>
-  </action>
-  <action name="actionSingle_Judge">
-   <property name="text">
-    <string>Single &amp;Judge</string>
-   </property>
-  </action>
-  <action name="actionExportResult">
-   <property name="text">
-    <string>Export Result</string>
-   </property>
-   <property name="statusTip">
-    <string>New features of Exporting Result...</string>
-   </property>
-  </action>
-  <action name="actionMore">
-   <property name="icon">
-    <iconset resource="../../resource.qrc">
-     <normaloff>:/icon/globe.svg</normaloff>:/icon/globe.svg</iconset>
-   </property>
-   <property name="text">
-    <string>More</string>
-   </property>
-   <property name="statusTip">
-    <string>Online Guides...</string>
-   </property>
-  </action>
-  <action name="judgeGreyAction">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="../../resource.qrc">
-     <normaloff>:/icon/paint-unknown.svg</normaloff>:/icon/paint-unknown.svg</iconset>
-   </property>
-   <property name="text">
-    <string>Judge &amp;No Source</string>
-   </property>
-   <property name="statusTip">
-    <string>Judge &quot;No Source&quot;...</string>
-   </property>
-  </action>
-  <action name="judgeMagentaAction">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="../../resource.qrc">
-     <normaloff>:/icon/deletecell.svg</normaloff>:/icon/deletecell.svg</iconset>
-   </property>
-   <property name="text">
-    <string>Judge &amp;Compile Failed</string>
-   </property>
-   <property name="statusTip">
-    <string>Judge &quot;Compile Error&quot;, &quot;Compile Time Limit Exceeded&quot;, etc...</string>
-   </property>
-  </action>
-  <action name="actionChangeContestName">
-   <property name="icon">
-    <iconset resource="../../resource.qrc">
-     <normaloff>:/icon/document-edit.svg</normaloff>:/icon/document-edit.svg</iconset>
-   </property>
-   <property name="text">
-    <string>C&amp;hange Contest Name</string>
-   </property>
-   <property name="statusTip">
-    <string>Change the name of this contest...</string>
-   </property>
-  </action>
-  <action name="cleanupAction">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="../../resource.qrc">
-     <normaloff>:/icon/view-sort.svg</normaloff>:/icon/view-sort.svg</iconset>
-   </property>
-   <property name="text">
-    <string>Clean Up &amp;Files</string>
-   </property>
-   <property name="statusTip">
-    <string>Cleanup the files of all contestants...</string>
-   </property>
-  </action>
-  <action name="refreshAction">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="../../resource.qrc">
-     <normaloff>:/icon/view-refresh.svg</normaloff>:/icon/view-refresh.svg</iconset>
-   </property>
-   <property name="text">
-    <string>&amp;Refresh</string>
-   </property>
-   <property name="statusTip">
-    <string>Refresh the contestant list...</string>
-   </property>
-  </action>
-  <action name="actionCommunication">
-   <property name="text">
-    <string>Communication</string>
-   </property>
-   <property name="statusTip">
-    <string>How to make Communication Tasks...</string>
-   </property>
-  </action>
-  <action name="actionExportStatistics">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="../../resource.qrc">
-     <normaloff>:/icon/document-export.svg</normaloff>:/icon/document-export.svg</iconset>
-   </property>
-   <property name="text">
-    <string>Export &amp;Statistics</string>
-   </property>
-  </action>
-  <action name="actionManual">
-   <property name="icon">
-    <iconset resource="../../resource.qrc">
-     <normaloff>:/icon/acrobat.svg</normaloff>:/icon/acrobat.svg</iconset>
-   </property>
-   <property name="text">
-    <string>Manual</string>
-   </property>
-  </action>
- </widget>
- <layoutdefault spacing="6" margin="11"/>
- <customwidgets>
-  <customwidget>
-   <class>SummaryTree</class>
-   <extends>QTreeWidget</extends>
-   <header>summarytree.h</header>
-  </customwidget>
-  <customwidget>
-   <class>TaskEditWidget</class>
-   <extends>QWidget</extends>
-   <header>taskeditwidget.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>TestCaseEditWidget</class>
-   <extends>QWidget</extends>
-   <header>testcaseeditwidget.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>ResultViewer</class>
-   <extends>QTableWidget</extends>
-   <header>resultviewer.h</header>
-  </customwidget>
-  <customwidget>
-   <class>StatisticsBrowser</class>
-   <extends>QWidget</extends>
-   <header>statisticsbrowser.h</header>
-   <container>1</container>
-  </customwidget>
- </customwidgets>
- <tabstops>
-  <tabstop>tabWidget</tabstop>
-  <tabstop>summary</tabstop>
-  <tabstop>moveDownButton</tabstop>
-  <tabstop>moveUpButton</tabstop>
-  <tabstop>resultViewer</tabstop>
-  <tabstop>cleanupButton</tabstop>
-  <tabstop>refreshButton</tabstop>
-  <tabstop>judgeUnjudgedButton</tabstop>
-  <tabstop>judgeButton</tabstop>
-  <tabstop>judgeAllButton</tabstop>
- </tabstops>
- <resources>
-  <include location="../../resource.qrc"/>
- </resources>
- <connections/>
+  <layoutdefault spacing="6" margin="11" />
+  <customwidgets>
+    <customwidget>
+      <class>SummaryTree</class>
+      <extends>QTreeWidget</extends>
+      <header>summarytree.h</header>
+    </customwidget>
+    <customwidget>
+      <class>TaskEditWidget</class>
+      <extends>QWidget</extends>
+      <header>taskeditwidget.h</header>
+      <container>1</container>
+    </customwidget>
+    <customwidget>
+      <class>TestCaseEditWidget</class>
+      <extends>QWidget</extends>
+      <header>testcaseeditwidget.h</header>
+      <container>1</container>
+    </customwidget>
+    <customwidget>
+      <class>ResultViewer</class>
+      <extends>QTableWidget</extends>
+      <header>resultviewer.h</header>
+    </customwidget>
+    <customwidget>
+      <class>StatisticsBrowser</class>
+      <extends>QWidget</extends>
+      <header>statisticsbrowser.h</header>
+      <container>1</container>
+    </customwidget>
+  </customwidgets>
+  <tabstops>
+    <tabstop>tabWidget</tabstop>
+    <tabstop>summary</tabstop>
+    <tabstop>moveDownButton</tabstop>
+    <tabstop>moveUpButton</tabstop>
+    <tabstop>resultViewer</tabstop>
+    <tabstop>cleanupButton</tabstop>
+    <tabstop>refreshButton</tabstop>
+    <tabstop>judgeUnjudgedButton</tabstop>
+    <tabstop>judgeButton</tabstop>
+    <tabstop>judgeAllButton</tabstop>
+  </tabstops>
+  <resources>
+    <include location="../../resource.qrc" />
+  </resources>
+  <connections />
 </ui>

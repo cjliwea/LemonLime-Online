@@ -344,3 +344,30 @@ textarea:focus-visible, [role="button"]:focus-visible {
     transition-duration: 0ms !important;
   }
 }
+
+/* ===== 公告 / 开考须知横幅 ===== */
+.announce-bar { margin-bottom: 14px; }
+.announce-bar[hidden] { display: none; }
+.ann-item {
+  border: 1px dashed #84CC16;
+  background: #FBFEF3;
+  border-radius: 9px;
+  padding: 9px 12px;
+  font-size: 13px;
+  color: #3F6212;
+  margin-bottom: 8px;
+  line-height: 1.6;
+}
+.ann-item b {
+  display: block;
+  font-size: 11px;
+  color: #94A3B8;
+  font-weight: 400;
+  margin-bottom: 2px;
+}
+.ann-item.ann-notice {
+  border-style: solid;
+  border-color: #FDE68A;
+  background: #FEFCE8;
+  color: #854D0E;
+}

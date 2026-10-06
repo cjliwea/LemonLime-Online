@@ -167,6 +167,9 @@ QString SubmissionServer::findStatementFile(const QString &contestDir) {
 SubmissionServer::SubmissionServer(QObject *parent) : QObject(parent) {
 	userStore_ = new UserStore(this);
 	sessions_ = new SessionManager(this);
+	// 在线人数变化转发给主窗口（状态栏 / 实时状况页）
+	connect(sessions_, &SessionManager::onlineChanged, this,
+	        &SubmissionServer::onlineCountChanged);
 }
 
 SubmissionServer::~SubmissionServer() { stop(); }
@@ -192,6 +195,43 @@ void SubmissionServer::setAutoJudge(bool on) {
 	saveConfig();
 }
 
+void SubmissionServer::setAnnouncement(const QString &text) {
+	announcement_ = text;
+	saveConfig();
+	emit logMessage(text.isEmpty() ? tr("已清除公告")
+	                               : tr("公告已广播：%1").arg(text));
+}
+
+void SubmissionServer::setNotice(const QString &text) {
+	notice_ = text;
+	saveConfig();
+	emit logMessage(text.isEmpty() ? tr("已清除开考须知")
+	                               : tr("开考须知已更新"));
+}
+
+void SubmissionServer::setDefaultUiMode(const QString &mode) {
+	defaultUiMode_ = (mode == QStringLiteral("editor") || mode == QStringLiteral("upload"))
+	                     ? mode
+	                     : QStringLiteral("both");
+	saveConfig();
+}
+
+int SubmissionServer::onlineCount() const { return sessions_ ? sessions_->onlineCount() : 0; }
+
+QStringList SubmissionServer::onlineUsernames() const {
+	return sessions_ ? sessions_->onlineUsernames() : QStringList{};
+}
+
+QDateTime SubmissionServer::lastSeenOf(const QString &username) const {
+	return sessions_ ? sessions_->lastSeenOf(username) : QDateTime{};
+}
+
+void SubmissionServer::forceLogout(const QString &username) {
+	if (sessions_)
+		sessions_->destroyAllForUser(username);
+	emit logMessage(tr("已注销用户 %1 的全部会话").arg(username));
+}
+
 bool SubmissionServer::loadConfig() {
 	if (contestDir_.isEmpty())
 		return false;
@@ -205,6 +245,9 @@ bool SubmissionServer::loadConfig() {
 	startTime_ = QDateTime::fromString(obj.value("startTime").toString(), Qt::ISODate);
 	endTime_ = QDateTime::fromString(obj.value("endTime").toString(), Qt::ISODate);
 	autoJudge_ = obj.value("autoJudge").toBool(true);
+	announcement_ = obj.value("announcement").toString();
+	notice_ = obj.value("notice").toString();
+	defaultUiMode_ = obj.value("defaultUiMode").toString(QStringLiteral("both"));
 	return true;
 }
 
@@ -219,6 +262,11 @@ bool SubmissionServer::saveConfig() const {
 	if (endTime_.isValid())
 		obj.insert("endTime", endTime_.toString(Qt::ISODate));
 	obj.insert("autoJudge", autoJudge_);
+	if (!announcement_.isEmpty())
+		obj.insert("announcement", announcement_);
+	if (!notice_.isEmpty())
+		obj.insert("notice", notice_);
+	obj.insert("defaultUiMode", defaultUiMode_);
 	QSaveFile f(QDir(contestDir_).filePath(kConfigName));
 	if (!f.open(QFile::WriteOnly))
 		return false;
@@ -301,6 +349,9 @@ void SubmissionServer::setupRoutes() {
 
 	http_->route("/api/tasks", QHttpServerRequest::Method::Get,
 	             [this](const QHttpServerRequest &req) { return handleApiTasks(req); });
+
+	http_->route("/api/announce", QHttpServerRequest::Method::Get,
+	             [this](const QHttpServerRequest &req) { return handleApiAnnounce(req); });
 
 	http_->route("/api/submit/<arg>", QHttpServerRequest::Method::Post,
 	             [this](qint32 taskId, const QHttpServerRequest &req) {
@@ -483,11 +534,26 @@ QHttpServerResponse SubmissionServer::handleApiTasks(const QHttpServerRequest &r
 	root.insert("hasStatement", !findStatementFile(contestDir_).isEmpty());
 	root.insert("tasks", arr);
 	root.insert("serverNow", QDateTime::currentDateTime().toString(Qt::ISODate));
+	root.insert("announcement", announcement_);
+	root.insert("notice", notice_);
+	root.insert("defaultUiMode", defaultUiMode_);
 	root.insert("windowEnabled", windowEnabled_);
 	if (windowEnabled_ && startTime_.isValid())
 		root.insert("startTime", startTime_.toString(Qt::ISODate));
 	if (windowEnabled_ && endTime_.isValid())
 		root.insert("endTime", endTime_.toString(Qt::ISODate));
+	return QHttpServerResponse("application/json",
+	                           QJsonDocument(root).toJson(QJsonDocument::Compact));
+}
+
+QHttpServerResponse SubmissionServer::handleApiAnnounce(const QHttpServerRequest &req) {
+	QString user;
+	if (!requireSession(req, &user))
+		return jsonError(401, tr("Not authenticated"));
+	QJsonObject root;
+	root.insert("announcement", announcement_);
+	root.insert("notice", notice_);
+	root.insert("serverNow", QDateTime::currentDateTime().toString(Qt::ISODate));
 	return QHttpServerResponse("application/json",
 	                           QJsonDocument(root).toJson(QJsonDocument::Compact));
 }
@@ -544,6 +610,7 @@ QHttpServerResponse SubmissionServer::handleApiSubmit(qint32 taskId, const QHttp
 	const auto sha =
 	    QString::fromLatin1(QCryptographicHash::hash(source, QCryptographicHash::Sha256).toHex());
 	appendAuditLog(user, taskId, source.size(), sha);
+	++submissionCount_;
 	emit submissionReceived(user, contest_->getTaskList().at(taskId)->getProblemTitle(),
 	                        source.size());
 
@@ -629,6 +696,7 @@ QHttpServerResponse SubmissionServer::handleApiUploadSource(qint32 taskId,
 	const auto sha =
 	    QString::fromLatin1(QCryptographicHash::hash(source, QCryptographicHash::Sha256).toHex());
 	appendAuditLog(user, taskId, source.size(), sha);
+	++submissionCount_;
 	emit submissionReceived(user, contest_->getTaskList().at(taskId)->getProblemTitle(),
 	                        source.size());
 
@@ -711,6 +779,7 @@ QHttpServerResponse SubmissionServer::handleApiUploadFolder(const QHttpServerReq
 	}
 
 	appendFolderAuditLog(loginUser, contestant, written, totalBytes);
+	++submissionCount_;
 	emit submissionReceived(contestant, tr("整包上传"), static_cast<int>(totalBytes));
 
 	bool willJudge = false;

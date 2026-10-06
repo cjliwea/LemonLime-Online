@@ -11,6 +11,6 @@ set(LEMON_SERVER_SOURCES
     ${LEMON_BASEDIR_SERVER}/SessionManager.cpp
     ${LEMON_BASEDIR_SERVER}/SubmissionServer.h
     ${LEMON_BASEDIR_SERVER}/SubmissionServer.cpp
-    ${LEMON_BASEDIR_SERVER}/onlineserverdialog.h
-    ${LEMON_BASEDIR_SERVER}/onlineserverdialog.cpp
+    ${LEMON_BASEDIR_SERVER}/onlinepanel.h
+    ${LEMON_BASEDIR_SERVER}/onlinepanel.cpp
 )

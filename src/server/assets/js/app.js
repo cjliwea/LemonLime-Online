@@ -477,3 +477,26 @@ async function renderSubmit() {
     }
   });
 }
+
+// ===== 公告 / 开考须知：15 秒轮询，横幅常显在页面顶部 =====
+function renderAnnounce(d) {
+  const bar = document.getElementById('announceBar');
+  if (!bar) return;
+  const parts = [];
+  if (d.notice) parts.push('<div class="ann-item ann-notice"><b>开考须知</b>' + escapeHtml(d.notice) + '</div>');
+  if (d.announcement) parts.push('<div class="ann-item ann-live"><b>公告</b>' + escapeHtml(d.announcement) + '</div>');
+  if (!parts.length) { bar.hidden = true; bar.innerHTML = ''; return; }
+  bar.innerHTML = parts.join('');
+  bar.hidden = false;
+}
+
+async function pollAnnouncement() {
+  try {
+    const r = await fetch('/api/announce', { credentials: 'same-origin' });
+    if (!r.ok) return;
+    renderAnnounce(await r.json());
+  } catch (e) { /* 网络抖动忽略，下轮再取 */ }
+}
+
+pollAnnouncement();
+setInterval(pollAnnouncement, 15000);

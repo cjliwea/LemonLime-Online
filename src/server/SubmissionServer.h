@@ -11,6 +11,7 @@
 #include <QObject>
 #include <QPointer>
 #include <QString>
+#include <QStringList>
 
 class QHttpServer;
 class QTcpServer;
@@ -51,6 +52,24 @@ class SubmissionServer : public QObject {
 	bool autoJudge() const { return autoJudge_; }
 	void setAutoJudge(bool on);
 
+	// ---- 公告与须知（主窗口面板直接下发；学生端经 /api/announce 轮询） ----
+	QString announcement() const { return announcement_; }
+	void setAnnouncement(const QString &text);
+	QString notice() const { return notice_; }
+	void setNotice(const QString &text);
+
+	// 默认答题界面："editor" / "upload" / "both"
+	QString defaultUiMode() const { return defaultUiMode_; }
+	void setDefaultUiMode(const QString &mode);
+
+	// ---- 实时状况 ----
+	int submissionCount() const { return submissionCount_; }
+	int onlineCount() const;
+	QStringList onlineUsernames() const;
+	QDateTime lastSeenOf(const QString &username) const;
+	// 强制某用户下线（销毁其全部会话）
+	void forceLogout(const QString &username);
+
 	bool loadConfig();
 	bool saveConfig() const;
 
@@ -59,6 +78,8 @@ class SubmissionServer : public QObject {
 	void stopped();
 	void submissionReceived(QString username, QString taskName, int bytes);
 	void logMessage(QString msg);
+	// 在线人数（去重用户数）变化，由 SessionManager 转发
+	void onlineCountChanged(int count);
 
   private:
 	void setupRoutes();
@@ -72,6 +93,7 @@ class SubmissionServer : public QObject {
 	QHttpServerResponse handleApiSubmit(qint32 taskId, const QHttpServerRequest &req);
 	QHttpServerResponse handleApiUploadFolder(const QHttpServerRequest &req);
 	QHttpServerResponse handleApiUploadSource(qint32 taskId, const QHttpServerRequest &req);
+	QHttpServerResponse handleApiAnnounce(const QHttpServerRequest &req);
 	QHttpServerResponse handleStatement(const QHttpServerRequest &req);
 
 	QString sessionUser(const QHttpServerRequest &req) const;
@@ -108,4 +130,9 @@ class SubmissionServer : public QObject {
 	QDateTime endTime_;
 
 	bool autoJudge_ = true;
+
+	QString announcement_;
+	QString notice_;
+	QString defaultUiMode_ = QStringLiteral("both");
+	int submissionCount_ = 0;
 };

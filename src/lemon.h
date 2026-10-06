@@ -22,8 +22,10 @@ namespace Ui {
 class Contest;
 class Settings;
 class OptionsDialog;
-class OnlineServerDialog;
+class OnlinePanel;
 class QLabel;
+class QPushButton;
+class QTableWidget;
 
 class LemonLime : public QMainWindow {
 	Q_OBJECT
@@ -40,8 +42,15 @@ class LemonLime : public QMainWindow {
 	Ui::LemonLime *ui;
 	Contest *curContest;
 	Settings *settings;
-	OnlineServerDialog *onlineServerDialog{};
-	QLabel *onlineSvcLabel{}; // 状态栏右侧的在线服务状态标签
+	OnlinePanel *onlinePanel{}; // 在线服务面板：内容构建在比赛设置/账号/公告须知/实时状况/日志标签页内
+	// 底部常驻服务状态条（右侧永久区）
+	QLabel *statusDotLabel{};
+	QLabel *statusAddrLabel{};
+	QLabel *statusOnlineLabel{};
+	QPushButton *statusCopyBtn{};
+	QPushButton *statusBrowserBtn{};
+	QPushButton *statusFirewallBtn{};
+	QTableWidget *scoreTable{}; // 成绩标签页的得分表（懒构建）
 	QFileSystemWatcher *dataDirWatcher;
 	QString curFile;
 	QSignalMapper *signalMapper;
@@ -69,7 +78,9 @@ class LemonLime : public QMainWindow {
 	void refreshSummary();
 	void resetDataWatcher();
 	void showOptionsDialog();
-	void showOnlineServerDialog();
+	void showOnlineServerDialog(); // 改为跳转到「比赛设置」标签页
+	void updateScoreTable();       // 成绩标签页：选手 × 题目 得分表
+	void setupOnlineStatusBar();   // 构建底部服务状态条
 	void refreshButtonClicked();
 	void cleanupButtonClicked();
 	void tabIndexChanged(int);

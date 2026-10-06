@@ -31,7 +31,7 @@
 #include "probleminstaller.h"
 #include "server/SubmissionServer.h"
 #include "server/UserStore.h" // SubmissionServer.h 内联函数用到 QPointer<UserStore>::data()，MSVC 需要完整类型
-#include "server/onlineserverdialog.h"
+#include "server/onlinepanel.h"
 #include "titlebar.h"
 #include "statisticsbrowser.h"
 #include "welcomedialog.h"
@@ -47,8 +47,14 @@
 #include <QMessageBox>
 #include <QProgressDialog>
 #include <QScreen>
+#include <QColor>
+#include <QFont>
+#include <QHeaderView>
+#include <QProcess>
 #include <QSizeGrip>
 #include <QStatusBar>
+#include <QTableWidget>
+#include <QTimer>
 #include <QTextBrowser>
 #include <QToolBar>
 #include <QToolButton>
@@ -133,12 +139,12 @@ LemonLime::LemonLime(QWidget *parent) : QMainWindow(parent), ui(new Ui::LemonLim
 	if (auto *primaryBtn = qobject_cast<QToolButton *>(mainToolBar->widgetForAction(ui->judgeAllAction)))
 		primaryBtn->setObjectName(QStringLiteral("PrimaryBtn"));
 
-	// 状态栏右侧常驻：在线服务状态
-	onlineSvcLabel = new QLabel(tr("在线服务：未启动"), this);
-	onlineSvcLabel->setObjectName(QStringLiteral("onlineSvcLabel"));
-	ui->statusBar->addPermanentWidget(onlineSvcLabel);
-	// 无边框窗口后靠右下角拉伸柄调整大小（放在在线服务标签之后）
-	ui->statusBar->addPermanentWidget(new QSizeGrip(this));
+	// 顶部标签条：满宽均布（QSS 不支持居中偏移，均布是等价观感的稳妥实现）
+	ui->tabWidget->tabBar()->setExpanding(true);
+	// 在线服务面板：内容直接构建进各标签页（比赛设置/账号/公告须知/实时状况/日志）
+	onlinePanel = new OnlinePanel(ui->contestSettingsTab, ui->accountsTab, ui->noticeTab,
+	                              ui->liveTab, ui->logsTab, this);
+	setupOnlineStatusBar();
 
 	// 无边框窗口：装自绘标题栏（含最小化 / 最大化）
 	installTitleBar(this, true);
@@ -195,11 +201,8 @@ void LemonLime::changeEvent(QEvent *event) {
 }
 
 void LemonLime::closeEvent(QCloseEvent * /*event*/) {
-	if (onlineServerDialog) {
-		onlineServerDialog->close();
-		delete onlineServerDialog;
-		onlineServerDialog = nullptr;
-	}
+	if (onlinePanel)
+		onlinePanel->server()->stop(); // 退出前停掉 HTTP 服务
 	if (curContest)
 		saveContest(curFile);
 
@@ -328,27 +331,132 @@ void LemonLime::showOptionsDialog() {
 }
 
 void LemonLime::showOnlineServerDialog() {
+	// 在线服务已面板化：跳到「比赛设置」标签页即可操作服务
+	if (curContest)
+		onlinePanel->bindContest(curContest, QDir::currentPath());
+	ui->tabWidget->setCurrentWidget(ui->contestSettingsTab);
+}
+
+// 底部常驻服务状态条：● 状态 · 地址 · 复制链接 · 浏览器打开 · 放行防火墙 · 在线 N
+void LemonLime::setupOnlineStatusBar() {
+	statusDotLabel = new QLabel(tr("● HTTP 已停止"), this);
+	statusDotLabel->setStyleSheet(QStringLiteral("color: #94A3B8;"));
+	statusAddrLabel = new QLabel(this);
+	statusAddrLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
+	statusCopyBtn = new QPushButton(tr("复制链接"), this);
+	statusBrowserBtn = new QPushButton(tr("浏览器打开"), this);
+	statusFirewallBtn = new QPushButton(tr("放行防火墙"), this);
+	statusOnlineLabel = new QLabel(tr("在线 0"), this);
+	for (auto *btn : {statusCopyBtn, statusBrowserBtn, statusFirewallBtn}) {
+		btn->setObjectName(QStringLiteral("statusBarBtn"));
+		btn->setFlat(true);
+		btn->setEnabled(false);
+	}
+	ui->statusBar->addPermanentWidget(statusDotLabel);
+	ui->statusBar->addPermanentWidget(statusAddrLabel);
+	ui->statusBar->addPermanentWidget(statusCopyBtn);
+	ui->statusBar->addPermanentWidget(statusBrowserBtn);
+	ui->statusBar->addPermanentWidget(statusFirewallBtn);
+	ui->statusBar->addPermanentWidget(statusOnlineLabel);
+	// 无边框窗口后靠右下角拉伸柄调整大小（放在最右）
+	ui->statusBar->addPermanentWidget(new QSizeGrip(this));
+
+	connect(onlinePanel->server(), &SubmissionServer::started, this, [this](const QHostAddress &,
+	                                                                       quint16 port) {
+		// 面板在 start() 返回后才算出完整 URL，这里延迟到事件循环再取
+		QTimer::singleShot(0, this, [this, port]() {
+			statusDotLabel->setText(tr("● HTTP 运行中"));
+			statusDotLabel->setStyleSheet(QStringLiteral("color: #65A30D; font-weight: 600;"));
+			const auto url = onlinePanel->serviceUrl();
+			statusAddrLabel->setText(url.isEmpty() ? QStringLiteral(":%1").arg(port) : url);
+			statusCopyBtn->setEnabled(true);
+			statusBrowserBtn->setEnabled(true);
+			statusFirewallBtn->setEnabled(true);
+		});
+	});
+	connect(onlinePanel->server(), &SubmissionServer::stopped, this, [this]() {
+		statusDotLabel->setText(tr("● HTTP 已停止"));
+		statusDotLabel->setStyleSheet(QStringLiteral("color: #94A3B8;"));
+		statusAddrLabel->setText(QString());
+		statusCopyBtn->setEnabled(false);
+		statusBrowserBtn->setEnabled(false);
+		statusFirewallBtn->setEnabled(false);
+	});
+	connect(statusCopyBtn, &QPushButton::clicked, this, [this]() {
+		QGuiApplication::clipboard()->setText(statusAddrLabel->text());
+		ui->statusBar->showMessage(tr("已复制访问地址"), 2000);
+	});
+	connect(statusBrowserBtn, &QPushButton::clicked, this, [this]() {
+		QDesktopServices::openUrl(QUrl(onlinePanel->serviceUrl()));
+	});
+	connect(statusFirewallBtn, &QPushButton::clicked, this, [this]() {
+		// netsh 需要管理员权限：经 ShellExecute RunAs 拉起 UAC 授权窗
+		const auto port = QString::number(onlinePanel->server()->port());
+		const auto args = QStringLiteral(
+		                      "advfirewall firewall add rule name=LemonLimeOnline dir=in action=allow "
+		                      "protocol=TCP localport=%1")
+		                      .arg(port);
+		const auto cmd = QStringLiteral(
+		    "Start-Process netsh -ArgumentList '%1' -Verb RunAs").arg(args);
+		QProcess::startDetached(QStringLiteral("powershell.exe"),
+		                        {QStringLiteral("-NoProfile"), QStringLiteral("-Command"), cmd});
+		ui->statusBar->showMessage(tr("已请求放行 TCP %1（请在弹出的授权窗口中确认）").arg(port), 6000);
+	});
+}
+
+// 成绩标签页：选手 × 题目 得分表（未评测显示 —）
+void LemonLime::updateScoreTable() {
+	if (! scoreTable) {
+		scoreTable = new QTableWidget(ui->scoreTab);
+		scoreTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
+		scoreTable->setSelectionBehavior(QAbstractItemView::SelectRows);
+		scoreTable->verticalHeader()->setVisible(false);
+		scoreTable->setAlternatingRowColors(true);
+		scoreTable->setStyleSheet(QStringLiteral("alternate-background-color: #FAFAFA;"));
+		ui->scoreTabLayout->addWidget(scoreTable);
+	}
 	if (! curContest) {
-		QMessageBox::information(
-		    this, tr("在线提交服务"),
-		    tr("请先打开一场比赛。提交服务会绑定到当前打开的比赛。"));
+		scoreTable->setRowCount(0);
+		scoreTable->setColumnCount(0);
 		return;
 	}
-	if (! onlineServerDialog) {
-		onlineServerDialog = new OnlineServerDialog(this);
-		// 把服务启停状态回传到主窗口状态栏标签
-		connect(onlineServerDialog->server(), &SubmissionServer::started, this,
-		        [this](const QHostAddress &, quint16 port) {
-			        onlineSvcLabel->setText(tr("在线服务：运行中 :%1").arg(port));
-		        });
-		connect(onlineServerDialog->server(), &SubmissionServer::stopped, this, [this]() {
-			onlineSvcLabel->setText(tr("在线服务：未启动"));
-		});
+	const auto contestants = curContest->getContestantList();
+	const auto tasks = curContest->getTaskList();
+	const int cols = tasks.size() + 2;
+	QStringList headers{tr("Contestant")};
+	for (const auto *t : tasks)
+		headers << t->getProblemTitle();
+	headers << tr("Total");
+	scoreTable->setColumnCount(cols);
+	scoreTable->setHorizontalHeaderLabels(headers);
+	scoreTable->setRowCount(contestants.size());
+	for (int r = 0; r < contestants.size(); ++r) {
+		const auto *c = contestants.at(r);
+		scoreTable->setItem(r, 0, new QTableWidgetItem(c->getContestantName()));
+		int total = 0;
+		bool any = false;
+		for (int k = 0; k < tasks.size(); ++k) {
+			const int s = c->getTaskScore(k);
+			if (s >= 0) {
+				total += s;
+				any = true;
+			}
+			auto *item = new QTableWidgetItem(s >= 0 ? QString::number(s) : QStringLiteral("—"));
+			item->setTextAlignment(Qt::AlignCenter);
+			if (s >= 100)
+				item->setForeground(QColor("#65A30D"));
+			else if (s == 0)
+				item->setForeground(QColor("#E24B4A"));
+			scoreTable->setItem(r, k + 1, item);
+		}
+		auto *tot = new QTableWidgetItem(any ? QString::number(total) : QStringLiteral("—"));
+		tot->setTextAlignment(Qt::AlignCenter);
+		QFont boldFont;
+		boldFont.setBold(true);
+		tot->setFont(boldFont);
+		scoreTable->setItem(r, cols - 1, tot);
 	}
-	onlineServerDialog->bindContest(curContest, QDir::currentPath());
-	onlineServerDialog->show();
-	onlineServerDialog->raise();
-	onlineServerDialog->activateWindow();
+	scoreTable->resizeColumnsToContents();
 }
 
 void LemonLime::judgeExtButtonFlip(bool stat) {
@@ -627,9 +735,11 @@ void LemonLime::tabIndexChanged(int index) {
 		ui->cleanupAction->setEnabled(false);
 		ui->refreshAction->setEnabled(false);
 
-		if (index == 2) {
+		// 标签重排后不能再依赖索引：按控件判断
+		if (ui->tabWidget->currentWidget() == ui->statisticsTab)
 			ui->statisticsBrowser->refresh();
-		}
+		if (ui->tabWidget->currentWidget() == ui->scoreTab)
+			updateScoreTable(); // 评测完成后切过来时拿到最新得分
 	} else {
 		QList<QTableWidgetSelectionRange> selectionRange = ui->resultViewer->selectedRanges();
 
@@ -911,6 +1021,10 @@ void LemonLime::updateContestCard() {
 	                             .arg(QDir::toNativeSeparators(QDir::currentPath())));
 	ui->contestCard->setVisible(true);
 	ui->mainStack->setCurrentIndex(0);
+	// 比赛变化后同步：服务绑定比赛、刷新成绩表
+	if (onlinePanel)
+		onlinePanel->bindContest(curContest, QDir::currentPath());
+	updateScoreTable();
 }
 
 void LemonLime::closeAction() {

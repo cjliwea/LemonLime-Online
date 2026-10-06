@@ -1620,6 +1620,38 @@ Depends: </source>
         <translation>%1 道題目 · %2 名選手 · %3</translation>
     </message>
     <message>
+        <source>Scoreboard</source>
+        <translation>成績</translation>
+    </message>
+    <message>
+        <source>Contest Settings</source>
+        <translation>比賽設置</translation>
+    </message>
+    <message>
+        <source>Accounts</source>
+        <translation>帳號</translation>
+    </message>
+    <message>
+        <source>Notice</source>
+        <translation>公告須知</translation>
+    </message>
+    <message>
+        <source>Live Status</source>
+        <translation>即時狀況</translation>
+    </message>
+    <message>
+        <source>Logs</source>
+        <translation>日誌</translation>
+    </message>
+    <message>
+        <source>Contestant</source>
+        <translation>選手</translation>
+    </message>
+    <message>
+        <source>Total</source>
+        <translation>總分</translation>
+    </message>
+    <message>
         <source>Open the folder of this contest with file manager...</source>
         <translation>在檔案管理器中開啟這個比賽的資料夾…</translation>
     </message>

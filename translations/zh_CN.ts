@@ -1620,6 +1620,38 @@ Depends: </source>
         <translation>%1 道题目 · %2 名选手 · %3</translation>
     </message>
     <message>
+        <source>Scoreboard</source>
+        <translation>成绩</translation>
+    </message>
+    <message>
+        <source>Contest Settings</source>
+        <translation>比赛设置</translation>
+    </message>
+    <message>
+        <source>Accounts</source>
+        <translation>账号</translation>
+    </message>
+    <message>
+        <source>Notice</source>
+        <translation>公告须知</translation>
+    </message>
+    <message>
+        <source>Live Status</source>
+        <translation>实时状况</translation>
+    </message>
+    <message>
+        <source>Logs</source>
+        <translation>日志</translation>
+    </message>
+    <message>
+        <source>Contestant</source>
+        <translation>选手</translation>
+    </message>
+    <message>
+        <source>Total</source>
+        <translation>总分</translation>
+    </message>
+    <message>
         <source>Open the folder of this contest with file manager...</source>
         <translation>在文件管理器中打开这个比赛的目录…</translation>
     </message>
