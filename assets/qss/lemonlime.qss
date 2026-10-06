@@ -641,7 +641,9 @@ QToolButton#advancedToggle:hover {
 	color: #65A30D;
 }
 
-/* 文件与读写三个开关：带滑块的滑动开关图（72×40 绘制，显示 36×20，保证高分屏清晰） */
+/* 文件与读写三个开关：带滑块的滑动开关图（72×40 绘制，显示 36×20，保证高分屏清晰）
+   注意：全局 QCheckBox::indicator 画了白底灰边矩形框，这里必须显式覆盖掉，
+   否则矩形框会从 PNG 胶囊的透明四角露出来（v1.8.2 的混搭问题） */
 QCheckBox#subFolderCheck,
 QCheckBox#standardInputCheck,
 QCheckBox#standardOutputCheck {
@@ -653,22 +655,28 @@ QCheckBox#standardInputCheck::indicator,
 QCheckBox#standardOutputCheck::indicator {
 	width: 36px;
 	height: 20px;
+	border: none;
+	background-color: transparent;
 	image: url(:/icon/switch-off.png);
 }
 
 QCheckBox#subFolderCheck::indicator:checked,
 QCheckBox#standardInputCheck::indicator:checked,
 QCheckBox#standardOutputCheck::indicator:checked {
+	border: none;
+	background-color: transparent;
 	image: url(:/icon/switch-on.png);
 }
 
 QCheckBox#subFolderCheck::indicator:disabled,
 QCheckBox#standardInputCheck::indicator:disabled,
 QCheckBox#standardOutputCheck::indicator:disabled {
+	border: none;
+	background-color: transparent;
 	image: none;
 }
 
-/* 编译设置：语言横向标签条（对照预览版 langs 行，g++/gcc/fpc/python3 胶囊） */
+/* 编译设置：语言横向标签条（g++/gcc/fpc/python3 圆角矩形标签，与卡片圆角一致） */
 QListWidget#compilersList {
 	background: transparent;
 	border: none;
@@ -677,7 +685,7 @@ QListWidget#compilersList {
 
 QListWidget#compilersList::item {
 	padding: 7px 16px;
-	border-radius: 999px;
+	border-radius: 8px;
 	border: 1px solid #E5E7EB;
 	background-color: #FFFFFF;
 	color: #475569;

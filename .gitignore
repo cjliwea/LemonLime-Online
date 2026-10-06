@@ -69,3 +69,6 @@ build-debug/
 .idea/
 cmake-build-debug/
 .vscode/
+
+# 工具脚本环境变量未展开产生的垃圾目录
+%SystemDrive%/
