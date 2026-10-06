@@ -343,8 +343,11 @@ async function renderSubmit() {
   document.getElementById('taskNo').textContent = `第 ${taskId + 1} 题 ·`;
   document.getElementById('taskTitle').textContent = task.title;
   document.getElementById('taskScore').textContent = task.totalScore;
-  document.getElementById('taskTime').textContent =
-    task.timeLimitMs ? (task.timeLimitMs / 1000).toFixed(1) + 's' : '—';
+  document.getElementById('taskTime').textContent = task.timeLimitMs
+    ? (task.timeLimitMaxMs
+        ? (task.timeLimitMs / 1000).toFixed(1) + 's ~ ' + (task.timeLimitMaxMs / 1000).toFixed(1) + 's'
+        : (task.timeLimitMs / 1000).toFixed(1) + 's')
+    : '—';
   document.getElementById('taskSource').textContent = task.sourceFileName || '—';
   if (task.submittedAt)
     document.getElementById('lastSubmitted').textContent = '上次提交于 ' + fmtTime(task.submittedAt);

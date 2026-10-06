@@ -28,6 +28,8 @@
 #include <QTcpServer>
 #include <QUrlQuery>
 
+#include <algorithm>
+
 namespace {
 constexpr auto kCookieName = "lemon_sid";
 constexpr auto kStatementDirName = "statements";
@@ -443,7 +445,19 @@ QHttpServerResponse SubmissionServer::handleApiTasks(const QHttpServerRequest &r
 		obj.insert("id", i);
 		obj.insert("title", t->getProblemTitle());
 		obj.insert("totalScore", t->getTotalScore());
-		obj.insert("timeLimitMs", t->getTotalTimeLimit());
+		// 时限展示单个测试点的限制；getTotalTimeLimit() 是全场评测总时长（各点时限之和），
+		// 给学生看会造成误解（33 个 1s 测试点会显示成 33.0s）。各点时限不同则附带最大值。
+		QList<int> timeLimits;
+		for (const auto *testCase : t->getTestCaseList())
+			timeLimits.append(testCase->getTimeLimit());
+		if (! timeLimits.isEmpty()) {
+			const auto minMax = std::minmax_element(timeLimits.cbegin(), timeLimits.cend());
+			obj.insert("timeLimitMs", *minMax.first);
+			if (*minMax.first != *minMax.second)
+				obj.insert("timeLimitMaxMs", *minMax.second);
+		} else {
+			obj.insert("timeLimitMs", 0);
+		}
 		obj.insert("sourceFileName", t->getSourceFileName());
 
 		// determine last submission time across known extensions
