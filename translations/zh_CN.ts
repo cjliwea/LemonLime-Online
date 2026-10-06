@@ -1592,6 +1592,34 @@ Depends: </source>
         <translation>打开当前比赛的目录(&amp;F)</translation>
     </message>
     <message>
+        <source>Open Folder</source>
+        <translation>打开目录</translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation>重命名</translation>
+    </message>
+    <message>
+        <source>No Contest Open</source>
+        <translation>尚未打开比赛</translation>
+    </message>
+    <message>
+        <source>Create a new contest, or open an existing one (.cdf).</source>
+        <translation>创建新比赛，或打开已有比赛（.cdf）。</translation>
+    </message>
+    <message>
+        <source>Create Contest</source>
+        <translation>创建比赛</translation>
+    </message>
+    <message>
+        <source>Open Contest...</source>
+        <translation>打开比赛…</translation>
+    </message>
+    <message>
+        <source>%1 task(s) · %2 contestant(s) · %3</source>
+        <translation>%1 道题目 · %2 名选手 · %3</translation>
+    </message>
+    <message>
         <source>Open the folder of this contest with file manager...</source>
         <translation>在文件管理器中打开这个比赛的目录…</translation>
     </message>

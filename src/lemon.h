@@ -54,6 +54,9 @@ class LemonLime : public QMainWindow {
 	void newContest(const QString &, const QString &, const QString &);
 	void saveContest(const QString &);
 	void loadContest(const QString &);
+	// 主窗口骨架：顶部比赛卡片 + 主区堆栈（比赛页 / 无比赛空状态页）
+	// 有比赛 -> 卡片填充（标题/元信息）+ 显示标签页；无比赛 -> 隐藏卡片 + 空状态页（创建/打开入口）
+	void updateContestCard();
 	static void getFiles(const QString &, const QStringList &, QMap<QString, QString> &);
 	void addTask(const QString &, const QList<std::pair<QString, QString>> &, int, int, int);
 	void addTaskWithScoreScale(const QString &, const QList<std::pair<QString, QString>> &, int, int, int);

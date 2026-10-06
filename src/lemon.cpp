@@ -63,6 +63,12 @@ LemonLime::LemonLime(QWidget *parent) : QMainWindow(parent), ui(new Ui::LemonLim
 	curContest = nullptr;
 	settings = new Settings();
 	ui->tabWidget->setVisible(false);
+	ui->contestCard->setVisible(false);
+	ui->mainStack->setCurrentIndex(1); // 空状态页：在试题区衔接创建/打开比赛
+	connect(ui->emptyNewBtn, &QPushButton::clicked, this, &LemonLime::newAction);
+	connect(ui->emptyOpenBtn, &QPushButton::clicked, this, &LemonLime::loadAction);
+	connect(ui->cardOpenFolderBtn, &QPushButton::clicked, this, &LemonLime::openFolderAction);
+	connect(ui->cardRenameBtn, &QPushButton::clicked, this, &LemonLime::changeContestName);
 	ui->closeAction->setEnabled(false);
 	ui->saveAction->setEnabled(false);
 	ui->openFolderAction->setEnabled(false);
@@ -805,6 +811,7 @@ void LemonLime::loadContest(const QString &filePath) {
 	ui->statisticsBrowser->setContest(curContest);
 	ui->statisticsBrowser->refresh();
 	ui->tabWidget->setVisible(true);
+	updateContestCard();
 	resetDataWatcher();
 	ui->closeAction->setEnabled(true);
 	ui->openFolderAction->setEnabled(true);
@@ -845,6 +852,7 @@ void LemonLime::newContest(const QString &title, const QString &savingName, cons
 	ui->statisticsBrowser->setContest(curContest);
 	ui->statisticsBrowser->refresh();
 	ui->tabWidget->setVisible(true);
+	updateContestCard();
 	resetDataWatcher();
 	ui->closeAction->setEnabled(true);
 	ui->openFolderAction->setEnabled(true);
@@ -884,6 +892,25 @@ void LemonLime::newAction() {
 		return;
 
 	applyImportedProblems(problems);
+	updateContestCard(); // 题目在 newContest 之后装配，卡片元信息需再刷一次
+}
+
+// 主窗口骨架联动：有比赛 -> 顶部卡片填充 + 比赛页；无比赛 -> 隐藏卡片 + 空状态页（创建/打开入口）。
+// 打开另一场比赛会覆盖当前比赛（loadContest/newContest 开头先 closeAction），不设独立的“关闭比赛”按钮。
+void LemonLime::updateContestCard() {
+	if (! curContest) {
+		ui->contestCard->setVisible(false);
+		ui->mainStack->setCurrentIndex(1);
+		return;
+	}
+
+	ui->contestTitle->setText(curContest->getContestTitle());
+	ui->contestMeta->setText(tr("%1 task(s) · %2 contestant(s) · %3")
+	                             .arg(curContest->getTaskList().size())
+	                             .arg(curContest->getContestantList().size())
+	                             .arg(QDir::toNativeSeparators(QDir::currentPath())));
+	ui->contestCard->setVisible(true);
+	ui->mainStack->setCurrentIndex(0);
 }
 
 void LemonLime::closeAction() {
@@ -896,6 +923,7 @@ void LemonLime::closeAction() {
 	curContest = nullptr;
 	ui->tabWidget->setCurrentIndex(0);
 	ui->tabWidget->setVisible(false);
+	updateContestCard();
 	ui->closeAction->setEnabled(false);
 	ui->openFolderAction->setEnabled(false);
 	ui->saveAction->setEnabled(false);
