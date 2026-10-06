@@ -62,7 +62,7 @@ const char *kPanelQss =
     "  margin-top: 4px; padding: 24px 12px 8px 12px; background: #FFFFFF; }"
     "QGroupBox::title { subcontrol-origin: border; subcontrol-position: top left; "
     "  left: 12px; top: 4px; padding: 0 4px; color: #475569; font-weight: 600; }"
-    "QPushButton { min-height: 20px; padding: 6px 16px; border: 1px solid #D4D4D8; "
+    "QPushButton { padding: 5px 12px; border: 1px solid #D4D4D8; "
     "  border-radius: 6px; background: #FFFFFF; }"
     "QPushButton:hover { background: #F4F4F5; }"
     "QPushButton:disabled { color: #A1A1AA; background: #FAFAFA; }"
@@ -187,9 +187,7 @@ QWidget *OnlinePanel::buildListenGroup(QWidget *parent) {
 	portSpin_->setMinimumHeight(30);
 	startStopBtn_ = new QPushButton(tr("启动"), listenBox);
 	startStopBtn_->setObjectName(QStringLiteral("PrimaryBtn"));
-	// 按钮文字曾被挤到显示不全：给足高度与最小宽度
-	startStopBtn_->setMinimumHeight(32);
-	startStopBtn_->setMinimumWidth(96);
+	// 边框跟随文字：不要再设最小宽度，否则边框会明显比文字大一圈
 	connect(startStopBtn_, &QPushButton::clicked, this, &OnlinePanel::toggleServer);
 
 	listenForm->addRow(tr("监听网卡"), bindCombo_);
@@ -207,8 +205,6 @@ QWidget *OnlinePanel::buildListenGroup(QWidget *parent) {
 
 	copyUrlBtn_ = new QPushButton(tr("复制"), listenBox);
 	openBrowserBtn_ = new QPushButton(tr("用浏览器打开"), listenBox);
-	copyUrlBtn_->setMinimumHeight(30);
-	openBrowserBtn_->setMinimumHeight(30);
 	copyUrlBtn_->setEnabled(false);
 	openBrowserBtn_->setEnabled(false);
 	connect(copyUrlBtn_, &QPushButton::clicked, this, [this]() {
@@ -256,8 +252,6 @@ QWidget *OnlinePanel::buildContestInfoGroup(QWidget *parent) {
 
 	applyWindowBtn_ = new QPushButton(tr("保存比赛时间"), infoBox);
 	applyWindowBtn_->setObjectName(QStringLiteral("PrimaryBtn"));
-	applyWindowBtn_->setMinimumHeight(32);
-	applyWindowBtn_->setMinimumWidth(132);
 	connect(applyWindowBtn_, &QPushButton::clicked, this, &OnlinePanel::onApplyContestWindow);
 	connect(windowEnableBox_, &QCheckBox::toggled, this, [this](bool on) {
 		startEdit_->setEnabled(on);

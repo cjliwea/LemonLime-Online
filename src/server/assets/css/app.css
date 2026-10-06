@@ -285,6 +285,34 @@ textarea:focus-visible, [role="button"]:focus-visible {
 }
 .editor-foot .spacer { flex: 1; }
 
+/* ---------- 答题方式切换（老师设为「双模式」时出现） ---------- */
+.answer-bar {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 16px; border-bottom: 1px solid var(--border);
+  background: #FAFBFC;
+}
+.answer-bar .spacer { flex: 1; }
+.mode-switch {
+  display: inline-flex; padding: 2px; gap: 2px;
+  background: #F1F5F9; border-radius: 8px;
+}
+.mode-switch[hidden] { display: none; }
+.mode-tab {
+  border: 0; background: transparent; cursor: pointer;
+  font: inherit; font-size: 13px; color: var(--text-soft);
+  padding: 5px 14px; border-radius: 6px;
+}
+.mode-tab:hover { color: var(--primary-hover); }
+.mode-tab.is-active {
+  background: var(--surface); color: var(--text);
+  font-weight: 600; box-shadow: 0 1px 2px rgba(15, 23, 42, .08);
+}
+
+/* ---------- 上传文件答题面板 ---------- */
+.upload-pane { padding: 22px 22px 24px; }
+.upload-pane .upload-title { margin: 0 0 6px; }
+.upload-pane .upload-row { margin-top: 16px; }
+
 /* ---------- 整包上传 ---------- */
 .upload-card { margin-top: 16px; padding: 20px 22px; }
 .upload-head { margin-bottom: 14px; }

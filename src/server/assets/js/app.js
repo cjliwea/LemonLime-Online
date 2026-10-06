@@ -320,23 +320,48 @@ async function renderSubmit() {
     const s = document.getElementById('statementLink');
     if (s) s.hidden = false;
   }
+  // 老师端设定的答题界面：editor=仅编辑器 / upload=仅上传文件 / both=学生自选
+  const uiMode = ['editor', 'upload', 'both'].includes(data.defaultUiMode)
+    ? data.defaultUiMode : 'both';
+  const modeSwitch = document.getElementById('modeSwitch');
+  const editorPane = document.getElementById('editorPane');
+  const uploadPane = document.getElementById('uploadPane');
+  const pickFileBtn = document.getElementById('pickFileBtn');
+  const submitBtnEl = document.getElementById('submitBtn');
+  // 双模式下记住学生上次的选择，避免每次进来都回到默认
+  const modeKey = `lemon.answerMode.${data.user}`;
+  let answerMode = uiMode === 'both' ? (localStorage.getItem(modeKey) || 'editor') : uiMode;
+  if (answerMode !== 'editor' && answerMode !== 'upload') answerMode = 'editor';
+
+  function applyAnswerMode(mode) {
+    answerMode = mode;
+    editorPane.hidden = mode !== 'editor';
+    uploadPane.hidden = mode !== 'upload';
+    if (uiMode === 'both') localStorage.setItem(modeKey, mode);
+    modeSwitch.querySelectorAll('.mode-tab').forEach(b =>
+      b.classList.toggle('is-active', b.dataset.answerMode === mode));
+  }
+  if (uiMode === 'both') {
+    modeSwitch.hidden = false;
+    modeSwitch.querySelectorAll('.mode-tab').forEach(b =>
+      b.addEventListener('click', () => applyAnswerMode(b.dataset.answerMode)));
+  }
+  applyAnswerMode(answerMode);
+
   // window state: gates the submit button if outside contest window
   let outsideWindow = false;
+  let editorReady = false;
+  let prevOutside = null;
   renderCountdown(document.getElementById('countdown'), data, s => {
     outsideWindow = (s.state === 'pre' || s.state === 'ended');
-    const btn = document.getElementById('submitBtn');
-    if (outsideWindow) {
-      btn.disabled = true;
-      btn.textContent = s.state === 'pre' ? '比赛尚未开始' : '比赛已结束';
-    }
-    const ub = document.getElementById('uploadSrcBtn');
-    if (ub) {
-      ub.disabled = outsideWindow;
-      if (!ub.dataset.busy)
-        ub.textContent = outsideWindow
-          ? (s.state === 'pre' ? '比赛尚未开始' : '比赛已结束')
-          : '上传源码文件';
-    }
+    if (outsideWindow === prevOutside) return; // 仅在越界状态变化时改写按钮，避免打断「提交中…」
+    const label = s.state === 'pre' ? '比赛尚未开始' : '比赛已结束';
+    submitBtnEl.disabled = outsideWindow;
+    submitBtnEl.textContent = outsideWindow ? label : '提交代码';
+    pickFileBtn.disabled = outsideWindow;
+    pickFileBtn.textContent = outsideWindow ? label : '选择文件并提交';
+    prevOutside = outsideWindow;
+    if (!outsideWindow && editorReady) refreshCount();
   });
   const task = data.tasks.find(t => t.id === taskId);
   if (!task) { location.href = '/'; return; }
@@ -377,6 +402,7 @@ async function renderSubmit() {
     refreshCount();
   });
   refreshCount();
+  editorReady = true;
 
   document.getElementById('fontSize').addEventListener('change', e => {
     editor.setFontSize(parseInt(e.target.value, 10));
@@ -426,48 +452,46 @@ async function renderSubmit() {
 
   // 上传源码文件：直接提交原始字节，不经过编辑器（避免 GBK 源码被当成 UTF-8 转坏）
   const srcFileInput = document.getElementById('srcFileInput');
-  const uploadSrcBtn = document.getElementById('uploadSrcBtn');
-  if (srcFileInput && uploadSrcBtn) {
-    uploadSrcBtn.addEventListener('click', () => srcFileInput.click());
-    srcFileInput.addEventListener('change', async () => {
-      const f = srcFileInput.files && srcFileInput.files[0];
-      srcFileInput.value = '';
-      if (!f || uploadSrcBtn.dataset.busy) return;
-      if (outsideWindow) { showToast('当前不在比赛时间内', true); return; }
-      if (f.size > MAX_SOURCE_BYTES) {
-        showToast(`文件过大（上限 ${MAX_SOURCE_BYTES} 字节）`, true);
-        return;
-      }
-      if (submitCount >= 1 && !confirm(
-            '这是第 ' + (submitCount + 1) + ' 次提交此题，' +
-            '提交后将覆盖上一次代码（评测以最后一次为准）。确定继续？')) return;
-      uploadSrcBtn.dataset.busy = '1';
-      uploadSrcBtn.disabled = true;
-      const orig = uploadSrcBtn.textContent;
-      uploadSrcBtn.textContent = '上传中…';
-      try {
-        const r = await fetch('/api/upload-source/' + taskId, {
-          method: 'POST',
-          credentials: 'same-origin',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: f.name, content: await fileToBase64(f) }),
-        });
-        if (r.status === 401) { location.href = '/login'; return; }
-        const j = await r.json();
-        if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
-        submitCount++;
-        document.getElementById('lastSubmitted').textContent =
-          '上次提交于 ' + fmtTime(j.submittedAt);
-        showToast(`已上传 ${j.name}（${fmtBytes(j.size)}）`);
-      } catch (e) {
-        showToast('上传失败：' + e.message, true);
-      } finally {
-        delete uploadSrcBtn.dataset.busy;
-        uploadSrcBtn.textContent = orig;
-        uploadSrcBtn.disabled = outsideWindow;
-      }
-    });
-  }
+  pickFileBtn.addEventListener('click', () => srcFileInput.click());
+  srcFileInput.addEventListener('change', async () => {
+    const f = srcFileInput.files && srcFileInput.files[0];
+    srcFileInput.value = '';
+    if (!f || pickFileBtn.dataset.busy) return;
+    if (outsideWindow) { showToast('当前不在比赛时间内', true); return; }
+    if (f.size > MAX_SOURCE_BYTES) {
+      showToast(`文件过大（上限 ${MAX_SOURCE_BYTES} 字节）`, true);
+      return;
+    }
+    if (submitCount >= 1 && !confirm(
+          '这是第 ' + (submitCount + 1) + ' 次提交此题，' +
+          '提交后将覆盖上一次提交（评测以最后一次为准）。确定继续？')) return;
+    pickFileBtn.dataset.busy = '1';
+    pickFileBtn.disabled = true;
+    const orig = pickFileBtn.textContent;
+    pickFileBtn.textContent = '上传中…';
+    try {
+      const r = await fetch('/api/upload-source/' + taskId, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: f.name, content: await fileToBase64(f) }),
+      });
+      if (r.status === 401) { location.href = '/login'; return; }
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
+      submitCount++;
+      document.getElementById('lastSubmitted').textContent =
+        '上次提交于 ' + fmtTime(j.submittedAt);
+      showToast(`已上传 ${j.name}（${fmtBytes(j.size)}）`);
+    } catch (e) {
+      showToast('上传失败：' + e.message, true);
+    } finally {
+      delete pickFileBtn.dataset.busy;
+      pickFileBtn.textContent = orig;
+      pickFileBtn.disabled = outsideWindow;
+    }
+  });
+  document.getElementById('uploadTip').textContent = '支持 .cpp / .c / .py / .pas 等源码文件';
 
   document.getElementById('submitBtn').addEventListener('click', doSubmit);
   document.addEventListener('keydown', e => {
