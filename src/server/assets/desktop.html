@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>桌面 · LemonLime 在线提交</title>
+<link rel="stylesheet" href="/assets/css/desktop.css">
+</head>
+<body>
+<header id="topbar">
+  <div class="tb-left">
+    <span class="tb-logo">&#9672;</span>
+    <span class="tb-title">在线提交系统</span>
+  </div>
+  <div class="tb-right">
+    <span id="tbClock" class="tb-item tb-clock" title="比赛剩余时间">--:--</span>
+    <span id="tbStatement" class="tb-item" title="打开题面及样例">题面</span>
+    <span id="tbNoticeBtn" class="tb-item" title="公告与开考须知">须知<span id="tbNoticeDot" class="tb-dot" hidden></span></span>
+    <span id="tbUser" class="tb-item tb-user"></span>
+    <span id="tbLogout" class="tb-item" title="退出登录">退出</span>
+  </div>
+</header>
+
+<main id="desktop">
+  <div id="icons"></div>
+</main>
+
+<!-- 须知/公告窗口（静态，内容由 JS 刷新） -->
+<div id="win-notice" class="win" hidden>
+  <div class="win-titlebar">
+    <span class="win-title">公告与须知</span>
+    <span class="win-btns"><span class="win-btn" data-act="max">&#9744;</span><span class="win-btn win-close" data-act="close">&#10005;</span></span>
+  </div>
+  <div class="win-body">
+    <h3 class="nb-sec">公告</h3>
+    <div id="nbAnnouncement" class="nb-text">暂无公告。</div>
+    <h3 class="nb-sec">开考须知</h3>
+    <div id="nbNotice" class="nb-text">暂无须知。</div>
+    <h3 class="nb-sec">我的私信</h3>
+    <div id="nbMessages" class="nb-text">暂无私信。</div>
+  </div>
+</div>
+
+<div id="toastHost"></div>
+<script src="/assets/js/desktop.js"></script>
+</body>
+</html>

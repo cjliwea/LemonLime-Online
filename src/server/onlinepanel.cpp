@@ -141,6 +141,7 @@ void OnlinePanel::bindContest(Contest *contest, const QString &contestDir) {
 	// 已持久化的开考须知回填到编辑框
 	if (noticeEdit_)
 		noticeEdit_->setPlainText(server_->notice());
+	refreshUiThemeControls();
 	refreshLive();
 	refreshOnlineTable();
 }
@@ -358,6 +359,27 @@ QWidget *OnlinePanel::buildUiModeGroup(QWidget *parent) {
 	hint->setObjectName(QStringLiteral("Hint"));
 	hint->setWordWrap(true);
 	modeLayout->addWidget(hint);
+
+	// 学生端界面主题：默认在线（题目列表+编辑器），可切 NOI Linux 桌面
+	auto *themeRow = new QHBoxLayout();
+	themeRow->addWidget(new QLabel(tr("学生端界面"), modeBox));
+	uiThemeCombo_ = new QComboBox(modeBox);
+	uiThemeCombo_->addItem(tr("在线（默认）"), QStringLiteral("online"));
+	uiThemeCombo_->addItem(tr("NOI Linux 桌面"), QStringLiteral("noilinux"));
+	themeRow->addWidget(uiThemeCombo_, 1);
+	modeLayout->addLayout(themeRow);
+	auto *themeHint = new QLabel(tr("NOI Linux 桌面：学生登录后进入仿 Linux 桌面（图标、窗口、每题编辑器），"
+	                                "比赛氛围更接近正式 NOI 环境。切换后学生重新登录或刷新生效。"),
+	                             modeBox);
+	themeHint->setObjectName(QStringLiteral("Hint"));
+	themeHint->setWordWrap(true);
+	modeLayout->addWidget(themeHint);
+	connect(uiThemeCombo_, &QComboBox::currentIndexChanged, this, [this]() {
+		const auto theme = uiThemeCombo_->currentData().toString();
+		server_->setUiTheme(theme);
+		appendLog(tr("学生端界面已切换为：%1")
+		              .arg(theme == QStringLiteral("noilinux") ? tr("NOI Linux 桌面") : tr("在线（默认）")));
+	});
 	modeLayout->addStretch(1);
 	return modeBox;
 }
@@ -1144,6 +1166,14 @@ void OnlinePanel::refreshDmUsers() {
 	dmUserCombo_->addItems(names);
 	if (! cur.isEmpty())
 		dmUserCombo_->setCurrentText(cur);
+}
+
+void OnlinePanel::refreshUiThemeControls() {
+	if (! uiThemeCombo_ || ! server_)
+		return;
+	const int idx = uiThemeCombo_->findData(server_->uiTheme());
+	if (idx >= 0)
+		uiThemeCombo_->setCurrentIndex(idx);
 }
 
 bool OnlinePanel::eventFilter(QObject *watched, QEvent *event) {

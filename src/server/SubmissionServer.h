@@ -62,6 +62,10 @@ class SubmissionServer : public QObject {
 	QString defaultUiMode() const { return defaultUiMode_; }
 	void setDefaultUiMode(const QString &mode);
 
+	// 学生端界面主题：online（题目列表+编辑器页）或 noilinux（NOI Linux 桌面）
+	void setUiTheme(const QString &theme);
+	QString uiTheme() const { return uiTheme_; }
+
 	// ---- 实时状况 ----
 	int submissionCount() const { return submissionCount_; }
 	int onlineCount() const;
@@ -92,6 +96,7 @@ class SubmissionServer : public QObject {
 	QHttpServerResponse handleLoginPost(const QHttpServerRequest &req);
 	QHttpServerResponse handleLogout(const QHttpServerRequest &req);
 	QHttpServerResponse handleIndex(const QHttpServerRequest &req);
+	QHttpServerResponse handleDesktopPage(const QHttpServerRequest &req);
 	QHttpServerResponse handleSubmitPage(qint32 taskId, const QHttpServerRequest &req);
 	QHttpServerResponse handleApiTasks(const QHttpServerRequest &req);
 	QHttpServerResponse handleApiSubmit(qint32 taskId, const QHttpServerRequest &req);
@@ -138,6 +143,7 @@ class SubmissionServer : public QObject {
 	QString announcement_;
 	QString notice_;
 	QString defaultUiMode_ = QStringLiteral("both");
+	QString uiTheme_ = QStringLiteral("online");
 	int submissionCount_ = 0;
 	// 未取走的私信队列：用户名 -> [{text, ts}, ...]，学生端 poll 时一次性取空
 	QMap<QString, QJsonArray> pendingMessages_;

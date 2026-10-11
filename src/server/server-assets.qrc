@@ -3,8 +3,11 @@
         <file alias="login.html">assets/login.html</file>
         <file alias="index.html">assets/index.html</file>
         <file alias="submit.html">assets/submit.html</file>
+        <file alias="desktop.html">assets/desktop.html</file>
         <file alias="css/app.css">assets/css/app.css</file>
+        <file alias="css/desktop.css">assets/css/desktop.css</file>
         <file alias="js/app.js">assets/js/app.js</file>
         <file alias="js/editor.js">assets/js/editor.js</file>
+        <file alias="js/desktop.js">assets/js/desktop.js</file>
     </qresource>
 </RCC>

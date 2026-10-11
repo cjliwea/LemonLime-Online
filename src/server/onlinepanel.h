@@ -82,6 +82,9 @@ class OnlinePanel : public QObject {
 	// direct message
 	void refreshDmUsers();
 
+	// student ui theme
+	void refreshUiThemeControls();
+
 	// contest window
 	void onApplyContestWindow();
 	void refreshContestWindow();
@@ -149,6 +152,7 @@ class OnlinePanel : public QObject {
 	QComboBox *dmUserCombo_{};
 	QLineEdit *dmTextEdit_{};
 	QListWidget *dmHistory_{};
+	QComboBox *uiThemeCombo_{};
 
 	// live page
 	QLabel *metricOnline_{};

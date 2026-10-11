@@ -215,6 +215,13 @@ void SubmissionServer::setDefaultUiMode(const QString &mode) {
 	saveConfig();
 }
 
+void SubmissionServer::setUiTheme(const QString &theme) {
+	uiTheme_ = (theme == QStringLiteral("noilinux")) ? theme : QStringLiteral("online");
+	saveConfig();
+	emit logMessage(uiTheme_ == QStringLiteral("noilinux") ? tr("学生端界面已切换为 NOI Linux 桌面")
+	                                                       : tr("学生端界面已切换为在线（默认）"));
+}
+
 int SubmissionServer::onlineCount() const { return sessions_ ? sessions_->onlineCount() : 0; }
 
 QStringList SubmissionServer::onlineUsernames() const {
@@ -261,6 +268,7 @@ bool SubmissionServer::loadConfig() {
 	announcement_ = obj.value("announcement").toString();
 	notice_ = obj.value("notice").toString();
 	defaultUiMode_ = obj.value("defaultUiMode").toString(QStringLiteral("both"));
+	uiTheme_ = obj.value("uiTheme").toString(QStringLiteral("online"));
 	return true;
 }
 
@@ -280,6 +288,7 @@ bool SubmissionServer::saveConfig() const {
 	if (! notice_.isEmpty())
 		obj.insert("notice", notice_);
 	obj.insert("defaultUiMode", defaultUiMode_);
+	obj.insert("uiTheme", uiTheme_);
 	QSaveFile f(QDir(contestDir_).filePath(kConfigName));
 	if (! f.open(QFile::WriteOnly))
 		return false;
@@ -378,14 +387,22 @@ void SubmissionServer::setupRoutes() {
 	http_->route("/statement", QHttpServerRequest::Method::Get,
 	             [this](const QHttpServerRequest &req) { return handleStatement(req); });
 
+	http_->route("/desktop", QHttpServerRequest::Method::Get,
+	             [this](const QHttpServerRequest &req) { return handleDesktopPage(req); });
+
 	// static assets
 	http_->route("/assets/css/app.css", QHttpServerRequest::Method::Get,
 	             [this]() { return handleStatic(":/online/css/app.css", "text/css; charset=utf-8"); });
+	http_->route("/assets/css/desktop.css", QHttpServerRequest::Method::Get,
+	             [this]() { return handleStatic(":/online/css/desktop.css", "text/css; charset=utf-8"); });
 	http_->route("/assets/js/app.js", QHttpServerRequest::Method::Get, [this]() {
 		return handleStatic(":/online/js/app.js", "application/javascript; charset=utf-8");
 	});
 	http_->route("/assets/js/editor.js", QHttpServerRequest::Method::Get, [this]() {
 		return handleStatic(":/online/js/editor.js", "application/javascript; charset=utf-8");
+	});
+	http_->route("/assets/js/desktop.js", QHttpServerRequest::Method::Get, [this]() {
+		return handleStatic(":/online/js/desktop.js", "application/javascript; charset=utf-8");
 	});
 }
 
@@ -453,7 +470,8 @@ QHttpServerResponse SubmissionServer::handleLoginPost(const QHttpServerRequest &
 	const auto token = sessions_->createSession(username);
 	const auto cookie = QStringLiteral("%1=%2; Path=/; HttpOnly; SameSite=Lax").arg(kCookieName, token);
 	emit logMessage(tr("Login OK: %1").arg(username));
-	return redirect("/", cookie);
+	return redirect(uiTheme_ == QStringLiteral("noilinux") ? QStringLiteral("/desktop") : QStringLiteral("/"),
+	                cookie);
 }
 
 QHttpServerResponse SubmissionServer::handleLogout(const QHttpServerRequest &req) {
@@ -468,7 +486,20 @@ QHttpServerResponse SubmissionServer::handleIndex(const QHttpServerRequest &req)
 	QString user;
 	if (! requireSession(req, &user))
 		return redirect("/login");
+	// NOI Linux 桌面模式下，访问根路径一律落到桌面
+	if (uiTheme_ == QStringLiteral("noilinux"))
+		return redirect("/desktop");
 	auto html = readResource(":/online/index.html");
+	if (html.isEmpty())
+		return QHttpServerResponse(QHttpServerResponder::StatusCode::InternalServerError);
+	return QHttpServerResponse("text/html; charset=utf-8", html.toUtf8());
+}
+
+QHttpServerResponse SubmissionServer::handleDesktopPage(const QHttpServerRequest &req) {
+	QString user;
+	if (! requireSession(req, &user))
+		return redirect("/login");
+	auto html = readResource(":/online/desktop.html");
 	if (html.isEmpty())
 		return QHttpServerResponse(QHttpServerResponder::StatusCode::InternalServerError);
 	return QHttpServerResponse("text/html; charset=utf-8", html.toUtf8());
@@ -553,9 +584,16 @@ QHttpServerResponse SubmissionServer::handleApiAnnounce(const QHttpServerRequest
 	if (! requireSession(req, &user))
 		return jsonError(401, tr("Not authenticated"));
 	QJsonObject root;
+	root.insert("username", user);
 	root.insert("announcement", announcement_);
 	root.insert("notice", notice_);
 	root.insert("serverNow", QDateTime::currentDateTime().toString(Qt::ISODate));
+	// 比赛时间窗（NOI Linux 桌面顶栏倒计时用；列表页忽略这些字段）
+	root.insert("windowEnabled", windowEnabled_ && startTime_.isValid() && endTime_.isValid());
+	if (startTime_.isValid())
+		root.insert("startTime", startTime_.toString(Qt::ISODate));
+	if (endTime_.isValid())
+		root.insert("endTime", endTime_.toString(Qt::ISODate));
 	// 定向私信：随公告轮询下发，取走即清（未在线的学生在下次轮询时补收）
 	const auto it = pendingMessages_.constFind(user);
 	if (it != pendingMessages_.constEnd()) {

@@ -1,0 +1,247 @@
+/* NOI Linux 桌面主题（Ubuntu 风）：深紫顶栏 + 渐变壁纸 + 白色窗口 */
+
+:root {
+  --ub-purple: #2c001e;
+  --ub-purple-2: #772953;
+  --ub-orange: #e95420;
+  --ub-text: #f7f7f7;
+  --ub-text-dim: rgba(247, 247, 247, 0.75);
+  --win-bg: #ffffff;
+  --win-text: #1b1b1f;
+  --win-border: rgba(0, 0, 0, 0.35);
+  --radius: 10px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  font-family: "Ubuntu", "Noto Sans CJK SC", "Microsoft YaHei", sans-serif;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(1200px 600px at 85% 90%, rgba(233, 84, 32, 0.28), transparent 60%),
+    linear-gradient(135deg, #1a0012 0%, var(--ub-purple) 38%, var(--ub-purple-2) 100%);
+  color: var(--ub-text);
+}
+
+/* ===== 顶栏 ===== */
+#topbar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 40px;
+  padding: 0 14px;
+  background: rgba(24, 0, 16, 0.92);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  user-select: none;
+}
+.tb-left, .tb-right { display: flex; align-items: center; gap: 16px; }
+.tb-logo { color: var(--ub-orange); font-size: 15px; }
+.tb-title { font-size: 14px; font-weight: 500; letter-spacing: 0.5px; }
+.tb-item {
+  font-size: 13px;
+  color: var(--ub-text-dim);
+  cursor: pointer;
+  position: relative;
+  padding: 4px 2px;
+}
+.tb-item:hover { color: var(--ub-text); }
+.tb-clock { color: var(--ub-text); font-variant-numeric: tabular-nums; }
+.tb-clock.warn { color: #ffb46b; }
+.tb-dot {
+  position: absolute;
+  top: 0;
+  right: -8px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ub-orange);
+}
+.tb-user { cursor: default; }
+
+/* ===== 桌面图标 ===== */
+#desktop { flex: 1; position: relative; overflow: hidden; }
+#icons {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 18px 26px;
+  padding: 28px;
+  height: 100%;
+}
+.dicon {
+  width: 88px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  user-select: none;
+}
+.dicon-badge {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #fff;
+}
+.dicon-badge.lang-cpp { background: rgba(0, 90, 156, 0.55); }
+.dicon-badge.lang-c { background: rgba(40, 110, 160, 0.55); }
+.dicon-badge.lang-py { background: rgba(240, 147, 41, 0.6); }
+.dicon-badge.lang-pas { background: rgba(110, 90, 200, 0.55); }
+.dicon-badge.lang-doc { background: rgba(233, 84, 32, 0.55); }
+.dicon:hover .dicon-badge { background: rgba(255, 255, 255, 0.22); }
+.dicon-name {
+  font-size: 12px;
+  color: var(--ub-text);
+  text-align: center;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  max-width: 88px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* ===== 窗口 ===== */
+.win {
+  position: absolute;
+  min-width: 320px;
+  min-height: 200px;
+  background: var(--win-bg);
+  color: var(--win-text);
+  border-radius: var(--radius);
+  border: 1px solid var(--win-border);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.win.focused { border-color: rgba(233, 84, 32, 0.65); }
+.win-titlebar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 34px;
+  padding: 0 6px 0 12px;
+  background: var(--ub-purple);
+  color: var(--ub-text);
+  font-size: 13px;
+  cursor: grab;
+  user-select: none;
+}
+.win-titlebar:active { cursor: grabbing; }
+.win-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.win-btns { display: flex; gap: 4px; }
+.win-btn {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 11px;
+}
+.win-btn:hover { background: rgba(255, 255, 255, 0.15); }
+.win-close:hover { background: var(--ub-orange); }
+.win-body { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+
+/* 编辑器窗口 */
+.ed-text {
+  flex: 1;
+  width: 100%;
+  resize: none;
+  border: none;
+  outline: none;
+  padding: 10px 12px;
+  font-family: Consolas, "Sarasa Mono SC", "Courier New", monospace;
+  font-size: 13.5px;
+  line-height: 1.55;
+  tab-size: 4;
+  white-space: pre;
+  overflow: auto;
+}
+.ed-foot {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-top: 1px solid #e6e6ea;
+  background: #fafafc;
+  font-size: 12.5px;
+}
+.ed-status { flex: 1; color: #6b6b76; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ed-status.ok { color: #2f7d33; }
+.ed-status.err { color: #c0392b; }
+.ed-btn {
+  border: none;
+  border-radius: 8px;
+  padding: 7px 16px;
+  font-size: 13px;
+  cursor: pointer;
+  background: #ececf1;
+  color: #333;
+}
+.ed-btn:hover { background: #e0e0e8; }
+.ed-btn.primary { background: var(--ub-orange); color: #fff; font-weight: 600; }
+.ed-btn.primary:hover { background: #cf4517; }
+.ed-btn:disabled { opacity: 0.55; cursor: default; }
+
+/* 须知窗口 */
+.nb-sec { margin: 12px 14px 6px; font-size: 13px; color: var(--ub-orange); }
+.nb-text { margin: 0 14px; font-size: 13.5px; line-height: 1.7; white-space: pre-wrap; word-break: break-word; }
+.nb-text.empty { color: #9a9aa4; }
+
+/* ===== 私信 toast ===== */
+#toastHost {
+  position: fixed;
+  top: 52px;
+  right: 16px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+.toast {
+  background: rgba(24, 0, 16, 0.94);
+  color: #f7d9c8;
+  border: 1px solid rgba(233, 84, 32, 0.55);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  max-width: 340px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+  animation: toastIn 0.25s ease;
+}
+.toast b {
+  display: block;
+  font-size: 11px;
+  color: var(--ub-orange);
+  margin-bottom: 2px;
+}
+.toast.hide { opacity: 0; transform: translateY(-8px); transition: all 0.3s ease; }
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: none; }
+}
