@@ -304,6 +304,8 @@ body {
   flex-direction: column;
   overflow: hidden;
 }
+/* hidden 属性必须显式压过 .win 的 display:flex，否则最小化/关闭都无效 */
+.win[hidden] { display: none; }
 .win.focused { border-color: rgba(233, 84, 32, 0.65); }
 .win.maximized { border-radius: 0; }
 .win-titlebar {
@@ -391,7 +393,7 @@ body {
 .nb-sec { margin: 12px 14px 6px; font-size: 13px; color: var(--ub-orange); }
 .nb-text { margin: 0 14px; font-size: 13.5px; line-height: 1.7; white-space: pre-wrap; word-break: break-word; }
 .nb-text.empty { color: #9a9aa4; }
-#win-notice .win-body { overflow-y: auto; display: block; }
+.nb-body { flex: 1; overflow-y: auto; padding-bottom: 10px; }
 
 /* 虚拟文件窗口（我的文件/文件夹/回收站/消息） */
 .vfs-hint {

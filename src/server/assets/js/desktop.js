@@ -689,9 +689,11 @@ function setSync(ok) {
 let lastAnnounce = { announcement: '', notice: '' };
 
 function refreshNoticeWin() {
+  if (! $('nbAnnouncement')) return; // 窗口未打开
   const a = lastAnnounce;
   const set = (id, val) => {
     const el = $(id);
+    if (! el) return;
     el.textContent = val || '暂无内容。';
     el.classList.toggle('empty', ! val);
   };
@@ -700,24 +702,16 @@ function refreshNoticeWin() {
 }
 
 function openNotice() {
-  if (! $('win-notice')._docked) {
-    registerDock('win-notice', '考试须知');
-    const rec = wins['win-notice'];
-    // 用 onclick 赋值而非 addEventListener：关闭后重开会重复执行这段，避免监听叠加
-    rec.el.querySelector('[data-act="min"]').onclick = () => setMinimized('win-notice', true);
-    rec.el.querySelector('[data-act="max"]').onclick = () => toggleMax('win-notice');
-    rec.el.querySelector('[data-act="close"]').onclick = closeNotice;
-    $('win-notice')._docked = true;
-  }
-  focusWin('win-notice');
+  // 与其他窗口一致：动态创建，× 直接销毁窗口（LemonNext 亦是关闭即销毁的单一窗口模型）
+  makeWindow('win-notice', '考试须知',
+    '<div class="nb-body">' +
+      '<h3 class="nb-sec">公告</h3>' +
+      '<div id="nbAnnouncement" class="nb-text">暂无公告。</div>' +
+      '<h3 class="nb-sec">开考须知</h3>' +
+      '<div id="nbNotice" class="nb-text">暂无须知。</div>' +
+    '</div>',
+    { w: 520, h: 440 });
   refreshNoticeWin();
-}
-
-function closeNotice() {
-  const el = $('win-notice');
-  el.hidden = true;
-  unregisterDock('win-notice');
-  el._docked = false;
 }
 
 // ===== 消息（老师私信）窗口 =====
