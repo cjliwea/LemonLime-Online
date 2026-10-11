@@ -148,6 +148,8 @@ body {
 
 /* ===== 桌面 ===== */
 #desktop { flex: 1; position: relative; overflow: hidden; }
+/* 从 OS 拖入时，桌面空白作为落点的高亮 */
+#desktop.drop-hot { box-shadow: inset 0 0 0 3px rgba(233, 84, 32, 0.7); }
 #icons {
   display: flex;
   flex-direction: column;
@@ -172,6 +174,9 @@ body {
   background: rgba(255, 255, 255, 0.16);
   border-color: #ff5f52;
 }
+/* 从 OS 拖入时，文件夹图标作为落点的高亮 */
+.dicon.drop-hot { background: rgba(255, 255, 255, 0.22); border-color: var(--ub-orange); }
+.dicon.drop-hot .badge-text { outline: 2px solid var(--ub-orange); }
 .dicon-badge {
   width: 54px;
   height: 54px;

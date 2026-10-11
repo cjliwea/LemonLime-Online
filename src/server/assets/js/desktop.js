@@ -3,6 +3,7 @@
      + 桌面图标 + 左下「提交代码」面板 + 右下同步状态
    - 模拟 OS 鼠标：屏蔽浏览器右键菜单/文本选择/拖拽；自定义右键菜单支持
      新建文件夹/新建空白文件（虚拟文件，localStorage 持久化，可删除进回收站）
+   - 支持从操作系统拖入文件/文件夹（拖到文件夹图标进该文件夹，拖到桌面进桌面）
    - 窗口：拖动/双击最大化/角落调大小/最小化进 dock；须知窗口可真正关闭 */
 'use strict';
 
@@ -34,6 +35,14 @@ function showToast(text) {
   t.innerHTML = '<b>老师私信</b>' + escapeHtml(text);
   $('toastHost').appendChild(t);
   setTimeout(() => { t.classList.add('hide'); setTimeout(() => t.remove(), 300); }, 6000);
+}
+
+function showTip(text) {
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = text;
+  $('toastHost').appendChild(t);
+  setTimeout(() => { t.classList.add('hide'); setTimeout(() => t.remove(), 300); }, 4000);
 }
 
 // ===== 模拟 OS：屏蔽浏览器默认行为 =====
@@ -590,6 +599,134 @@ function refreshVfsViews() {
   if (wins['win-trash']) refreshTrash();
 }
 
+// ===== 从操作系统拖入（模拟 OS：拖到文件夹图标 → 进该文件夹；拖到桌面 → 进桌面）=====
+// 浏览器原生 File System API：webkitGetAsEntry 递归遍历目录树，读取为文本写入 VFS。
+// 同名文件夹合并、同名文件另起「name (2)」；单文件体积受限（localStorage 容量有限）。
+const DROP_MAX_BYTES = 256 * 1024;
+const DROP_FORBIDDEN_EXTS = new Set([ 'in', 'out', 'exe', 'bak' ]);
+let dropHotEl = null;
+
+function isFileDrag(e) {
+  const dt = e.dataTransfer;
+  return !! dt && Array.from(dt.types || []).indexOf('Files') >= 0;
+}
+
+// 命中落点：文件夹图标 → 该文件夹；文件窗口 / 文件夹窗口列表 → 其层级；桌面空白 → 桌面
+function resolveDropTarget(x, y) {
+  const el = document.elementFromPoint(x, y);
+  if (! el || ! el.closest) return null;
+  const icon = el.closest('.dicon');
+  if (icon) {
+    const it = icon.dataset.vfsId ? vfsById(icon.dataset.vfsId) : null;
+    if (it && it.type === 'folder') return { parent: it.id, el: icon };
+    return { parent: 'desktop', el: $('desktop') }; // 文件/题目图标上方视为桌面
+  }
+  const body = el.closest('.vfs-body');
+  if (body && body.dataset.parent) return { parent: body.dataset.parent, el: body };
+  if (el.closest('.win') || el.closest('#topbar') || el.closest('#dock')) return null;
+  return { parent: 'desktop', el: $('desktop') };
+}
+
+function setDropHot(el) {
+  if (dropHotEl === el) return;
+  if (dropHotEl) dropHotEl.classList.remove('drop-hot');
+  dropHotEl = el || null;
+  if (dropHotEl) dropHotEl.classList.add('drop-hot');
+}
+
+function sanitizeName(n) {
+  return String(n || '').replace(/[\\/:*?"<>|]/g, '_').trim() || '未命名';
+}
+
+// 同名文件夹合并（复用已有节点），否则新建
+function findOrCreateFolder(name, parentId) {
+  const exist = vfs.items.find(i => i.parent === parentId && i.type === 'folder' && i.name === name);
+  if (exist) return exist;
+  const folder = { id: 'v' + (vfs.seq++), type: 'folder', name, content: '', parent: parentId };
+  vfs.items.push(folder);
+  return folder;
+}
+
+async function ingestFileEntry(file, parentId, stats) {
+  if (file.size > DROP_MAX_BYTES) { stats.oversized++; return; }
+  const ext = (file.name.match(/\.([^.]+)$/) || [ , '' ])[1].toLowerCase();
+  if (DROP_FORBIDDEN_EXTS.has(ext)) { stats.skip++; return; }
+  let text = '';
+  try { text = await file.text(); } catch (err) { text = ''; }
+  vfs.items.push({
+    id: 'v' + (vfs.seq++),
+    type: 'file',
+    name: uniqueName(sanitizeName(file.name), parentId),
+    content: text,
+    parent: parentId,
+  });
+  stats.files++;
+}
+
+async function ingestEntry(entry, parentId, stats) {
+  if (entry.isFile) {
+    const file = await new Promise((res, rej) => entry.file(res, rej));
+    await ingestFileEntry(file, parentId, stats);
+    return;
+  }
+  if (entry.isDirectory) {
+    const folder = findOrCreateFolder(sanitizeName(entry.name), parentId);
+    const reader = entry.createReader();
+    for (;;) {
+      // readEntries 每次只返回一批，必须循环读到空
+      const batch = await new Promise((res, rej) => reader.readEntries(res, rej));
+      if (! batch.length) break;
+      for (const sub of batch) await ingestEntry(sub, folder.id, stats);
+    }
+  }
+}
+
+async function ingestDataTransfer(dt, parentId) {
+  // 必须在任何 await 之前同步取出 entry，否则 dataTransfer 失效
+  let list = Array.from(dt.items || [])
+    .filter(i => i.kind === 'file')
+    .map(i => (i.webkitGetAsEntry ? i.webkitGetAsEntry() : null))
+    .filter(Boolean);
+  if (! list.length && dt.files)
+    list = Array.from(dt.files).map(f => ({ isFile: true, name: f.name, file: (cb) => cb(f) }));
+  const stats = { files: 0, oversized: 0, skip: 0 };
+  for (const entry of list) await ingestEntry(entry, parentId, stats);
+  saveVfs();
+  renderDesktop();
+  refreshVfsViews();
+  const parts = [];
+  if (stats.files) parts.push('已放入 ' + stats.files + ' 个文件');
+  if (stats.oversized) parts.push(stats.oversized + ' 个超过 256KB 已跳过');
+  if (stats.skip) parts.push(stats.skip + ' 个禁止格式已跳过');
+  showTip(parts.join('，') || '没有可导入的内容');
+}
+
+function initDesktopDrop() {
+  const desk = $('desktop');
+  // 阻止默认：否则拖到非接收区会触发浏览器直接打开该文件
+  document.addEventListener('dragover', (e) => { if (isFileDrag(e)) e.preventDefault(); });
+  document.addEventListener('drop', (e) => { if (isFileDrag(e)) e.preventDefault(); });
+  desk.addEventListener('dragover', (e) => {
+    if (! isFileDrag(e)) return;
+    e.preventDefault();
+    const t = resolveDropTarget(e.clientX, e.clientY);
+    setDropHot(t ? t.el : null);
+  });
+  desk.addEventListener('dragleave', (e) => {
+    if (! desk.contains(e.relatedTarget)) setDropHot(null);
+  });
+  desk.addEventListener('drop', async (e) => {
+    if (! isFileDrag(e)) return;
+    e.preventDefault();
+    const t = resolveDropTarget(e.clientX, e.clientY);
+    setDropHot(null);
+    if (! t || ! e.dataTransfer) return;
+    await ingestDataTransfer(e.dataTransfer, t.parent);
+  });
+  window.addEventListener('dragend', () => setDropHot(null));
+  window.addEventListener('blur', () => setDropHot(null));
+}
+
 // ===== 题目编辑器窗口 =====
 function openEditor(task) {
   const taskId = task.id;
@@ -866,6 +1003,7 @@ function initChrome() {
 // ===== 启动 =====
 loadVfs();
 initChrome();
+initDesktopDrop();
 updateMsgDot();
 loadTasks();
 pollAnnouncement();
