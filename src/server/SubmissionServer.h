@@ -71,6 +71,9 @@ class SubmissionServer : public QObject {
 	// 强制某用户下线（销毁其全部会话）
 	void forceLogout(const QString &username);
 
+	// ---- 定向消息：教师发给指定学生的私信，学生端经 /api/announce 轮询取走 ----
+	void sendDirectMessage(const QString &username, const QString &text);
+
 	bool loadConfig();
 	bool saveConfig() const;
 
@@ -107,8 +110,8 @@ class SubmissionServer : public QObject {
 	void appendAuditLog(const QString &username, int taskIndex, qint64 bytes, const QString &sha256);
 
 	// 整包上传：把选手文件夹原样镜像到 <contestDir>/source/<contestant>/
-	bool writeContestantFolder(const QString &contestant, const QJsonArray &files,
-	                           QJsonArray *resultsOut, QString *errOut);
+	bool writeContestantFolder(const QString &contestant, const QJsonArray &files, QJsonArray *resultsOut,
+	                           QString *errOut);
 	void appendFolderAuditLog(const QString &loginUser, const QString &contestant, int fileCount,
 	                          qint64 bytes);
 	void triggerJudgeContestant(const QString &contestant);
@@ -136,4 +139,6 @@ class SubmissionServer : public QObject {
 	QString notice_;
 	QString defaultUiMode_ = QStringLiteral("both");
 	int submissionCount_ = 0;
+	// 未取走的私信队列：用户名 -> [{text, ts}, ...]，学生端 poll 时一次性取空
+	QMap<QString, QJsonArray> pendingMessages_;
 };

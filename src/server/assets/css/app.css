@@ -399,3 +399,48 @@ textarea:focus-visible, [role="button"]:focus-visible {
   background: #FEFCE8;
   color: #854D0E;
 }
+.ann-item.ann-dm {
+  border-style: solid;
+  border-color: #84CC16;
+  background: #F7FEE7;
+  color: #365314;
+}
+
+/* ===== 老师私信 toast ===== */
+#toastHost {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+.toast {
+  background: #1A2E05;
+  color: #D9F99D;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 14px;
+  line-height: 1.5;
+  max-width: 320px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  animation: toastIn 0.25s ease;
+}
+.toast b {
+  display: block;
+  font-size: 11px;
+  color: #A3E635;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+.toast.hide {
+  opacity: 0;
+  transform: translateY(-8px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: none; }
+}

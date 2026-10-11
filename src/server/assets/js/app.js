@@ -503,12 +503,45 @@ async function renderSubmit() {
 }
 
 // ===== 公告 / 开考须知：15 秒轮询，横幅常显在页面顶部 =====
+// ===== 定向私信：随公告轮询取走，弹 toast + 横幅常显最近一条 =====
+const seenDm = new Set();
+let dmList = [];
+
+function showToast(text) {
+  let host = document.getElementById('toastHost');
+  if (!host) {
+    host = document.createElement('div');
+    host.id = 'toastHost';
+    document.body.appendChild(host);
+  }
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.innerHTML = '<b>老师私信</b>' + escapeHtml(text);
+  host.appendChild(t);
+  setTimeout(() => {
+    t.classList.add('hide');
+    setTimeout(() => t.remove(), 300);
+  }, 6000);
+}
+
 function renderAnnounce(d) {
   const bar = document.getElementById('announceBar');
+  (d.messages || []).forEach(m => {
+    const key = (m.ts || '') + '|' + (m.text || '');
+    if (seenDm.has(key)) return;
+    seenDm.add(key);
+    dmList.push(m);
+    if (dmList.length > 5) dmList.shift();
+    showToast(m.text || '');
+  });
   if (!bar) return;
   const parts = [];
   if (d.notice) parts.push('<div class="ann-item ann-notice"><b>开考须知</b>' + escapeHtml(d.notice) + '</div>');
   if (d.announcement) parts.push('<div class="ann-item ann-live"><b>公告</b>' + escapeHtml(d.announcement) + '</div>');
+  if (dmList.length) {
+    const last = dmList[dmList.length - 1];
+    parts.push('<div class="ann-item ann-dm"><b>老师私信</b>' + escapeHtml(last.text || '') + '</div>');
+  }
   if (!parts.length) { bar.hidden = true; bar.innerHTML = ''; return; }
   bar.innerHTML = parts.join('');
   bar.hidden = false;

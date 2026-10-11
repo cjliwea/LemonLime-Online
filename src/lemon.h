@@ -23,9 +23,11 @@ class Contest;
 class Settings;
 class OptionsDialog;
 class OnlinePanel;
+class QButtonGroup;
 class QLabel;
 class QPushButton;
 class QTableWidget;
+class QWidget;
 
 class LemonLime : public QMainWindow {
 	Q_OBJECT
@@ -50,6 +52,10 @@ class LemonLime : public QMainWindow {
 	QPushButton *statusCopyBtn{};
 	QPushButton *statusBrowserBtn{};
 	QPushButton *statusFirewallBtn{};
+	// 顶部二级导航：「在线服务」组按钮 + 子导航条（仅在线服务各页显示）
+	QPushButton *onlineNavBtn_{};
+	QWidget *subNavBar_{};
+	QButtonGroup *subGroup_{};
 	QFileSystemWatcher *dataDirWatcher;
 	QString curFile;
 	QSignalMapper *signalMapper;

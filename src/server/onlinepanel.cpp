@@ -20,12 +20,13 @@
 #include <QDateTimeEdit>
 #include <QDesktopServices>
 #include <QDir>
+#include <QEvent>
 #include <QFile>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QFont>
-#include <QFrame>
 #include <QFormLayout>
+#include <QFrame>
 #include <QGridLayout>
 #include <QGroupBox>
 #include <QGuiApplication>
@@ -49,63 +50,63 @@
 #include <QStyle>
 #include <QTableWidget>
 #include <QTcpServer>
-#include <QTime>
 #include <QTextStream>
+#include <QTime>
 #include <QUrl>
 #include <QVBoxLayout>
 
 using namespace Qt::StringLiterals;
 
 namespace {
-const char *kPanelQss =
-    "QGroupBox { border: 1px solid #E5E7EB; border-radius: 10px; "
-    "  margin-top: 4px; padding: 24px 12px 8px 12px; background: #FFFFFF; }"
-    "QGroupBox::title { subcontrol-origin: border; subcontrol-position: top left; "
-    "  left: 12px; top: 4px; padding: 0 4px; color: #475569; font-weight: 600; }"
-    "QPushButton { padding: 5px 12px; border: 1px solid #D4D4D8; "
-    "  border-radius: 6px; background: #FFFFFF; }"
-    "QPushButton:hover { background: #F4F4F5; }"
-    "QPushButton:disabled { color: #A1A1AA; background: #FAFAFA; }"
-    "QPushButton#PrimaryBtn { background: #84CC16; color: #1A2E05; "
-    "  border: 1px solid #65A30D; font-weight: 600; }"
-    "QPushButton#PrimaryBtn:hover { background: #65A30D; color: #FFFFFF; }"
-    "QPushButton#DangerBtn { background: #FEE2E2; color: #991B1B; "
-    "  border: 1px solid #FCA5A5; font-weight: 600; }"
-    "QPushButton#DangerBtn:hover { background: #FECACA; }"
-    "QLineEdit, QComboBox, QSpinBox, QDateTimeEdit, QPlainTextEdit { "
-    "  min-height: 20px; padding: 6px 10px; border: 1px solid #D4D4D8; border-radius: 6px; "
-    "  background: #FFFFFF; }"
-    "QLineEdit:focus, QComboBox:focus, QSpinBox:focus, QDateTimeEdit:focus { "
-    "  border-color: #84CC16; }"
-    "QTableWidget, QListWidget { border: 1px solid #E5E7EB; border-radius: 6px; "
-    "  gridline-color: #F1F5F9; background: #FFFFFF; }"
-    "QHeaderView::section { background: #F8FAFC; padding: 6px; "
-    "  border: 0; border-bottom: 1px solid #E5E7EB; color: #475569; }"
-    "QLabel#MetricValue { font-size: 21px; font-weight: 600; color: #0F172A; }"
-    "QLabel#MetricLabel { font-size: 11px; color: #94A3B8; }"
-    "QLabel#Hint { color: #94A3B8; font-size: 11px; }"
-    // 日志页（对齐预览版）：白色卡片 + 标题行，深色等宽日志区
-    "QFrame#LogCard { background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 10px; }"
-    "QLabel#LogTitle { font-size: 13px; font-weight: 600; color: #0F172A; }"
-    "QPushButton#sbtn { border: 1px solid #E5E7EB; background: #FFFFFF; border-radius: 6px; "
-    "  padding: 3px 10px; font-size: 12px; color: #475569; }"
-    "QPushButton#sbtn:hover { border-color: #84CC16; color: #3F6212; background: #FFFFFF; }"
-    "QPlainTextEdit#LogView { background: #0F172A; color: #C7D2FE; border: 0; border-radius: 9px; "
-    "  padding: 11px 13px; font-family: Consolas, monospace; font-size: 12px; }";
+	const char *kPanelQss =
+	    "QGroupBox { border: 1px solid #E5E7EB; border-radius: 10px; "
+	    "  margin-top: 4px; padding: 24px 12px 8px 12px; background: #FFFFFF; }"
+	    "QGroupBox::title { subcontrol-origin: border; subcontrol-position: top left; "
+	    "  left: 12px; top: 4px; padding: 0 4px; color: #475569; font-weight: 600; }"
+	    "QPushButton { padding: 5px 12px; border: 1px solid #D4D4D8; "
+	    "  border-radius: 6px; background: #FFFFFF; }"
+	    "QPushButton:hover { background: #F4F4F5; }"
+	    "QPushButton:disabled { color: #A1A1AA; background: #FAFAFA; }"
+	    "QPushButton#PrimaryBtn { background: #84CC16; color: #1A2E05; "
+	    "  border: 1px solid #65A30D; font-weight: 600; }"
+	    "QPushButton#PrimaryBtn:hover { background: #65A30D; color: #FFFFFF; }"
+	    "QPushButton#DangerBtn { background: #FEE2E2; color: #991B1B; "
+	    "  border: 1px solid #FCA5A5; font-weight: 600; }"
+	    "QPushButton#DangerBtn:hover { background: #FECACA; }"
+	    "QLineEdit, QComboBox, QSpinBox, QDateTimeEdit, QPlainTextEdit { "
+	    "  min-height: 20px; padding: 6px 10px; border: 1px solid #D4D4D8; border-radius: 6px; "
+	    "  background: #FFFFFF; }"
+	    "QLineEdit:focus, QComboBox:focus, QSpinBox:focus, QDateTimeEdit:focus { "
+	    "  border-color: #84CC16; }"
+	    "QTableWidget, QListWidget { border: 1px solid #E5E7EB; border-radius: 6px; "
+	    "  gridline-color: #F1F5F9; background: #FFFFFF; }"
+	    "QHeaderView::section { background: #F8FAFC; padding: 6px; "
+	    "  border: 0; border-bottom: 1px solid #E5E7EB; color: #475569; }"
+	    "QLabel#MetricValue { font-size: 21px; font-weight: 600; color: #0F172A; }"
+	    "QLabel#MetricLabel { font-size: 11px; color: #94A3B8; }"
+	    "QLabel#Hint { color: #94A3B8; font-size: 11px; }"
+	    // 日志页（对齐预览版）：白色卡片 + 标题行，深色等宽日志区
+	    "QFrame#LogCard { background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 10px; }"
+	    "QLabel#LogTitle { font-size: 13px; font-weight: 600; color: #0F172A; }"
+	    "QPushButton#sbtn { border: 1px solid #E5E7EB; background: #FFFFFF; border-radius: 6px; "
+	    "  padding: 3px 10px; font-size: 12px; color: #475569; }"
+	    "QPushButton#sbtn:hover { border-color: #84CC16; color: #3F6212; background: #FFFFFF; }"
+	    "QPlainTextEdit#LogView { background: #0F172A; color: #C7D2FE; border: 0; border-radius: 9px; "
+	    "  padding: 11px 13px; font-family: Consolas, monospace; font-size: 12px; }";
 } // namespace
 
-OnlinePanel::OnlinePanel(QWidget *settingsPage, QWidget *accountsPage, QWidget *noticePage,
-                         QWidget *livePage, QWidget *logsPage, QObject *parent)
-    : QObject(parent), settingsPage_(settingsPage), accountsPage_(accountsPage),
-      noticePage_(noticePage), livePage_(livePage), logsPage_(logsPage) {
+OnlinePanel::OnlinePanel(QWidget *settingsPage, QWidget *accountsPage, QWidget *noticePage, QWidget *livePage,
+                         QWidget *logsPage, QObject *parent)
+    : QObject(parent), settingsPage_(settingsPage), accountsPage_(accountsPage), noticePage_(noticePage),
+      livePage_(livePage), logsPage_(logsPage) {
 	server_ = new SubmissionServer(this);
 	connect(server_, &SubmissionServer::logMessage, this, &OnlinePanel::appendLog);
 	connect(server_, &SubmissionServer::submissionReceived, this,
 	        [this](const QString &user, const QString &task, int bytes) {
 		        if (feedList_) {
-			        auto *item = new QListWidgetItem(
-			            QTime::currentTime().toString("hh:mm:ss") + "  " + user + " 提交 " + task +
-			            "（" + QString::number(bytes) + " 字节）");
+			        auto *item =
+			            new QListWidgetItem(QTime::currentTime().toString("hh:mm:ss") + "  " + user +
+			                                " 提交 " + task + "（" + QString::number(bytes) + " 字节）");
 			        feedList_->insertItem(0, item);
 			        while (feedList_->count() > 100)
 				        delete feedList_->takeItem(feedList_->count() - 1);
@@ -136,8 +137,7 @@ void OnlinePanel::bindContest(Contest *contest, const QString &contestDir) {
 	refreshStatementHint();
 	refreshContestWindow();
 	if (contestTitleLabel_)
-		contestTitleLabel_->setText(contest ? contest->getContestTitle()
-		                                    : tr("（尚未打开比赛）"));
+		contestTitleLabel_->setText(contest ? contest->getContestTitle() : tr("（尚未打开比赛）"));
 	// 已持久化的开考须知回填到编辑框
 	if (noticeEdit_)
 		noticeEdit_->setPlainText(server_->notice());
@@ -186,7 +186,7 @@ QWidget *OnlinePanel::buildListenGroup(QWidget *parent) {
 	bindCombo_->addItem(tr("仅本机 (127.0.0.1)"), QStringLiteral("127.0.0.1"));
 	const auto addrs = QNetworkInterface::allAddresses();
 	for (const auto &a : addrs) {
-		if (a.protocol() == QAbstractSocket::IPv4Protocol && !a.isLoopback())
+		if (a.protocol() == QAbstractSocket::IPv4Protocol && ! a.isLoopback())
 			bindCombo_->addItem(a.toString(), a.toString());
 	}
 	portSpin_ = new QSpinBox(listenBox);
@@ -288,9 +288,8 @@ QWidget *OnlinePanel::buildJudgeGroup(QWidget *parent) {
 		}
 	});
 	judgeLayout->addWidget(autoJudgeBox_);
-	auto *hint = new QLabel(
-	    tr("关闭时为手动评测：学生提交只写入 source 目录，老师在主窗口手动点评测。"),
-	    judgeBox);
+	auto *hint =
+	    new QLabel(tr("关闭时为手动评测：学生提交只写入 source 目录，老师在主窗口手动点评测。"), judgeBox);
 	hint->setObjectName(QStringLiteral("Hint"));
 	hint->setWordWrap(true);
 	judgeLayout->addWidget(hint);
@@ -382,9 +381,10 @@ QWidget *OnlinePanel::buildStatementGroup(QWidget *parent) {
 	pdfRow->addWidget(setStatementBtn_);
 	pdfRow->addWidget(clearStatementBtn_);
 	pdfLayout->addLayout(pdfRow);
-	auto *hint = new QLabel(
-	    tr("题面 PDF、大样例压缩包或任意单个文件均可在此下发，会原样提供给学生在“题面下载”处获取；重复选择会替换已下发的文件。"),
-	    pdfBox);
+	auto *hint = new QLabel(tr("题面 "
+	                           "PDF、大样例压缩包或任意单个文件均可在此下发，会原样提供给学生在“题面下载”处获"
+	                           "取；重复选择会替换已下发的文件。"),
+	                        pdfBox);
 	hint->setObjectName(QStringLiteral("Hint"));
 	pdfLayout->addWidget(hint);
 
@@ -493,12 +493,37 @@ void OnlinePanel::buildNoticePage(QWidget *page) {
 	annBtnRow->addWidget(clearAnnBtn);
 	annBtnRow->addStretch();
 	annLayout->addLayout(annBtnRow);
-	auto *annHint = new QLabel(
-	    tr("将以横幅显示在所有已登录学生的页面顶部（15 秒内可见）。"),
-	    annBox);
+	auto *annHint = new QLabel(tr("将以横幅显示在所有已登录学生的页面顶部（15 秒内可见）。"), annBox);
 	annHint->setObjectName(QStringLiteral("Hint"));
 	annHint->setWordWrap(true);
 	annLayout->addWidget(annHint);
+
+	// --- 定向消息（发给指定学生，学生端经公告轮询取走）
+	auto *dmBox = new QGroupBox(tr("定向消息（发给指定学生）"), page);
+	auto *dmLayout = new QVBoxLayout(dmBox);
+	auto *dmRow = new QHBoxLayout();
+	dmRow->addWidget(new QLabel(tr("收件学生"), dmBox));
+	dmUserCombo_ = new QComboBox(dmBox);
+	dmUserCombo_->setEditable(true);
+	dmUserCombo_->setMinimumHeight(30);
+	dmUserCombo_->setMinimumContentsLength(12);
+	dmUserCombo_->installEventFilter(this); // 点开下拉时刷新在线/账号名单
+	dmRow->addWidget(dmUserCombo_);
+	dmTextEdit_ = new QLineEdit(dmBox);
+	dmTextEdit_->setPlaceholderText(tr("消息内容，例如：请到讲台来一趟"));
+	dmRow->addWidget(dmTextEdit_, 1);
+	auto *dmSendBtn = new QPushButton(tr("发送"), dmBox);
+	dmSendBtn->setObjectName(QStringLiteral("PrimaryBtn"));
+	connect(dmSendBtn, &QPushButton::clicked, this, &OnlinePanel::onSendDirectMessage);
+	dmRow->addWidget(dmSendBtn);
+	dmLayout->addLayout(dmRow);
+	auto *dmHint =
+	    new QLabel(tr("学生端轮询公告时取走私信并弹窗提示；学生未在线时保留到其下次打开页面。"), dmBox);
+	dmHint->setObjectName(QStringLiteral("Hint"));
+	dmHint->setWordWrap(true);
+	dmLayout->addWidget(dmHint);
+	dmHistory_ = new QListWidget(dmBox);
+	dmLayout->addWidget(dmHistory_);
 
 	// --- 历史
 	auto *historyBox = new QGroupBox(tr("历史公告"), page);
@@ -510,8 +535,7 @@ void OnlinePanel::buildNoticePage(QWidget *page) {
 	auto *noticeBox = new QGroupBox(tr("开考须知（常驻显示）"), page);
 	auto *noticeLayout = new QVBoxLayout(noticeBox);
 	noticeEdit_ = new QPlainTextEdit(noticeBox);
-	noticeEdit_->setPlaceholderText(
-	    tr("常驻显示在所有学生页面的规则说明，例如：\"保持安静，独立作答…\""));
+	noticeEdit_->setPlaceholderText(tr("常驻显示在所有学生页面的规则说明，例如：\"保持安静，独立作答…\""));
 	noticeLayout->addWidget(noticeEdit_);
 	auto *noticeBtnRow = new QHBoxLayout();
 	auto *saveNoticeBtn = new QPushButton(tr("保存须知"), noticeBox);
@@ -528,11 +552,12 @@ void OnlinePanel::buildNoticePage(QWidget *page) {
 	noticeLayout->addLayout(noticeBtnRow);
 
 	layout->addWidget(annBox, 0, 0);
-	layout->addWidget(historyBox, 1, 0);
-	layout->addWidget(noticeBox, 0, 1, 2, 1);
+	layout->addWidget(dmBox, 1, 0);
+	layout->addWidget(historyBox, 2, 0);
+	layout->addWidget(noticeBox, 0, 1, 3, 1);
 	layout->setColumnStretch(0, 1);
 	layout->setColumnStretch(1, 1);
-	layout->setRowStretch(1, 1);
+	layout->setRowStretch(2, 1);
 	if (auto *box = qobject_cast<QBoxLayout *>(page->layout()))
 		box->addWidget(host, 1);
 }
@@ -576,28 +601,26 @@ void OnlinePanel::buildLivePage(QWidget *page) {
 	auto *onlineBox = new QGroupBox(tr("在线学生"), page);
 	auto *onlineLayout = new QVBoxLayout(onlineBox);
 	onlineTable_ = new QTableWidget(0, 3, onlineBox);
-	onlineTable_->setHorizontalHeaderLabels(
-	    {tr("用户名"), tr("显示名"), tr("最近活跃")});
+	onlineTable_->setHorizontalHeaderLabels({tr("用户名"), tr("显示名"), tr("最近活跃")});
 	onlineTable_->horizontalHeader()->setStretchLastSection(true);
 	onlineTable_->verticalHeader()->setVisible(false);
 	onlineTable_->setSelectionBehavior(QAbstractItemView::SelectRows);
 	onlineTable_->setEditTriggers(QAbstractItemView::NoEditTriggers);
 	onlineTable_->setContextMenuPolicy(Qt::CustomContextMenu);
-	connect(onlineTable_, &QTableWidget::customContextMenuRequested, this,
-	        [this](const QPoint &pos) {
-		        const auto rows = onlineTable_->selectionModel()->selectedRows();
-		        if (rows.isEmpty())
-			        return;
-		        const auto name = onlineTable_->item(rows.first().row(), 0)->text();
-		        QMenu menu(onlineTable_);
-		        QAction *kick = menu.addAction(tr("强制下线"));
-		        QAction *chosen = menu.exec(onlineTable_->viewport()->mapToGlobal(pos));
-		        if (chosen == kick) {
-			        // 注销该用户全部会话；学生下次请求回到登录页
-			        server_->forceLogout(name);
-			        appendLog(tr("用户 %1 已被强制下线").arg(name));
-		        }
-	        });
+	connect(onlineTable_, &QTableWidget::customContextMenuRequested, this, [this](const QPoint &pos) {
+		const auto rows = onlineTable_->selectionModel()->selectedRows();
+		if (rows.isEmpty())
+			return;
+		const auto name = onlineTable_->item(rows.first().row(), 0)->text();
+		QMenu menu(onlineTable_);
+		QAction *kick = menu.addAction(tr("强制下线"));
+		QAction *chosen = menu.exec(onlineTable_->viewport()->mapToGlobal(pos));
+		if (chosen == kick) {
+			// 注销该用户全部会话；学生下次请求回到登录页
+			server_->forceLogout(name);
+			appendLog(tr("用户 %1 已被强制下线").arg(name));
+		}
+	});
 	onlineLayout->addWidget(onlineTable_);
 	splitRow->addWidget(onlineBox, 3);
 
@@ -672,7 +695,7 @@ void OnlinePanel::toggleServer() {
 	QHostAddress addr(addrStr);
 	auto port = static_cast<quint16>(portSpin_->value());
 	QString err;
-	if (!server_->start(addr, port, &err)) {
+	if (! server_->start(addr, port, &err)) {
 		if (portAvailable(addr, port)) {
 			// 端口本身空闲，是其他原因（权限/网卡等）
 			QMessageBox::critical(nullptr, tr("错误"), tr("启动失败：%1").arg(err));
@@ -695,10 +718,10 @@ void OnlinePanel::toggleServer() {
 		if (alt != 0)
 			retryBtn = box.addButton(tr("改用端口 %1 重试").arg(alt), QMessageBox::AcceptRole);
 		box.exec();
-		if (!retryBtn || box.clickedButton() != retryBtn)
+		if (! retryBtn || box.clickedButton() != retryBtn)
 			return;
 		err.clear();
-		if (!server_->start(addr, alt, &err)) {
+		if (! server_->start(addr, alt, &err)) {
 			QMessageBox::critical(nullptr, tr("错误"), tr("启动失败：%1").arg(err));
 			return;
 		}
@@ -713,12 +736,11 @@ void OnlinePanel::toggleServer() {
 void OnlinePanel::refreshServerUi() {
 	const bool running = server_ && server_->isRunning();
 	startStopBtn_->setText(running ? tr("停止服务") : tr("启动"));
-	startStopBtn_->setObjectName(running ? QStringLiteral("DangerBtn")
-	                                     : QStringLiteral("PrimaryBtn"));
+	startStopBtn_->setObjectName(running ? QStringLiteral("DangerBtn") : QStringLiteral("PrimaryBtn"));
 	startStopBtn_->style()->unpolish(startStopBtn_);
 	startStopBtn_->style()->polish(startStopBtn_);
-	bindCombo_->setEnabled(!running);
-	portSpin_->setEnabled(!running);
+	bindCombo_->setEnabled(! running);
+	portSpin_->setEnabled(! running);
 	statusLabel_->setText(running ? tr("正在运行") : tr("已停止"));
 	urlLabel_->setText(running ? serviceUrl_ : QStringLiteral("—"));
 	copyUrlBtn_->setEnabled(running);
@@ -727,18 +749,17 @@ void OnlinePanel::refreshServerUi() {
 }
 
 void OnlinePanel::appendLog(const QString &msg) {
-	if (!logView_)
+	if (! logView_)
 		return;
 	// 对齐预览版：时间戳灰色、正文柠檬绿，逐行追加（超出上限自动丢弃最旧的行）
 	logView_->appendHtml(QStringLiteral("<span style=\"color:#64748B;\">[%1]</span>"
 	                                    "<span style=\"color:#A3E635;\"> %2</span>")
-	                         .arg(QDateTime::currentDateTime().toString("hh:mm:ss"),
-	                              msg.toHtmlEscaped()));
+	                         .arg(QDateTime::currentDateTime().toString("hh:mm:ss"), msg.toHtmlEscaped()));
 }
 
 QString OnlinePanel::detectLocalIp() const {
 	for (const auto &a : QNetworkInterface::allAddresses()) {
-		if (a.protocol() == QAbstractSocket::IPv4Protocol && !a.isLoopback())
+		if (a.protocol() == QAbstractSocket::IPv4Protocol && ! a.isLoopback())
 			return a.toString();
 	}
 	return QStringLiteral("127.0.0.1");
@@ -747,15 +768,15 @@ QString OnlinePanel::detectLocalIp() const {
 // ---------------------------------------------------------------- users
 
 void OnlinePanel::onGenerateUsers() {
-	if (!server_ || contestDir_.isEmpty()) {
+	if (! server_ || contestDir_.isEmpty()) {
 		QMessageBox::warning(nullptr, tr("提示"), tr("请先打开一场比赛。"));
 		return;
 	}
 	auto *store = server_->userStore();
-	if (!store)
+	if (! store)
 		return;
 	const auto batch = store->generateBatch(genCountSpin_->value(), genPrefixEdit_->text(), 8);
-	if (!store->saveToContestDir(contestDir_)) {
+	if (! store->saveToContestDir(contestDir_)) {
 		QMessageBox::critical(nullptr, tr("错误"), tr("无法保存 online_users.json"));
 		return;
 	}
@@ -765,10 +786,10 @@ void OnlinePanel::onGenerateUsers() {
 }
 
 void OnlinePanel::onAddUser() {
-	if (!server_ || contestDir_.isEmpty())
+	if (! server_ || contestDir_.isEmpty())
 		return;
 	auto *store = server_->userStore();
-	if (!store)
+	if (! store)
 		return;
 	const auto name = addNameEdit_->text().trimmed();
 	const auto pwd = addPwdEdit_->text();
@@ -777,8 +798,7 @@ void OnlinePanel::onAddUser() {
 		return;
 	}
 	if (store->exists(name)) {
-		if (QMessageBox::question(nullptr, tr("确认"),
-		                          tr("用户 '%1' 已存在，是否覆盖其密码？").arg(name)) !=
+		if (QMessageBox::question(nullptr, tr("确认"), tr("用户 '%1' 已存在，是否覆盖其密码？").arg(name)) !=
 		    QMessageBox::Yes)
 			return;
 	}
@@ -791,16 +811,15 @@ void OnlinePanel::onAddUser() {
 }
 
 void OnlinePanel::onRemoveUser() {
-	if (!server_ || contestDir_.isEmpty())
+	if (! server_ || contestDir_.isEmpty())
 		return;
 	auto *store = server_->userStore();
-	if (!store)
+	if (! store)
 		return;
 	const auto rows = usersTable_->selectionModel()->selectedRows();
 	if (rows.isEmpty())
 		return;
-	if (QMessageBox::question(nullptr, tr("确认"),
-	                          tr("确定删除选中的 %1 个用户？").arg(rows.size())) !=
+	if (QMessageBox::question(nullptr, tr("确认"), tr("确定删除选中的 %1 个用户？").arg(rows.size())) !=
 	    QMessageBox::Yes)
 		return;
 	for (const auto &idx : rows) {
@@ -812,21 +831,20 @@ void OnlinePanel::onRemoveUser() {
 }
 
 void OnlinePanel::onExportCsv() {
-	if (!server_)
+	if (! server_)
 		return;
 	auto *store = server_->userStore();
-	if (!store || store->count() == 0) {
+	if (! store || store->count() == 0) {
 		QMessageBox::information(nullptr, tr("提示"), tr("当前没有可导出的账号。"));
 		return;
 	}
 	const auto path = QFileDialog::getSaveFileName(
-	    nullptr, tr("导出 CSV"),
-	    QDir(contestDir_).filePath(QStringLiteral("online_users_passwords.csv")),
+	    nullptr, tr("导出 CSV"), QDir(contestDir_).filePath(QStringLiteral("online_users_passwords.csv")),
 	    tr("CSV 文件 (*.csv)"));
 	if (path.isEmpty())
 		return;
 	QFile f(path);
-	if (!f.open(QFile::WriteOnly | QFile::Text)) {
+	if (! f.open(QFile::WriteOnly | QFile::Text)) {
 		QMessageBox::critical(nullptr, tr("错误"), f.errorString());
 		return;
 	}
@@ -872,21 +890,21 @@ static QStringList parseCsvLine(const QString &line) {
 }
 
 void OnlinePanel::onImportCsv() {
-	if (contestDir_.isEmpty() || !server_) {
+	if (contestDir_.isEmpty() || ! server_) {
 		QMessageBox::warning(nullptr, tr("提示"), tr("请先打开一场比赛。"));
 		return;
 	}
 	auto *store = server_->userStore();
-	if (!store)
+	if (! store)
 		return;
 
-	const auto path = QFileDialog::getOpenFileName(nullptr, tr("选择 CSV 文件"), contestDir_,
-	                                               tr("CSV 文件 (*.csv *.txt)"));
+	const auto path =
+	    QFileDialog::getOpenFileName(nullptr, tr("选择 CSV 文件"), contestDir_, tr("CSV 文件 (*.csv *.txt)"));
 	if (path.isEmpty())
 		return;
 
 	QFile f(path);
-	if (!f.open(QFile::ReadOnly | QFile::Text)) {
+	if (! f.open(QFile::ReadOnly | QFile::Text)) {
 		QMessageBox::critical(nullptr, tr("错误"), f.errorString());
 		return;
 	}
@@ -898,7 +916,7 @@ void OnlinePanel::onImportCsv() {
 	bool overwriteAll = false;
 	bool skipAllConflicts = false;
 
-	while (!ts.atEnd()) {
+	while (! ts.atEnd()) {
 		++lineNum;
 		QString line = ts.readLine();
 		if (lineNum == 1 && line.startsWith(QChar(0xFEFF)))
@@ -910,8 +928,8 @@ void OnlinePanel::onImportCsv() {
 		// header detection: first line containing 'username' / '用户名' is treated as header
 		if (lineNum == 1) {
 			const auto lower = trimmed.toLower();
-			if (lower.contains("username") || lower.contains("用户名") ||
-			    lower.contains("user_name") || lower.contains("name,"))
+			if (lower.contains("username") || lower.contains("用户名") || lower.contains("user_name") ||
+			    lower.contains("name,"))
 				continue;
 		}
 
@@ -938,8 +956,7 @@ void OnlinePanel::onImportCsv() {
 			// no password column in this row → auto-generate one
 			QByteArray buf(8, Qt::Uninitialized);
 			auto *gen = QRandomGenerator::system();
-			static const char alphabet[] =
-			    "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+			static const char alphabet[] = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
 			for (int i = 0; i < buf.size(); ++i)
 				buf[i] = alphabet[gen->bounded(int(sizeof(alphabet) - 1))];
 			password = QString::fromLatin1(buf);
@@ -950,7 +967,7 @@ void OnlinePanel::onImportCsv() {
 				++skipped;
 				continue;
 			}
-			if (!overwriteAll) {
+			if (! overwriteAll) {
 				QMessageBox box;
 				box.setIcon(QMessageBox::Question);
 				box.setWindowTitle(tr("用户已存在"));
@@ -982,24 +999,21 @@ void OnlinePanel::onImportCsv() {
 
 	store->saveToContestDir(contestDir_);
 	refreshUsersTable();
-	appendLog(tr("CSV 导入完成：新增 %1，覆盖 %2，跳过 %3")
-	              .arg(added)
-	              .arg(overwritten)
-	              .arg(skipped));
+	appendLog(tr("CSV 导入完成：新增 %1，覆盖 %2，跳过 %3").arg(added).arg(overwritten).arg(skipped));
 	QMessageBox::information(
 	    nullptr, tr("导入结果"),
 	    tr("新增 %1 个账号，覆盖 %2 个已有账号，跳过 %3 行。").arg(added).arg(overwritten).arg(skipped));
 }
 
 void OnlinePanel::onSavePlaintextList() {
-	if (contestDir_.isEmpty() || !server_)
+	if (contestDir_.isEmpty() || ! server_)
 		return;
 	auto *store = server_->userStore();
-	if (!store || store->count() == 0)
+	if (! store || store->count() == 0)
 		return;
 	const auto path = QDir(contestDir_).filePath(QStringLiteral("online_users_passwords.csv"));
 	QFile f(path);
-	if (!f.open(QFile::WriteOnly | QFile::Text))
+	if (! f.open(QFile::WriteOnly | QFile::Text))
 		return;
 	QTextStream ts(&f);
 	ts.setEncoding(QStringConverter::Utf8);
@@ -1010,10 +1024,10 @@ void OnlinePanel::onSavePlaintextList() {
 }
 
 void OnlinePanel::refreshUsersTable() {
-	if (!server_ || !usersTable_)
+	if (! server_ || ! usersTable_)
 		return;
 	auto *store = server_->userStore();
-	if (!store)
+	if (! store)
 		return;
 	const auto names = store->allUsernames();
 	const auto onlineList = server_->onlineUsernames();
@@ -1037,8 +1051,8 @@ void OnlinePanel::refreshUsersTable() {
 		usersTable_->setItem(i, 3, stItem);
 		// 上次登录时间
 		const auto login = server_->lastLoginOf(n);
-		auto *loginItem = new QTableWidgetItem(login.isValid() ? login.toString("MM-dd hh:mm:ss")
-		                                                       : QStringLiteral("—"));
+		auto *loginItem =
+		    new QTableWidgetItem(login.isValid() ? login.toString("MM-dd hh:mm:ss") : QStringLiteral("—"));
 		loginItem->setForeground(QBrush(QColor("#64748B")));
 		usersTable_->setItem(i, 4, loginItem);
 	}
@@ -1056,7 +1070,7 @@ void OnlinePanel::refreshLive() {
 }
 
 void OnlinePanel::refreshOnlineTable() {
-	if (!onlineTable_ || !server_)
+	if (! onlineTable_ || ! server_)
 		return;
 	const auto names = server_->onlineUsernames();
 	auto *store = server_->userStore();
@@ -1066,9 +1080,8 @@ void OnlinePanel::refreshOnlineTable() {
 		onlineTable_->setItem(i, 0, new QTableWidgetItem(n));
 		onlineTable_->setItem(i, 1, new QTableWidgetItem(store ? store->displayNameOf(n) : n));
 		const auto seen = server_->lastSeenOf(n);
-		onlineTable_->setItem(i, 2, new QTableWidgetItem(seen.isValid()
-		                                                     ? seen.toString("hh:mm:ss")
-		                                                     : QStringLiteral("—")));
+		onlineTable_->setItem(
+		    i, 2, new QTableWidgetItem(seen.isValid() ? seen.toString("hh:mm:ss") : QStringLiteral("—")));
 	}
 }
 
@@ -1077,9 +1090,9 @@ void OnlinePanel::refreshOnlineTable() {
 void OnlinePanel::onBroadcastAnnouncement() {
 	const auto text = annText_->toPlainText().trimmed();
 	server_->setAnnouncement(text);
-	if (!text.isEmpty()) {
-		annHistory_->insertItem(0, new QListWidgetItem(
-		                               QDateTime::currentDateTime().toString("hh:mm") + "  " + text));
+	if (! text.isEmpty()) {
+		annHistory_->insertItem(
+		    0, new QListWidgetItem(QDateTime::currentDateTime().toString("hh:mm") + "  " + text));
 		while (annHistory_->count() > 50)
 			delete annHistory_->takeItem(annHistory_->count() - 1);
 		annText_->clear();
@@ -1093,6 +1106,52 @@ void OnlinePanel::onClearAnnouncement() {
 
 void OnlinePanel::onSaveNotice() { server_->setNotice(noticeEdit_->toPlainText().trimmed()); }
 
+void OnlinePanel::onSendDirectMessage() {
+	const auto user = dmUserCombo_->currentText().trimmed();
+	const auto text = dmTextEdit_->text().trimmed();
+	if (user.isEmpty() || text.isEmpty()) {
+		QMessageBox::information(nullptr, tr("提示"), tr("请先选择收件学生并填写消息内容。"));
+		return;
+	}
+	if (server_->userStore() && ! server_->userStore()->exists(user)) {
+		QMessageBox::warning(nullptr, tr("提示"),
+		                     tr("账号名单中不存在学生「%1」，请先在账号页添加。").arg(user));
+		return;
+	}
+	server_->sendDirectMessage(user, text);
+	dmHistory_->insertItem(
+	    0, new QListWidgetItem(QDateTime::currentDateTime().toString("hh:mm") + "  → " + user + "：" + text));
+	while (dmHistory_->count() > 50)
+		delete dmHistory_->takeItem(dmHistory_->count() - 1);
+	dmTextEdit_->clear();
+}
+
+void OnlinePanel::refreshDmUsers() {
+	if (! dmUserCombo_)
+		return;
+	QStringList names;
+	if (server_) {
+		names += server_->onlineUsernames(); // 在线学生排在前面
+		if (server_->userStore()) {
+			const auto all = server_->userStore()->allUsernames();
+			for (const auto &u : all)
+				if (! names.contains(u))
+					names += u;
+		}
+	}
+	const auto cur = dmUserCombo_->currentText();
+	dmUserCombo_->clear();
+	dmUserCombo_->addItems(names);
+	if (! cur.isEmpty())
+		dmUserCombo_->setCurrentText(cur);
+}
+
+bool OnlinePanel::eventFilter(QObject *watched, QEvent *event) {
+	if (watched == dmUserCombo_ && event->type() == QEvent::MouseButtonPress)
+		refreshDmUsers();
+	return QObject::eventFilter(watched, event);
+}
+
 // ---------------------------------------------------------------- statement
 
 void OnlinePanel::onSetStatement() {
@@ -1100,9 +1159,9 @@ void OnlinePanel::onSetStatement() {
 		QMessageBox::warning(nullptr, tr("提示"), tr("请先打开一场比赛。"));
 		return;
 	}
-	const auto src = QFileDialog::getOpenFileName(
-	    nullptr, tr("选择题面及样例"), QString(),
-	    tr("题面与样例 (*.pdf *.zip *.7z *.rar *.tar.gz);;所有文件 (*)"));
+	const auto src =
+	    QFileDialog::getOpenFileName(nullptr, tr("选择题面及样例"), QString(),
+	                                 tr("题面与样例 (*.pdf *.zip *.7z *.rar *.tar.gz);;所有文件 (*)"));
 	if (src.isEmpty())
 		return;
 	const QFileInfo srcInfo(src);
@@ -1116,28 +1175,27 @@ void OnlinePanel::onSetStatement() {
 	}
 	// 单槽位：新选择的文件会替换当前下发的文件
 	const auto current = SubmissionServer::findStatementFile(contestDir_);
-	if (!current.isEmpty() &&
-	    QMessageBox::question(nullptr, tr("确认"),
-	                          tr("已下发 %1，是否替换为 %2？")
-	                              .arg(QFileInfo(current).fileName(), srcInfo.fileName())) !=
+	if (! current.isEmpty() &&
+	    QMessageBox::question(
+	        nullptr, tr("确认"),
+	        tr("已下发 %1，是否替换为 %2？").arg(QFileInfo(current).fileName(), srcInfo.fileName())) !=
 	        QMessageBox::Yes)
 		return;
-	if (!stmtDir.exists() && !contestDir.mkpath(QStringLiteral("statements"))) {
-		QMessageBox::critical(nullptr, tr("错误"),
-		                      tr("无法创建目录：%1").arg(stmtDir.absolutePath()));
+	if (! stmtDir.exists() && ! contestDir.mkpath(QStringLiteral("statements"))) {
+		QMessageBox::critical(nullptr, tr("错误"), tr("无法创建目录：%1").arg(stmtDir.absolutePath()));
 		return;
 	}
 	// 先清掉旧的（statements/ 下的残留文件与旧版 statement.pdf），再放入新文件
 	const auto srcCanonical = srcInfo.canonicalFilePath();
 	for (const auto &fi : stmtDir.entryInfoList(QDir::Files)) {
-		if (!srcCanonical.isEmpty() && fi.canonicalFilePath() == srcCanonical)
+		if (! srcCanonical.isEmpty() && fi.canonicalFilePath() == srcCanonical)
 			continue; // 选中的就是该文件本身，别删了源文件
 		QFile::remove(fi.absoluteFilePath());
 	}
 	const auto legacy = contestDir.filePath(QStringLiteral("statement.pdf"));
 	if (QFile::exists(legacy))
 		QFile::remove(legacy);
-	if (!QFile::copy(src, dst)) {
+	if (! QFile::copy(src, dst)) {
 		QMessageBox::critical(nullptr, tr("错误"), tr("复制失败：%1").arg(src));
 		return;
 	}
@@ -1153,10 +1211,9 @@ void OnlinePanel::onClearStatement() {
 		appendLog(tr("当前没有题面及样例，无需清除"));
 		return;
 	}
-	if (QMessageBox::question(nullptr, tr("确认"), tr("是否删除 %1？").arg(current)) !=
-	    QMessageBox::Yes)
+	if (QMessageBox::question(nullptr, tr("确认"), tr("是否删除 %1？").arg(current)) != QMessageBox::Yes)
 		return;
-	if (!QFile::remove(current)) {
+	if (! QFile::remove(current)) {
 		QMessageBox::critical(nullptr, tr("错误"), tr("删除失败：%1").arg(current));
 		return;
 	}
@@ -1172,7 +1229,7 @@ void OnlinePanel::onClearStatement() {
 }
 
 void OnlinePanel::refreshStatementHint() {
-	if (!statementLabel_)
+	if (! statementLabel_)
 		return;
 	if (contestDir_.isEmpty()) {
 		statementLabel_->setText(tr("（尚未绑定比赛）"));
@@ -1183,11 +1240,10 @@ void OnlinePanel::refreshStatementHint() {
 		return;
 	}
 	const auto p = SubmissionServer::findStatementFile(contestDir_);
-	const bool exists = !p.isEmpty();
+	const bool exists = ! p.isEmpty();
 	if (exists) {
 		const QFileInfo fi(p);
-		statementLabel_->setText(
-		    tr("已设定：%1（%2 KB）").arg(p).arg(fi.size() / 1024.0, 0, 'f', 1));
+		statementLabel_->setText(tr("已设定：%1（%2 KB）").arg(p).arg(fi.size() / 1024.0, 0, 'f', 1));
 	} else {
 		statementLabel_->setText(tr("未设定。点击右侧按钮选择文件。"));
 	}
@@ -1200,14 +1256,13 @@ void OnlinePanel::refreshStatementHint() {
 // ---------------------------------------------------------------- contest window
 
 void OnlinePanel::onApplyContestWindow() {
-	if (!server_)
+	if (! server_)
 		return;
 	const auto enabled = windowEnableBox_->isChecked();
 	const auto start = startEdit_->dateTime();
 	const auto end = endEdit_->dateTime();
 	if (enabled && start >= end) {
-		QMessageBox::warning(nullptr, tr("提示"),
-		                     tr("结束时间必须晚于开始时间。"));
+		QMessageBox::warning(nullptr, tr("提示"), tr("结束时间必须晚于开始时间。"));
 		return;
 	}
 	server_->setContestWindow(enabled, start, end);
@@ -1220,7 +1275,7 @@ void OnlinePanel::onApplyContestWindow() {
 }
 
 void OnlinePanel::refreshContestWindow() {
-	if (!server_ || !windowEnableBox_)
+	if (! server_ || ! windowEnableBox_)
 		return;
 	if (autoJudgeBox_)
 		autoJudgeBox_->setChecked(server_->autoJudge());
@@ -1232,7 +1287,7 @@ void OnlinePanel::refreshContestWindow() {
 		startEdit_->setDateTime(server_->startTime());
 	if (server_->endTime().isValid())
 		endEdit_->setDateTime(server_->endTime());
-	if (!en) {
+	if (! en) {
 		windowStatusLabel_->setText(tr("当前：未启用，任何时间都允许提交"));
 		return;
 	}

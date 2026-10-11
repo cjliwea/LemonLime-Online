@@ -14,6 +14,7 @@ class SubmissionServer;
 class QComboBox;
 class QCheckBox;
 class QDateTimeEdit;
+class QEvent;
 class QLabel;
 class QLineEdit;
 class QListWidget;
@@ -30,8 +31,8 @@ class QWidget;
 class OnlinePanel : public QObject {
 	Q_OBJECT
   public:
-	explicit OnlinePanel(QWidget *settingsPage, QWidget *accountsPage, QWidget *noticePage,
-	                     QWidget *livePage, QWidget *logsPage, QObject *parent = nullptr);
+	explicit OnlinePanel(QWidget *settingsPage, QWidget *accountsPage, QWidget *noticePage, QWidget *livePage,
+	                     QWidget *logsPage, QObject *parent = nullptr);
 	~OnlinePanel() override;
 
 	SubmissionServer *server() const { return server_; }
@@ -78,6 +79,9 @@ class OnlinePanel : public QObject {
 	void onClearStatement();
 	void refreshStatementHint();
 
+	// direct message
+	void refreshDmUsers();
+
 	// contest window
 	void onApplyContestWindow();
 	void refreshContestWindow();
@@ -86,6 +90,7 @@ class OnlinePanel : public QObject {
 	void onBroadcastAnnouncement();
 	void onClearAnnouncement();
 	void onSaveNotice();
+	void onSendDirectMessage();
 
 	SubmissionServer *server_ = nullptr;
 
@@ -141,6 +146,9 @@ class OnlinePanel : public QObject {
 	QPlainTextEdit *annText_{};
 	QListWidget *annHistory_{};
 	QPlainTextEdit *noticeEdit_{};
+	QComboBox *dmUserCombo_{};
+	QLineEdit *dmTextEdit_{};
+	QListWidget *dmHistory_{};
 
 	// live page
 	QLabel *metricOnline_{};
@@ -151,4 +159,7 @@ class OnlinePanel : public QObject {
 
 	// logs page
 	QPlainTextEdit *logView_{};
+
+  protected:
+	bool eventFilter(QObject *watched, QEvent *event) override;
 };

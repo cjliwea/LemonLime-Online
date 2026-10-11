@@ -803,6 +803,32 @@ QPushButton#navTab:checked {
 	font-weight: 600;
 }
 
+/* 二级子导航条：仅在在线服务各页显示 */
+QWidget#subNavBar {
+	background: #F8FAFC;
+	border-bottom: 1px solid #E5E7EB;
+}
+
+QPushButton#subTab {
+	background: transparent;
+	border: none;
+	border-radius: 12px;
+	padding: 4px 12px;
+	color: #64748B;
+	font-size: 12px;
+}
+
+QPushButton#subTab:hover {
+	background: #F1F5F9;
+	color: #0F172A;
+}
+
+QPushButton#subTab:checked {
+	background: #ECFCCB;
+	color: #3F6212;
+	font-weight: 600;
+}
+
 QTabWidget#tabWidget::pane {
 	border: none;
 	background-color: transparent;

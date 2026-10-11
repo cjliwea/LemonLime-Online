@@ -32,33 +32,33 @@
 #include "server/SubmissionServer.h"
 #include "server/UserStore.h" // SubmissionServer.h 内联函数用到 QPointer<UserStore>::data()，MSVC 需要完整类型
 #include "server/onlinepanel.h"
-#include "titlebar.h"
 #include "statisticsbrowser.h"
+#include "titlebar.h"
 #include "welcomedialog.h"
 //
+#include <QButtonGroup>
 #include <QByteArrayView>
+#include <QColor>
 #include <QDesktopServices>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QFont>
 #include <QGuiApplication>
 #include <QHBoxLayout>
+#include <QHeaderView>
 #include <QInputDialog>
 #include <QLabel>
 #include <QLineEdit>
 #include <QMessageBox>
-#include <QProgressDialog>
-#include <QScreen>
-#include <QButtonGroup>
-#include <QColor>
-#include <QFont>
-#include <QHeaderView>
 #include <QProcess>
+#include <QProgressDialog>
 #include <QPushButton>
+#include <QScreen>
 #include <QSizeGrip>
 #include <QStatusBar>
 #include <QTableWidget>
-#include <QTimer>
 #include <QTextBrowser>
+#include <QTimer>
 #include <QToolBar>
 #include <QToolButton>
 #include <QUrl>
@@ -132,6 +132,10 @@ LemonLime::LemonLime(QWidget *parent) : QMainWindow(parent), ui(new Ui::LemonLim
 
 	// 顶部居中导航条（复刻预览版）：藏起 QTabBar，用自绘按钮行实现真正的居中。
 	// QTabWidget/QTabBar 原生不支持居中，setExpanding 只是均布，不是居中。
+	// 二级导航：顶级仅 4 项（试题/成绩/统计 + 在线服务），在线服务 5 页
+	// （比赛设置/账号/公告须知/实时状况/日志）收纳进其下方的子导航条。
+	constexpr int kOnlineFirst = 2; // contestSettingsTab 在 tabWidget 中的下标
+	constexpr int kOnlineLast = 6;  // logsTab 在 tabWidget 中的下标
 	ui->tabWidget->tabBar()->hide();
 	auto *navBar = new QWidget(this);
 	navBar->setObjectName(QStringLiteral("navBar"));
@@ -140,30 +144,70 @@ LemonLime::LemonLime(QWidget *parent) : QMainWindow(parent), ui(new Ui::LemonLim
 	navLayout->setSpacing(4);
 	navLayout->addStretch(1);
 	auto *navGroup = new QButtonGroup(navBar);
-	for (int i = 0; i < ui->tabWidget->count(); ++i) {
-		auto *tabBtn = new QPushButton(ui->tabWidget->tabText(i), navBar);
-		tabBtn->setObjectName(QStringLiteral("navTab"));
-		tabBtn->setCheckable(true);
-		tabBtn->setCursor(Qt::PointingHandCursor);
+	auto makeNavBtn = [navBar](const QString &text) {
+		auto *btn = new QPushButton(text, navBar);
+		btn->setObjectName(QStringLiteral("navTab"));
+		btn->setCheckable(true);
+		btn->setCursor(Qt::PointingHandCursor);
+		return btn;
+	};
+	for (int i : {0, 1, 7}) { // 试题 / 成绩 / 统计
+		auto *tabBtn = makeNavBtn(ui->tabWidget->tabText(i));
 		tabBtn->setChecked(i == 0);
 		navGroup->addButton(tabBtn, i);
 		navLayout->addWidget(tabBtn);
 	}
+	onlineNavBtn_ = makeNavBtn(tr("在线服务"));
+	navGroup->addButton(onlineNavBtn_, kOnlineFirst);
+	navLayout->addWidget(onlineNavBtn_);
 	navLayout->addStretch(1);
-	// 点击 -> 切页；切页（含程序性 setCurrentIndex）-> 同步选中态
+
+	// 二级子导航条：仅当当前页属于在线服务时显示
+	subNavBar_ = new QWidget(this);
+	subNavBar_->setObjectName(QStringLiteral("subNavBar"));
+	auto *subLayout = new QHBoxLayout(subNavBar_);
+	subLayout->setContentsMargins(0, 0, 0, 0);
+	subLayout->setSpacing(4);
+	subLayout->addStretch(1);
+	subGroup_ = new QButtonGroup(subNavBar_);
+	for (int i = kOnlineFirst; i <= kOnlineLast; ++i) {
+		auto *subBtn = new QPushButton(ui->tabWidget->tabText(i), subNavBar_);
+		subBtn->setObjectName(QStringLiteral("subTab"));
+		subBtn->setCheckable(true);
+		subBtn->setCursor(Qt::PointingHandCursor);
+		subGroup_->addButton(subBtn, i);
+		subLayout->addWidget(subBtn);
+	}
+	subLayout->addStretch(1);
+	subNavBar_->setVisible(false);
+
+	// 点击 -> 切页；切页（含程序性 setCurrentIndex）-> 同步选中态与子导航显隐
 	connect(navGroup, &QButtonGroup::idClicked, ui->tabWidget, &QTabWidget::setCurrentIndex);
-	connect(ui->tabWidget, &QTabWidget::currentChanged, navGroup, [navGroup](int idx) {
-		for (auto *b : navGroup->buttons())
-			b->setChecked(navGroup->id(b) == idx);
+	connect(subGroup_, &QButtonGroup::idClicked, ui->tabWidget, &QTabWidget::setCurrentIndex);
+	connect(ui->tabWidget, &QTabWidget::currentChanged, navGroup, [this, navGroup](int idx) {
+		const bool online = idx >= kOnlineFirst && idx <= kOnlineLast;
+		onlineNavBtn_->setChecked(online);
+		subNavBar_->setVisible(online);
+		if (online) {
+			for (auto *b : navGroup->buttons())
+				b->setChecked(b == onlineNavBtn_);
+			for (auto *b : subGroup_->buttons())
+				b->setChecked(subGroup_->id(b) == idx);
+		} else {
+			for (auto *b : navGroup->buttons())
+				b->setChecked(navGroup->id(b) == idx);
+		}
 	});
 	// 插到 mainPage 布局里 tabWidget 上方（空状态页不显示导航，与预览版一致）
-	if (auto *pageBox = qobject_cast<QBoxLayout *>(ui->tabWidget->parentWidget()->layout()))
+	if (auto *pageBox = qobject_cast<QBoxLayout *>(ui->tabWidget->parentWidget()->layout())) {
 		pageBox->insertWidget(0, navBar);
+		pageBox->insertWidget(1, subNavBar_);
+	}
 
 	// 在线服务面板：内容直接构建进各标签页（比赛设置/账号/公告须知/实时状况/日志）。
 	// 必须先于页脚按钮创建：面板容器先进比赛设置页布局，页脚才能垫底
-	onlinePanel = new OnlinePanel(ui->contestSettingsTab, ui->accountsTab, ui->noticeTab,
-	                              ui->liveTab, ui->logsTab, this);
+	onlinePanel = new OnlinePanel(ui->contestSettingsTab, ui->accountsTab, ui->noticeTab, ui->liveTab,
+	                              ui->logsTab, this);
 	setupOnlineStatusBar();
 
 	// 页内动作按钮：原菜单全部移除后，各动作收进对应标签页（复用 QAction 文案与快捷键）
@@ -257,8 +301,7 @@ void LemonLime::closeEvent(QCloseEvent * /*event*/) {
 	QSettings windowSettings("LemonLime", "lemon");
 	const QRect normal = normalGeometry();
 	// 最大化时 size() 就是整屏，必须存 normalGeometry()，否则下次启动会「正常即整屏」
-	windowSettings.setValue("WindowGeometry",
-	                        normal.isValid() && normal.width() > 0 ? normal : geometry());
+	windowSettings.setValue("WindowGeometry", normal.isValid() && normal.width() > 0 ? normal : geometry());
 	windowSettings.setValue("WindowMaximized", isMaximized() || bool(windowState() & Qt::WindowMaximized));
 	windowSettings.setValue("WindowSize", size()); // 兼容旧版本配置键
 }
@@ -408,19 +451,19 @@ void LemonLime::setupOnlineStatusBar() {
 	// 无边框窗口后靠右下角拉伸柄调整大小（放在最右）
 	ui->statusBar->addPermanentWidget(new QSizeGrip(this));
 
-	connect(onlinePanel->server(), &SubmissionServer::started, this, [this](const QHostAddress &,
-	                                                                       quint16 port) {
-		// 面板在 start() 返回后才算出完整 URL，这里延迟到事件循环再取
-		QTimer::singleShot(0, this, [this, port]() {
-			statusDotLabel->setText(tr("● HTTP 运行中"));
-			statusDotLabel->setStyleSheet(QStringLiteral("color: #65A30D; font-weight: 600;"));
-			const auto url = onlinePanel->serviceUrl();
-			statusAddrLabel->setText(url.isEmpty() ? QStringLiteral(":%1").arg(port) : url);
-			statusCopyBtn->setEnabled(true);
-			statusBrowserBtn->setEnabled(true);
-			statusFirewallBtn->setEnabled(true);
-		});
-	});
+	connect(onlinePanel->server(), &SubmissionServer::started, this,
+	        [this](const QHostAddress &, quint16 port) {
+		        // 面板在 start() 返回后才算出完整 URL，这里延迟到事件循环再取
+		        QTimer::singleShot(0, this, [this, port]() {
+			        statusDotLabel->setText(tr("● HTTP 运行中"));
+			        statusDotLabel->setStyleSheet(QStringLiteral("color: #65A30D; font-weight: 600;"));
+			        const auto url = onlinePanel->serviceUrl();
+			        statusAddrLabel->setText(url.isEmpty() ? QStringLiteral(":%1").arg(port) : url);
+			        statusCopyBtn->setEnabled(true);
+			        statusBrowserBtn->setEnabled(true);
+			        statusFirewallBtn->setEnabled(true);
+		        });
+	        });
 	connect(onlinePanel->server(), &SubmissionServer::stopped, this, [this]() {
 		statusDotLabel->setText(tr("● HTTP 已停止"));
 		statusDotLabel->setStyleSheet(QStringLiteral("color: #94A3B8;"));
@@ -431,26 +474,23 @@ void LemonLime::setupOnlineStatusBar() {
 		statusOnlineLabel->setText(tr("在线 0"));
 	});
 	// 右下角在线人数：跟随服务端的登录/下线信号实时刷新（此前只在启动时写死「在线 0」）
-	connect(onlinePanel->server(), &SubmissionServer::onlineCountChanged, this, [this](int count) {
-		statusOnlineLabel->setText(tr("在线 %1").arg(count));
-	});
+	connect(onlinePanel->server(), &SubmissionServer::onlineCountChanged, this,
+	        [this](int count) { statusOnlineLabel->setText(tr("在线 %1").arg(count)); });
 	statusOnlineLabel->setText(tr("在线 %1").arg(onlinePanel->server()->onlineCount()));
 	connect(statusCopyBtn, &QPushButton::clicked, this, [this]() {
 		QGuiApplication::clipboard()->setText(statusAddrLabel->text());
 		ui->statusBar->showMessage(tr("已复制访问地址"), 2000);
 	});
-	connect(statusBrowserBtn, &QPushButton::clicked, this, [this]() {
-		QDesktopServices::openUrl(QUrl(onlinePanel->serviceUrl()));
-	});
+	connect(statusBrowserBtn, &QPushButton::clicked, this,
+	        [this]() { QDesktopServices::openUrl(QUrl(onlinePanel->serviceUrl())); });
 	connect(statusFirewallBtn, &QPushButton::clicked, this, [this]() {
 		// netsh 需要管理员权限：经 ShellExecute RunAs 拉起 UAC 授权窗
 		const auto port = QString::number(onlinePanel->server()->port());
-		const auto args = QStringLiteral(
-		                      "advfirewall firewall add rule name=LemonLimeOnline dir=in action=allow "
-		                      "protocol=TCP localport=%1")
-		                      .arg(port);
-		const auto cmd = QStringLiteral(
-		    "Start-Process netsh -ArgumentList '%1' -Verb RunAs").arg(args);
+		const auto args =
+		    QStringLiteral("advfirewall firewall add rule name=LemonLimeOnline dir=in action=allow "
+		                   "protocol=TCP localport=%1")
+		        .arg(port);
+		const auto cmd = QStringLiteral("Start-Process netsh -ArgumentList '%1' -Verb RunAs").arg(args);
 		QProcess::startDetached(QStringLiteral("powershell.exe"),
 		                        {QStringLiteral("-NoProfile"), QStringLiteral("-Command"), cmd});
 		ui->statusBar->showMessage(tr("已请求放行 TCP %1（请在弹出的授权窗口中确认）").arg(port), 6000);
@@ -1189,10 +1229,8 @@ void LemonLime::applyImportedProblems(const QList<PlannedProblem> &problems) {
 		QString error;
 
 		if (! installer.install(plan.scan, &report, &error)) {
-			failures.append(QStringLiteral("%1：%2")
-			                    .arg(plan.scan.englishName.isEmpty() ? plan.scan.title
-			                                                         : plan.scan.englishName,
-			                         error));
+			failures.append(QStringLiteral("%1：%2").arg(
+			    plan.scan.englishName.isEmpty() ? plan.scan.title : plan.scan.englishName, error));
 			continue;
 		}
 
@@ -1217,9 +1255,8 @@ void LemonLime::applyImportedProblems(const QList<PlannedProblem> &problems) {
 
 		if (! plan.interactor.isEmpty()) {
 			newTask->setInteractor(plan.interactor);
-			newTask->setInteractorName(plan.interactorName.isEmpty()
-			                               ? QFileInfo(plan.interactor).fileName()
-			                               : plan.interactorName);
+			newTask->setInteractorName(plan.interactorName.isEmpty() ? QFileInfo(plan.interactor).fileName()
+			                                                         : plan.interactorName);
 		}
 
 		if (! plan.sourceFilesPath.isEmpty()) {
@@ -1268,8 +1305,8 @@ void LemonLime::applyImportedProblems(const QList<PlannedProblem> &problems) {
 
 	if (! failures.isEmpty()) {
 		QMessageBox::warning(this, tr("导入结果"),
-		                     tr("有 %1 道题目没有导入成功：").arg(failures.size()) +
-		                         QStringLiteral("\n\n") + failures.join(QStringLiteral("\n")));
+		                     tr("有 %1 道题目没有导入成功：").arg(failures.size()) + QStringLiteral("\n\n") +
+		                         failures.join(QStringLiteral("\n")));
 	} else if (imported > 0) {
 		QString text = tr("已导入 %1 道题目，写入 %2 个测试点文件。").arg(imported).arg(copiedFiles);
 
