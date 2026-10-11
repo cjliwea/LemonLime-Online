@@ -134,6 +134,8 @@ body {
   overflow: hidden;
 }
 .win.focused { border-color: rgba(233, 84, 32, 0.65); }
+/* 静态定义的须知窗口默认尺寸（动态窗口由 JS 定尺寸） */
+#win-notice { width: 520px; height: 440px; left: 120px; top: 70px; }
 .win-titlebar {
   flex: none;
   display: flex;
