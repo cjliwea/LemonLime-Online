@@ -1,4 +1,5 @@
-/* NOI Linux 桌面主题（Ubuntu 风）：深紫顶栏 + 渐变壁纸 + 白色窗口 */
+/* NOI Linux 桌面主题（Ubuntu 风）：深紫顶栏 + 左侧 dock + 渐变壁纸 + 白色窗口
+   模拟操作系统环境：屏蔽浏览器右键/选择/拖拽，交互遵循桌面惯例 */
 
 :root {
   --ub-purple: #2c001e;
@@ -10,6 +11,7 @@
   --win-text: #1b1b1f;
   --win-border: rgba(0, 0, 0, 0.35);
   --radius: 10px;
+  --dock-w: 56px;
 }
 
 * { box-sizing: border-box; }
@@ -21,14 +23,18 @@ html, body {
   font-family: "Ubuntu", "Noto Sans CJK SC", "Microsoft YaHei", sans-serif;
 }
 
+/* 模拟 OS：除编辑区外禁止选择文本，禁止链接/图片拖拽 */
 body {
   display: flex;
   flex-direction: column;
+  user-select: none;
+  -webkit-user-select: none;
   background:
     radial-gradient(1200px 600px at 85% 90%, rgba(233, 84, 32, 0.28), transparent 60%),
     linear-gradient(135deg, #1a0012 0%, var(--ub-purple) 38%, var(--ub-purple-2) 100%);
   color: var(--ub-text);
 }
+.ed-text { user-select: text; -webkit-user-select: text; }
 
 /* ===== 顶栏 ===== */
 #topbar {
@@ -40,7 +46,6 @@ body {
   padding: 0 14px;
   background: rgba(24, 0, 16, 0.92);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  user-select: none;
 }
 .tb-left, .tb-right { display: flex; align-items: center; gap: 16px; }
 .tb-logo { color: var(--ub-orange); font-size: 15px; }
@@ -66,6 +71,66 @@ body {
 }
 .tb-user { cursor: default; }
 
+/* ===== 壳：dock + 桌面 ===== */
+#shell { flex: 1; display: flex; min-height: 0; }
+
+#dock {
+  flex: none;
+  width: var(--dock-w);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0;
+  background: rgba(24, 0, 16, 0.55);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+.dock-icon {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex: none;
+}
+.dock-icon:hover { background: rgba(255, 255, 255, 0.22); }
+.dock-glyph { font-size: 11px; font-weight: 700; color: #fff; }
+.dock-glyph.lang-doc { font-size: 10px; }
+.dock-dot {
+  position: absolute;
+  left: -6px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--ub-orange);
+}
+.dock-sep { width: 28px; height: 1px; background: rgba(255, 255, 255, 0.18); flex: none; }
+#dockWins { display: flex; flex-direction: column; gap: 10px; overflow: hidden; }
+.dock-win {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(233, 84, 32, 0.35);
+  border: 1px solid rgba(233, 84, 32, 0.5);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex: none;
+}
+.dock-win:hover { background: rgba(233, 84, 32, 0.5); }
+.dock-win.minimized { opacity: 0.55; }
+
 /* ===== 桌面图标 ===== */
 #desktop { flex: 1; position: relative; overflow: hidden; }
 #icons {
@@ -83,8 +148,14 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  cursor: pointer;
-  user-select: none;
+  cursor: default;
+  padding: 6px 2px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+}
+.dicon.selected {
+  background: rgba(233, 84, 32, 0.28);
+  border-color: rgba(233, 84, 32, 0.55);
 }
 .dicon-badge {
   width: 52px;
@@ -134,8 +205,7 @@ body {
   overflow: hidden;
 }
 .win.focused { border-color: rgba(233, 84, 32, 0.65); }
-/* 静态定义的须知窗口默认尺寸（动态窗口由 JS 定尺寸） */
-#win-notice { width: 520px; height: 440px; left: 120px; top: 70px; }
+.win.maximized { border-radius: 0; }
 .win-titlebar {
   flex: none;
   display: flex;
@@ -146,10 +216,8 @@ body {
   background: var(--ub-purple);
   color: var(--ub-text);
   font-size: 13px;
-  cursor: grab;
-  user-select: none;
+  cursor: default;
 }
-.win-titlebar:active { cursor: grabbing; }
 .win-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .win-btns { display: flex; gap: 4px; }
 .win-btn {
@@ -164,7 +232,18 @@ body {
 }
 .win-btn:hover { background: rgba(255, 255, 255, 0.15); }
 .win-close:hover { background: var(--ub-orange); }
-.win-body { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.win-body { flex: 1; display: flex; flex-direction: column; min-height: 0; position: relative; }
+
+/* 右下角调整大小手柄 */
+.win-resize {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 16px;
+  height: 16px;
+  cursor: nwse-resize;
+  z-index: 5;
+}
 
 /* 编辑器窗口 */
 .ed-text {
@@ -212,6 +291,34 @@ body {
 .nb-sec { margin: 12px 14px 6px; font-size: 13px; color: var(--ub-orange); }
 .nb-text { margin: 0 14px; font-size: 13.5px; line-height: 1.7; white-space: pre-wrap; word-break: break-word; }
 .nb-text.empty { color: #9a9aa4; }
+#win-notice .win-body { overflow-y: auto; display: block; }
+
+/* ===== 右键菜单（OS 风） ===== */
+.ctxmenu {
+  position: fixed;
+  z-index: 10000;
+  min-width: 160px;
+  padding: 5px;
+  background: rgba(250, 250, 252, 0.98);
+  color: #1b1b1f;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+  font-size: 13px;
+}
+.ctxmenu .mi {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.ctxmenu .mi:hover { background: var(--ub-orange); color: #fff; }
+.ctxmenu .mi.disabled { color: #a5a5ae; cursor: default; }
+.ctxmenu .mi.disabled:hover { background: transparent; color: #a5a5ae; }
+.ctxmenu .msep { height: 1px; margin: 5px 8px; background: rgba(0, 0, 0, 0.12); }
 
 /* ===== 私信 toast ===== */
 #toastHost {

@@ -21,15 +21,35 @@
   </div>
 </header>
 
-<main id="desktop">
-  <div id="icons"></div>
-</main>
+<div id="shell">
+  <!-- 左侧 dock（Ubuntu 风）：固定应用 + 运行中窗口 -->
+  <nav id="dock">
+    <div class="dock-icon" id="dkStatement" title="题面及样例">
+      <span class="dock-glyph lang-doc">PDF</span>
+      <span class="dock-dot" hidden></span>
+    </div>
+    <div class="dock-icon" id="dkNotice" title="公告与须知">
+      <span class="dock-glyph">&#9432;</span>
+      <span class="dock-dot" hidden></span>
+    </div>
+    <div class="dock-sep"></div>
+    <div id="dockWins"></div>
+  </nav>
+
+  <main id="desktop">
+    <div id="icons"></div>
+  </main>
+</div>
 
 <!-- 须知/公告窗口（静态，内容由 JS 刷新） -->
 <div id="win-notice" class="win" hidden>
   <div class="win-titlebar">
     <span class="win-title">公告与须知</span>
-    <span class="win-btns"><span class="win-btn" data-act="max">&#9744;</span><span class="win-btn win-close" data-act="close">&#10005;</span></span>
+    <span class="win-btns">
+      <span class="win-btn" data-act="max">&#9744;</span>
+      <span class="win-btn" data-act="min">&#8211;</span>
+      <span class="win-btn win-close" data-act="close">&#10005;</span>
+    </span>
   </div>
   <div class="win-body">
     <h3 class="nb-sec">公告</h3>
