@@ -65,6 +65,8 @@ class SubmissionServer : public QObject {
 	// 学生端界面主题：online（题目列表+编辑器页）或 noilinux（NOI Linux 桌面）
 	void setUiTheme(const QString &theme);
 	QString uiTheme() const { return uiTheme_; }
+	// 某账号实际使用的答题界面：账号单独设定优先，未设定时回退全局 uiTheme
+	QString effectiveUiMode(const QString &username) const;
 
 	// ---- 实时状况 ----
 	int submissionCount() const { return submissionCount_; }

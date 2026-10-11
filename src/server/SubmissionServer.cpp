@@ -224,6 +224,15 @@ void SubmissionServer::setUiTheme(const QString &theme) {
 
 int SubmissionServer::onlineCount() const { return sessions_ ? sessions_->onlineCount() : 0; }
 
+QString SubmissionServer::effectiveUiMode(const QString &username) const {
+	if (userStore_ && ! username.isEmpty()) {
+		const auto mode = userStore_->uiModeOf(username);
+		if (mode == QStringLiteral("noilinux") || mode == QStringLiteral("online"))
+			return mode;
+	}
+	return uiTheme_;
+}
+
 QStringList SubmissionServer::onlineUsernames() const {
 	return sessions_ ? sessions_->onlineUsernames() : QStringList{};
 }
@@ -470,7 +479,8 @@ QHttpServerResponse SubmissionServer::handleLoginPost(const QHttpServerRequest &
 	const auto token = sessions_->createSession(username);
 	const auto cookie = QStringLiteral("%1=%2; Path=/; HttpOnly; SameSite=Lax").arg(kCookieName, token);
 	emit logMessage(tr("Login OK: %1").arg(username));
-	return redirect(uiTheme_ == QStringLiteral("noilinux") ? QStringLiteral("/desktop") : QStringLiteral("/"),
+	return redirect(effectiveUiMode(username) == QStringLiteral("noilinux") ? QStringLiteral("/desktop")
+	                                                                        : QStringLiteral("/"),
 	                cookie);
 }
 
@@ -487,7 +497,7 @@ QHttpServerResponse SubmissionServer::handleIndex(const QHttpServerRequest &req)
 	if (! requireSession(req, &user))
 		return redirect("/login");
 	// NOI Linux 桌面模式下，访问根路径一律落到桌面
-	if (uiTheme_ == QStringLiteral("noilinux"))
+	if (effectiveUiMode(user) == QStringLiteral("noilinux"))
 		return redirect("/desktop");
 	auto html = readResource(":/online/index.html");
 	if (html.isEmpty())
@@ -499,6 +509,9 @@ QHttpServerResponse SubmissionServer::handleDesktopPage(const QHttpServerRequest
 	QString user;
 	if (! requireSession(req, &user))
 		return redirect("/login");
+	// 账号设定为在线界面时，桌面入口回落到题目列表页
+	if (effectiveUiMode(user) != QStringLiteral("noilinux"))
+		return redirect("/");
 	auto html = readResource(":/online/desktop.html");
 	if (html.isEmpty())
 		return QHttpServerResponse(QHttpServerResponder::StatusCode::InternalServerError);

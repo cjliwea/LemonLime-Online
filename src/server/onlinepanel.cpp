@@ -19,6 +19,7 @@
 #include <QDateTime>
 #include <QDateTimeEdit>
 #include <QDesktopServices>
+#include <QDialog>
 #include <QDir>
 #include <QEvent>
 #include <QFile>
@@ -33,6 +34,7 @@
 #include <QHBoxLayout>
 #include <QHeaderView>
 #include <QHostAddress>
+#include <QInputDialog>
 #include <QLabel>
 #include <QLineEdit>
 #include <QListWidget>
@@ -54,6 +56,8 @@
 #include <QTime>
 #include <QUrl>
 #include <QVBoxLayout>
+
+#include <algorithm>
 
 using namespace Qt::StringLiterals;
 
@@ -472,15 +476,44 @@ void OnlinePanel::buildAccountsPage(QWidget *page) {
 	toolLayout->addLayout(addRow);
 
 	// --- Table
-	usersTable_ = new QTableWidget(0, 5, page);
+	usersTable_ = new QTableWidget(0, 7, page);
 	usersTable_->setHorizontalHeaderLabels(
-	    {tr("用户名"), tr("显示名"), tr("密码"), tr("状态"), tr("上次登录")});
-	usersTable_->horizontalHeader()->setStretchLastSection(true);
+	    {tr("选择"), tr("准考证号"), tr("姓名"), tr("答题界面"), tr("状态"), tr("设备"), tr("操作")});
+	usersTable_->horizontalHeader()->setStretchLastSection(false);
+	usersTable_->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Stretch);
+	usersTable_->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+	usersTable_->horizontalHeader()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
+	usersTable_->horizontalHeader()->setSectionResizeMode(4, QHeaderView::ResizeToContents);
+	usersTable_->horizontalHeader()->setSectionResizeMode(5, QHeaderView::ResizeToContents);
+	usersTable_->horizontalHeader()->setSectionResizeMode(6, QHeaderView::ResizeToContents);
+	usersTable_->horizontalHeader()->setSortIndicatorShown(true);
+	usersTable_->horizontalHeader()->setSortIndicator(1, Qt::AscendingOrder);
 	usersTable_->verticalHeader()->setVisible(false);
 	usersTable_->setSelectionBehavior(QAbstractItemView::SelectRows);
 	usersTable_->setEditTriggers(QAbstractItemView::NoEditTriggers);
 	usersTable_->setAlternatingRowColors(true);
 	usersTable_->setStyleSheet(QStringLiteral("alternate-background-color: #FAFAFA;"));
+	// 准考证号表头点击切换升/降序（自行重排数据，避免 Qt 原生排序弄乱单元格控件）
+	connect(usersTable_->horizontalHeader(), &QHeaderView::sectionClicked, this, [this](int section) {
+		if (section != 1)
+			return;
+		usersSortAsc_ = ! usersSortAsc_;
+		usersTable_->horizontalHeader()->setSortIndicator(1, usersSortAsc_ ? Qt::AscendingOrder
+		                                                                   : Qt::DescendingOrder);
+		refreshUsersTable();
+	});
+	// 勾选状态随表格刷新保留
+	connect(usersTable_, &QTableWidget::itemChanged, this, [this](QTableWidgetItem *item) {
+		if (populatingUsers_ || ! item || item->column() != 0 || ! usersTable_)
+			return;
+		const auto *idItem = usersTable_->item(item->row(), 1);
+		if (! idItem)
+			return;
+		if (item->checkState() == Qt::Checked)
+			checkedUsers_.insert(idItem->text());
+		else
+			checkedUsers_.remove(idItem->text());
+	});
 
 	layout->addWidget(genBox);
 	layout->addWidget(toolBox);
@@ -838,15 +871,25 @@ void OnlinePanel::onRemoveUser() {
 	auto *store = server_->userStore();
 	if (! store)
 		return;
-	const auto rows = usersTable_->selectionModel()->selectedRows();
-	if (rows.isEmpty())
+	QStringList targets;
+	const auto checked = checkedUsers_.values();
+	for (const auto &name : checked)
+		if (store->exists(name))
+			targets << name;
+	if (targets.isEmpty()) {
+		const auto rows = usersTable_->selectionModel()->selectedRows();
+		for (const auto &idx : rows)
+			if (auto *it = usersTable_->item(idx.row(), 1))
+				targets << it->text();
+	}
+	if (targets.isEmpty())
 		return;
-	if (QMessageBox::question(nullptr, tr("确认"), tr("确定删除选中的 %1 个用户？").arg(rows.size())) !=
+	if (QMessageBox::question(nullptr, tr("确认"), tr("确定删除选中的 %1 个用户？").arg(targets.size())) !=
 	    QMessageBox::Yes)
 		return;
-	for (const auto &idx : rows) {
-		const auto name = usersTable_->item(idx.row(), 0)->text();
+	for (const auto &name : targets) {
 		store->removeUser(name);
+		checkedUsers_.remove(name);
 	}
 	store->saveToContestDir(contestDir_);
 	refreshUsersTable();
@@ -1051,33 +1094,230 @@ void OnlinePanel::refreshUsersTable() {
 	auto *store = server_->userStore();
 	if (! store)
 		return;
-	const auto names = store->allUsernames();
+	auto names = store->allUsernames();
+	if (! usersSortAsc_)
+		std::reverse(names.begin(), names.end());
 	const auto onlineList = server_->onlineUsernames();
 	const QSet<QString> onlineSet(onlineList.cbegin(), onlineList.cend());
+	populatingUsers_ = true;
+	usersTable_->setRowCount(0); // 连同行内「操作」按钮一起清掉，避免残留控件
 	usersTable_->setRowCount(names.size());
 	for (int i = 0; i < names.size(); ++i) {
 		const auto &n = names.at(i);
-		usersTable_->setItem(i, 0, new QTableWidgetItem(n));
-		usersTable_->setItem(i, 1, new QTableWidgetItem(store->displayNameOf(n)));
-		const auto pw = store->plaintextOf(n);
-		auto *pwItem = new QTableWidgetItem(pw.isEmpty() ? QStringLiteral("●●●") : pw);
-		if (pw.isEmpty())
-			pwItem->setForeground(QBrush(QColor("#94A3B8")));
-		pwItem->setFont(QFont(QStringLiteral("Consolas")));
-		usersTable_->setItem(i, 2, pwItem);
-		// 状态：是否在线
+		// 选择
+		auto *check = new QTableWidgetItem();
+		check->setFlags(Qt::ItemIsEnabled | Qt::ItemIsUserCheckable);
+		check->setCheckState(checkedUsers_.contains(n) ? Qt::Checked : Qt::Unchecked);
+		usersTable_->setItem(i, 0, check);
+		// 准考证号
+		usersTable_->setItem(i, 1, new QTableWidgetItem(n));
+		// 姓名
+		usersTable_->setItem(i, 2, new QTableWidgetItem(store->displayNameOf(n)));
+		// 答题界面：账号单独设定优先，未设定则跟随全局
+		const auto ownMode = store->uiModeOf(n);
+		auto *modeItem = new QTableWidgetItem(
+		    ownMode == QStringLiteral("noilinux") ? tr("NOI Linux")
+		    : ownMode == QStringLiteral("online")
+		        ? tr("在线")
+		        : (server_->uiTheme() == QStringLiteral("noilinux") ? tr("NOI Linux") : tr("在线")));
+		if (ownMode.isEmpty()) {
+			modeItem->setForeground(QBrush(QColor("#94A3B8")));
+			modeItem->setToolTip(tr("跟随全局设置"));
+		}
+		usersTable_->setItem(i, 3, modeItem);
+		// 状态（监考未实现，先按占位显示）
 		const bool online = onlineSet.contains(n);
-		auto *stItem = new QTableWidgetItem(online ? tr("在线") : tr("离线"));
+		auto *stItem = new QTableWidgetItem(online ? tr("在线") : tr("未启用检测"));
 		stItem->setForeground(QBrush(QColor(online ? "#65A30D" : "#94A3B8")));
 		stItem->setTextAlignment(Qt::AlignCenter);
-		usersTable_->setItem(i, 3, stItem);
-		// 上次登录时间
-		const auto login = server_->lastLoginOf(n);
-		auto *loginItem =
-		    new QTableWidgetItem(login.isValid() ? login.toString("MM-dd hh:mm:ss") : QStringLiteral("—"));
-		loginItem->setForeground(QBrush(QColor("#64748B")));
-		usersTable_->setItem(i, 4, loginItem);
+		usersTable_->setItem(i, 4, stItem);
+		// 设备（监考未实现，先占位）
+		auto *devItem = new QTableWidgetItem(tr("未绑定"));
+		devItem->setForeground(QBrush(QColor("#94A3B8")));
+		devItem->setTextAlignment(Qt::AlignCenter);
+		usersTable_->setItem(i, 5, devItem);
+		// 操作
+		auto *ops = new QWidget();
+		auto *opsLayout = new QHBoxLayout(ops);
+		opsLayout->setContentsMargins(2, 0, 2, 0);
+		opsLayout->setSpacing(6);
+		auto *editBtn = new QPushButton(tr("编辑"), ops);
+		editBtn->setObjectName(QStringLiteral("sbtn"));
+		auto *copyBtn = new QPushButton(tr("复制"), ops);
+		copyBtn->setObjectName(QStringLiteral("sbtn"));
+		copyBtn->setFlat(true);
+		copyBtn->setStyleSheet(QStringLiteral("QPushButton { border: 0; color: #2563EB; "
+		                                      "background: transparent; padding: 3px 6px; }"
+		                                      "QPushButton:hover { text-decoration: underline; }"));
+		connect(editBtn, &QPushButton::clicked, this, [this, n]() { openAccountDialog(n); });
+		connect(copyBtn, &QPushButton::clicked, this, [this, n]() { duplicateAccount(n); });
+		opsLayout->addWidget(editBtn);
+		opsLayout->addWidget(copyBtn);
+		opsLayout->addStretch();
+		usersTable_->setCellWidget(i, 6, ops);
 	}
+	populatingUsers_ = false;
+}
+
+void OnlinePanel::openAccountDialog(const QString &username) {
+	if (! server_ || contestDir_.isEmpty())
+		return;
+	auto *store = server_->userStore();
+	if (! store || ! store->exists(username))
+		return;
+
+	QDialog dlg(nullptr);
+	dlg.setWindowTitle(tr("账号详情 · %1").arg(username));
+	dlg.setMinimumWidth(540);
+	dlg.setStyleSheet(QLatin1String(kPanelQss));
+	auto *root = new QVBoxLayout(&dlg);
+	root->setContentsMargins(16, 16, 16, 16);
+	root->setSpacing(12);
+
+	auto *form = new QFormLayout();
+	form->setLabelAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+	form->setHorizontalSpacing(12);
+	form->setVerticalSpacing(10);
+
+	auto *idEdit = new QLineEdit(username, &dlg);
+	auto *nameEdit = new QLineEdit(store->displayNameOf(username), &dlg);
+	auto *playerEdit = new QLineEdit(store->playerOf(username), &dlg);
+	auto *modeCombo = new QComboBox(&dlg);
+	modeCombo->addItem(tr("跟随全局设置"), QString());
+	modeCombo->addItem(tr("NOI Linux 桌面"), QStringLiteral("noilinux"));
+	modeCombo->addItem(tr("在线（题目列表）"), QStringLiteral("online"));
+	const int modeIdx = modeCombo->findData(store->uiModeOf(username));
+	modeCombo->setCurrentIndex(modeIdx >= 0 ? modeIdx : 0);
+
+	auto *curPwdEdit = new QLineEdit(store->plaintextOf(username), &dlg);
+	curPwdEdit->setReadOnly(true);
+	curPwdEdit->setEchoMode(QLineEdit::Password);
+	if (store->plaintextOf(username).isEmpty())
+		curPwdEdit->setPlaceholderText(tr("（无明文留存）"));
+	auto *newPwdEdit = new QLineEdit(&dlg);
+	newPwdEdit->setEchoMode(QLineEdit::Password);
+	newPwdEdit->setPlaceholderText(tr("留空则保持原密码"));
+
+	form->addRow(tr("准考证号"), idEdit);
+	form->addRow(tr("姓名"), nameEdit);
+	form->addRow(tr("关联选手"), playerEdit);
+	form->addRow(tr("答题界面"), modeCombo);
+	form->addRow(tr("当前密码"), curPwdEdit);
+	form->addRow(tr("新密码"), newPwdEdit);
+
+	auto *showPwdBox = new QCheckBox(tr("显示密码"), &dlg);
+	connect(showPwdBox, &QCheckBox::toggled, &dlg, [curPwdEdit, newPwdEdit](bool on) {
+		const auto mode = on ? QLineEdit::Normal : QLineEdit::Password;
+		curPwdEdit->setEchoMode(mode);
+		newPwdEdit->setEchoMode(mode);
+	});
+	auto *copyPwdBtn = new QPushButton(tr("复制原密码"), &dlg);
+	connect(copyPwdBtn, &QPushButton::clicked, &dlg, [this, store, username]() {
+		QGuiApplication::clipboard()->setText(store->plaintextOf(username));
+		appendLog(tr("已复制 %1 的原密码").arg(username));
+	});
+	auto *genPwdBtn = new QPushButton(tr("生成新密码"), &dlg);
+	connect(genPwdBtn, &QPushButton::clicked, &dlg, [newPwdEdit, showPwdBox]() {
+		static const QString alphabet =
+		    QStringLiteral("ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789");
+		QString out;
+		for (int i = 0; i < 8; ++i)
+			out.append(alphabet.at(QRandomGenerator::global()->bounded(alphabet.size())));
+		newPwdEdit->setText(out);
+		showPwdBox->setChecked(true);
+	});
+	auto *pwdRow = new QWidget(&dlg);
+	auto *pwdRowLayout = new QHBoxLayout(pwdRow);
+	pwdRowLayout->setContentsMargins(0, 0, 0, 0);
+	pwdRowLayout->setSpacing(8);
+	pwdRowLayout->addWidget(showPwdBox);
+	pwdRowLayout->addStretch();
+	pwdRowLayout->addWidget(copyPwdBtn);
+	pwdRowLayout->addWidget(genPwdBtn);
+	form->addRow(QString(), pwdRow);
+
+	root->addLayout(form);
+
+	// 只读的监考信息（功能尚未实现，先按参考设计占位）
+	auto *infoForm = new QFormLayout();
+	infoForm->setHorizontalSpacing(12);
+	infoForm->setVerticalSpacing(6);
+	auto addInfo = [&](const QString &label, const QString &value) {
+		auto *v = new QLabel(value, &dlg);
+		v->setStyleSheet(QStringLiteral("color: #64748B;"));
+		infoForm->addRow(label, v);
+	};
+	addInfo(tr("状态"), tr("未启用检测"));
+	addInfo(tr("设备"), tr("未绑定"));
+	addInfo(tr("断线次数"), QStringLiteral("0"));
+	const auto seen = server_->lastSeenOf(username);
+	addInfo(tr("最后联系"), seen.isValid() ? seen.toString("yyyy-MM-dd hh:mm:ss") : tr("暂无记录"));
+	root->addLayout(infoForm);
+	root->addStretch();
+
+	auto *btnRow = new QHBoxLayout();
+	btnRow->addStretch();
+	auto *saveBtn = new QPushButton(tr("保存"), &dlg);
+	saveBtn->setObjectName(QStringLiteral("PrimaryBtn"));
+	auto *cancelBtn = new QPushButton(tr("取消"), &dlg);
+	connect(cancelBtn, &QPushButton::clicked, &dlg, &QDialog::reject);
+	connect(saveBtn, &QPushButton::clicked, &dlg, [&]() {
+		const auto newId = idEdit->text().trimmed();
+		if (newId.isEmpty()) {
+			QMessageBox::warning(&dlg, tr("提示"), tr("准考证号不能为空。"));
+			return;
+		}
+		if (newId != username && store->exists(newId)) {
+			QMessageBox::warning(&dlg, tr("提示"), tr("准考证号「%1」已存在。").arg(newId));
+			return;
+		}
+		if (! store->updateUser(username, newId, nameEdit->text(), playerEdit->text(),
+		                        modeCombo->currentData().toString())) {
+			QMessageBox::warning(&dlg, tr("提示"), tr("保存失败，准考证号可能重复。"));
+			return;
+		}
+		const auto newPwd = newPwdEdit->text();
+		if (! newPwd.isEmpty())
+			store->setPassword(newId, newPwd);
+		if (! store->saveToContestDir(contestDir_)) {
+			QMessageBox::critical(&dlg, tr("错误"), tr("无法保存 online_users.json"));
+			return;
+		}
+		checkedUsers_.remove(username);
+		refreshUsersTable();
+		appendLog(tr("已更新账号 %1").arg(newId));
+		dlg.accept();
+	});
+	btnRow->addWidget(saveBtn);
+	btnRow->addWidget(cancelBtn);
+	root->addLayout(btnRow);
+
+	dlg.exec();
+}
+
+void OnlinePanel::duplicateAccount(const QString &username) {
+	if (! server_ || contestDir_.isEmpty())
+		return;
+	auto *store = server_->userStore();
+	if (! store || ! store->exists(username))
+		return;
+	bool ok = false;
+	const auto suggested = username + QStringLiteral("_copy");
+	const auto newId = QInputDialog::getText(nullptr, tr("复制账号"), tr("新账号的准考证号："),
+	                                         QLineEdit::Normal, suggested, &ok)
+	                       .trimmed();
+	if (! ok || newId.isEmpty())
+		return;
+	if (store->exists(newId)) {
+		QMessageBox::warning(nullptr, tr("提示"), tr("准考证号「%1」已存在。").arg(newId));
+		return;
+	}
+	store->addUser(newId, store->displayNameOf(username), store->plaintextOf(username));
+	store->updateUser(newId, newId, store->displayNameOf(username), store->playerOf(username),
+	                  store->uiModeOf(username));
+	store->saveToContestDir(contestDir_);
+	refreshUsersTable();
+	appendLog(tr("已复制账号 %1 → %2").arg(username, newId));
 }
 
 // ---------------------------------------------------------------- live

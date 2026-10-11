@@ -8,6 +8,8 @@
 
 #include <QObject>
 #include <QPointer>
+#include <QSet>
+#include <QString>
 
 class Contest;
 class SubmissionServer;
@@ -73,6 +75,8 @@ class OnlinePanel : public QObject {
 	void onSavePlaintextList();
 	void refreshUsersTable();
 	void refreshOnlineTable();
+	void openAccountDialog(const QString &username);
+	void duplicateAccount(const QString &username);
 
 	// statement
 	void onSetStatement();
@@ -144,6 +148,10 @@ class OnlinePanel : public QObject {
 	QLineEdit *addNameEdit_{};
 	QLineEdit *addPwdEdit_{};
 	QTableWidget *usersTable_{};
+	// 账号表：勾选状态按准考证号保存，表格刷新（登录/下线/提交）后不丢失
+	QSet<QString> checkedUsers_;
+	bool usersSortAsc_ = true;
+	bool populatingUsers_ = false;
 
 	// notice page
 	QPlainTextEdit *annText_{};
