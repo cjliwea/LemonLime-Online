@@ -34,38 +34,40 @@
 
 namespace {
 
-struct TypeEntry {
-	Task::TaskType type;
-	QString title;
-	QString description;
-	QString need;
-};
+	struct TypeEntry {
+		Task::TaskType type;
+		QString title;
+		QString description;
+		QString need;
+	};
 
-auto typeEntries() -> QList<TypeEntry> {
-	QList<TypeEntry> list;
+	auto typeEntries() -> QList<TypeEntry> {
+		QList<TypeEntry> list;
 
-	list.append(TypeEntry{Task::Traditional, QObject::tr("传统题"),
-	                      QObject::tr("最常用。选手程序读入数据、写出答案，评测时与标准答案比对。"),
-	                      QObject::tr("需要：题目文件夹（含 .in / .out 测试点）、分值、时限、内存。")});
+		list.append(TypeEntry{Task::Traditional, QObject::tr("传统题"),
+		                      QObject::tr("最常用。选手程序读入数据、写出答案，评测时与标准答案比对。"),
+		                      QObject::tr("需要：题目文件夹（含 .in / .out 测试点）、分值、时限、内存。")});
 
-	list.append(TypeEntry{Task::AnswersOnly, QObject::tr("提交答案题"),
-	                      QObject::tr("不需要源代码。选手直接上传答案文件，评测时与标准答案比对。"),
-	                      QObject::tr("需要：测试点（输入与标准答案）、答案文件扩展名。")});
+		list.append(TypeEntry{Task::AnswersOnly, QObject::tr("提交答案题"),
+		                      QObject::tr("不需要源代码。选手直接上传答案文件，评测时与标准答案比对。"),
+		                      QObject::tr("需要：测试点（输入与标准答案）、答案文件扩展名。")});
 
-	list.append(TypeEntry{Task::Interaction, QObject::tr("交互题"),
-	                      QObject::tr("选手程序与评测程序来回对话，由交互器控制流程。"),
-	                      QObject::tr("需要：测试点、交互器（interactor）源文件。")});
+		list.append(TypeEntry{Task::Interaction, QObject::tr("交互题"),
+		                      QObject::tr("选手程序与评测程序来回对话，由交互器控制流程。"),
+		                      QObject::tr("需要：测试点、交互器（interactor）源文件。")});
 
-	list.append(TypeEntry{Task::Communication, QObject::tr("通信题（完整）"),
-	                      QObject::tr("两个程序通过管道通信。grader 以源码形式提供，评测时按语言分别编译。"),
-	                      QObject::tr("需要：测试点、交互器源文件、各语言的 grader 源码。")});
+		list.append(
+		    TypeEntry{Task::Communication, QObject::tr("通信题（完整）"),
+		              QObject::tr("两个程序通过管道通信。grader 以源码形式提供，评测时按语言分别编译。"),
+		              QObject::tr("需要：测试点、交互器源文件、各语言的 grader 源码。")});
 
-	list.append(TypeEntry{Task::CommunicationExec, QObject::tr("通信题（部分）"),
-	                      QObject::tr("两个程序通过管道通信。grader 已经是编译好的可执行文件，直接调用。"),
-	                      QObject::tr("需要：测试点、交互器源文件、已编译的 grader 可执行文件。")});
+		list.append(
+		    TypeEntry{Task::CommunicationExec, QObject::tr("通信题（部分）"),
+		              QObject::tr("两个程序通过管道通信。grader 已经是编译好的可执行文件，直接调用。"),
+		              QObject::tr("需要：测试点、交互器源文件、已编译的 grader 可执行文件。")});
 
-	return list;
-}
+		return list;
+	}
 
 } // namespace
 
@@ -180,8 +182,7 @@ auto AddProblemWizard::buildTypePage() -> QWizardPage * {
 	});
 
 	typeTitle_->setText(entries.first().title);
-	typeDescription_->setText(entries.first().description + QStringLiteral("\n\n") +
-	                          entries.first().need);
+	typeDescription_->setText(entries.first().description + QStringLiteral("\n\n") + entries.first().need);
 
 	return page;
 }
@@ -211,8 +212,7 @@ auto AddProblemWizard::buildConfigPage() -> QWizardPage * {
 	    tr("可选：Special Judge 命令，例如 lemon-spj.exe %s %s %s（留空则按普通比对）"));
 	specialJudgeRow_ = specialJudgeEdit_;
 
-	auto makeFileRowFunc = [this](QLineEdit **edit, const QString &placeholder,
-	                              const QString &buttonText,
+	auto makeFileRowFunc = [this](QLineEdit **edit, const QString &placeholder, const QString &buttonText,
 	                              void (AddProblemWizard::*slot)()) -> QWidget * {
 		auto *row = new QWidget(extraCard_);
 		auto *layout = new QHBoxLayout(row);
@@ -235,11 +235,9 @@ auto AddProblemWizard::buildConfigPage() -> QWizardPage * {
 	interactorRow_ = makeFileRowFunc(&interactorEdit_, tr("交互器（interactor）源文件路径"),
 	                                 QStringLiteral("..."), &AddProblemWizard::chooseInteractor);
 	graderSourceRow_ = makeFileRowFunc(&graderSourceEdit_, tr("各语言的 grader 源码，可多选"),
-	                                   QStringLiteral("..."),
-	                                   &AddProblemWizard::chooseGraderSource);
+	                                   QStringLiteral("..."), &AddProblemWizard::chooseGraderSource);
 	graderExecRow_ = makeFileRowFunc(&graderExecEdit_, tr("已编译的 grader 可执行文件，可多选"),
-	                                 QStringLiteral("..."),
-	                                 &AddProblemWizard::chooseGraderExecutable);
+	                                 QStringLiteral("..."), &AddProblemWizard::chooseGraderExecutable);
 
 	answerExtensionEdit_ = new QLineEdit(extraCard_);
 	answerExtensionEdit_->setPlaceholderText(tr("例如 ans"));
@@ -322,8 +320,8 @@ void AddProblemWizard::applyTypeVisibility() {
 		extraForm_->setRowVisible(answerExtensionEdit_, wantsAnswerExtension);
 
 	if (extraCard_)
-		extraCard_->setVisible(wantsSpecialJudge || wantsInteractor || wantsGraderSource ||
-		                       wantsGraderExec || wantsAnswerExtension);
+		extraCard_->setVisible(wantsSpecialJudge || wantsInteractor || wantsGraderSource || wantsGraderExec ||
+		                       wantsAnswerExtension);
 
 	if (table_)
 		table_->setSingleProblemMode(false);
@@ -355,8 +353,9 @@ void AddProblemWizard::chooseGraderSource() {
 }
 
 void AddProblemWizard::chooseGraderExecutable() {
-	const QStringList files = QFileDialog::getOpenFileNames(
-	    this, tr("选择已编译的 grader 可执行文件（可多选）"), QDir::homePath(), tr("可执行文件 (*.exe);;所有文件 (*.*)"));
+	const QStringList files =
+	    QFileDialog::getOpenFileNames(this, tr("选择已编译的 grader 可执行文件（可多选）"), QDir::homePath(),
+	                                  tr("可执行文件 (*.exe);;所有文件 (*.*)"));
 
 	if (files.isEmpty())
 		return;
