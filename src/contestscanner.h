@@ -34,9 +34,9 @@ struct ScannedProblem {
 // 待导入的题目 = 扫描结果 + 老师确认过的导入参数
 struct PlannedProblem {
 	ScannedProblem scan;
-	int fullScore = 100;      // 该题总分（平均分给各测试点）
-	int timeLimit = 1000;     // ms
-	int memoryLimit = 512;    // MiB
+	int fullScore = 100;        // 该题总分（平均分给各测试点）
+	int timeLimit = 1000;       // ms
+	int memoryLimit = 512;      // MiB
 	bool subFolderCheck = true; // 选手提交结构：true = 准考证号/题目/题目.cpp
 
 	// 以下字段只在「新建题目」向导里用，新建比赛向导保持默认值

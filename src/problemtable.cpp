@@ -30,19 +30,19 @@
 
 namespace {
 
-const int columnTitle = 0;
-const int columnEnglish = 1;
-const int columnCases = 2;
-const int columnScore = 3;
-const int columnTime = 4;
-const int columnMemory = 5;
-const int columnSource = 6;
+	const int columnTitle = 0;
+	const int columnEnglish = 1;
+	const int columnCases = 2;
+	const int columnScore = 3;
+	const int columnTime = 4;
+	const int columnMemory = 5;
+	const int columnSource = 6;
 
-auto readOnlyItem(const QString &text) -> QTableWidgetItem * {
-	auto *item = new QTableWidgetItem(text);
-	item->setFlags(item->flags() & ~Qt::ItemIsEditable);
-	return item;
-}
+	auto readOnlyItem(const QString &text) -> QTableWidgetItem * {
+		auto *item = new QTableWidgetItem(text);
+		item->setFlags(item->flags() & ~Qt::ItemIsEditable);
+		return item;
+	}
 
 } // namespace
 
@@ -290,8 +290,7 @@ void ProblemTable::commitEdits() {
 void ProblemTable::setExcludedNames(const QStringList &names) { excludedNames_ = names; }
 
 void ProblemTable::pickFolder() {
-	const QString dir =
-	    QFileDialog::getExistingDirectory(this, tr("选择题目的数据文件夹"), QDir::homePath());
+	const QString dir = QFileDialog::getExistingDirectory(this, tr("选择题目的数据文件夹"), QDir::homePath());
 
 	if (! dir.isEmpty())
 		addPaths({dir});
@@ -299,8 +298,7 @@ void ProblemTable::pickFolder() {
 
 void ProblemTable::pickFiles() {
 	const QStringList files = QFileDialog::getOpenFileNames(
-	    this, tr("选择测试点文件"), QDir::homePath(),
-	    tr("测试点文件 (*.in *.out *.ans);;所有文件 (*.*)"));
+	    this, tr("选择测试点文件"), QDir::homePath(), tr("测试点文件 (*.in *.out *.ans);;所有文件 (*.*)"));
 
 	if (! files.isEmpty())
 		addPaths(files);
@@ -368,8 +366,7 @@ void ProblemTable::refreshTable() {
 
 		table_->setItem(i, columnTitle, new QTableWidgetItem(plan.scan.title));
 		table_->setItem(i, columnEnglish, new QTableWidgetItem(plan.scan.englishName));
-		table_->setItem(i, columnCases,
-		                readOnlyItem(tr("%1 组").arg(plan.scan.cases.size())));
+		table_->setItem(i, columnCases, readOnlyItem(tr("%1 组").arg(plan.scan.cases.size())));
 		table_->setItem(i, columnScore, new QTableWidgetItem(QString::number(plan.fullScore)));
 		table_->setItem(i, columnTime, new QTableWidgetItem(QString::number(plan.timeLimit)));
 		table_->setItem(i, columnMemory, new QTableWidgetItem(QString::number(plan.memoryLimit)));

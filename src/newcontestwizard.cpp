@@ -108,7 +108,8 @@ auto NewContestWizard::plannedProblems() -> QList<PlannedProblem> {
 auto NewContestWizard::buildBasicPage() -> QWizardPage * {
 	auto *page = new QWizardPage;
 	page->setTitle(tr("比赛信息"));
-	page->setSubTitle(tr("先给这场比赛起个名字、选好它放在哪里。下面的路径预览会实时告诉你文件究竟会写到哪里。"));
+	page->setSubTitle(
+	    tr("先给这场比赛起个名字、选好它放在哪里。下面的路径预览会实时告诉你文件究竟会写到哪里。"));
 
 	auto *outer = new QVBoxLayout(page);
 	outer->setContentsMargins(0, 0, 0, 0);
@@ -151,7 +152,7 @@ auto NewContestWizard::buildBasicPage() -> QWizardPage * {
 
 	auto *tip = new QLabel(tr("data/ 与 source/ 会在创建比赛时自动生成，"
 	                          "不需要事先手工新建任何文件夹。"),
-	                      page);
+	                       page);
 	tip->setObjectName(QStringLiteral("HintText"));
 	tip->setWordWrap(true);
 	outer->addWidget(tip);
@@ -191,7 +192,8 @@ auto NewContestWizard::buildImportPage() -> QWizardPage * {
 auto NewContestWizard::buildFinishPage() -> QWizardPage * {
 	auto *page = new QWizardPage;
 	page->setTitle(tr("确认并创建"));
-	page->setSubTitle(tr("确认无误后点「完成并创建」，比赛目录、data/、source/ 与题目数据会在这一步一次性建好。"));
+	page->setSubTitle(
+	    tr("确认无误后点「完成并创建」，比赛目录、data/、source/ 与题目数据会在这一步一次性建好。"));
 
 	auto *outer = new QVBoxLayout(page);
 	outer->setContentsMargins(0, 0, 0, 0);
@@ -214,8 +216,7 @@ auto NewContestWizard::buildFinishPage() -> QWizardPage * {
 }
 
 void NewContestWizard::chooseParentDir() {
-	const QString dir =
-	    QFileDialog::getExistingDirectory(this, tr("选择父目录"), parentDir());
+	const QString dir = QFileDialog::getExistingDirectory(this, tr("选择父目录"), parentDir());
 
 	if (! dir.isEmpty())
 		parentEdit_->setText(QDir::toNativeSeparators(dir));
@@ -228,12 +229,12 @@ void NewContestWizard::updatePathPreview() {
 	QString text = tr("比赛目录：%1").arg(QDir::toNativeSeparators(contestDir()));
 	text += QLatin1Char('\n');
 	text += tr("比赛文件：%1")
-	            .arg(QDir::toNativeSeparators(
-	                contestDir() + QDir::separator() + savingName() + QStringLiteral(".cdf")));
+	            .arg(QDir::toNativeSeparators(contestDir() + QDir::separator() + savingName() +
+	                                          QStringLiteral(".cdf")));
 	text += QLatin1Char('\n');
 	text += tr("题目数据：%1")
-	            .arg(QDir::toNativeSeparators(contestDir() + QDir::separator() +
-	                                          QStringLiteral("data") + QDir::separator()));
+	            .arg(QDir::toNativeSeparators(contestDir() + QDir::separator() + QStringLiteral("data") +
+	                                          QDir::separator()));
 
 	pathPreview_->setText(text);
 }
@@ -295,14 +296,14 @@ bool NewContestWizard::validateCurrentPage() {
 		}
 
 		if (! ContestScanner::isSafePathComponent(savingName())) {
-			QMessageBox::warning(this, tr("新建比赛"),
-			                     tr("保存文件名不能包含路径分隔符，也不能是 CON、PRN、AUX、NUL 之类的系统保留名，"
-			                        "且不能以空格或点结尾。"));
+			QMessageBox::warning(
+			    this, tr("新建比赛"),
+			    tr("保存文件名不能包含路径分隔符，也不能是 CON、PRN、AUX、NUL 之类的系统保留名，"
+			       "且不能以空格或点结尾。"));
 			return false;
 		}
 
-		const QString cdfPath =
-		    contestDir() + QDir::separator() + savingName() + QStringLiteral(".cdf");
+		const QString cdfPath = contestDir() + QDir::separator() + savingName() + QStringLiteral(".cdf");
 
 		if (QFile::exists(cdfPath)) {
 			QMessageBox::warning(this, tr("新建比赛"),

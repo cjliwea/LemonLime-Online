@@ -38,12 +38,12 @@ class TaskEditWidget : public QWidget {
 	Task *editTask;
 	QMenu *taskTypeMenu{}; // 试题标题右侧题型按钮的下拉菜单
 	void refreshWidgetState();
-	void refreshTaskInfo(); // 刷新顶部信息条（测试点 / 时限 / 内存 / 满分）
+	void refreshTaskInfo();       // 刷新顶部信息条（测试点 / 时限 / 内存 / 满分）
 	void refreshTaskTypeButton(); // 题型按钮文字与当前选中的隐藏 radio 同步
 	void refreshTaskTypeMenu();   // 语言切换后刷新菜单项文字
-	void applyBulkTimeLimit();  // 信息条时限框编辑完成 -> 应用到全部测试点
-	void applyBulkMemoryLimit(); // 信息条内存框编辑完成 -> 应用到全部测试点
-	void applyBulkFullScore();  // 信息条满分框编辑完成 -> 按测试点数均分
+	void applyBulkTimeLimit();    // 信息条时限框编辑完成 -> 应用到全部测试点
+	void applyBulkMemoryLimit();  // 信息条内存框编辑完成 -> 应用到全部测试点
+	void applyBulkFullScore();    // 信息条满分框编辑完成 -> 按测试点数均分
 	void addSourceFiles(const QString &, const QString &);
 	void addGraderFiles(const QString &, const QString &);
 	void rmSourceFilesAt(int);

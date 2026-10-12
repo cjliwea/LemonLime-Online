@@ -80,13 +80,9 @@ QStringList SessionManager::onlineUsernames() {
 	return out;
 }
 
-QDateTime SessionManager::lastSeenOf(const QString &username) const {
-	return lastSeen_.value(username);
-}
+QDateTime SessionManager::lastSeenOf(const QString &username) const { return lastSeen_.value(username); }
 
-QDateTime SessionManager::lastLoginOf(const QString &username) const {
-	return lastLogin_.value(username);
-}
+QDateTime SessionManager::lastLoginOf(const QString &username) const { return lastLogin_.value(username); }
 
 int SessionManager::emitIfChanged(int before, int after) {
 	if (before != after)

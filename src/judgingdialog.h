@@ -62,11 +62,11 @@ class JudgingDialog : public QDialog {
 	QTimer *blinkTimer{}; // 「评测中」色块闪烁定时器
 	bool blinkOn{};
 
-	void rebuildLayout();       // 基于 .ui 已有控件重建整体布局
+	void rebuildLayout();         // 基于 .ui 已有控件重建整体布局
 	void rebuildContestantCard(); // 重建当前选手卡片（每题一行 + 测试点色块）
-	void updateOverallLabel();  // 刷新总体进度文字
+	void updateOverallLabel();    // 刷新总体进度文字
 	void setDotStyle(int, int, char, const QColor &); // 设置色块状态与颜色
-	void insertTimePrefix();    // 插入日志行的灰色时间前缀
+	void insertTimePrefix();                          // 插入日志行的灰色时间前缀
 
   public slots:
 	void dialogAlert(const QString &);

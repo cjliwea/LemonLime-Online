@@ -13,44 +13,45 @@
 
 namespace {
 
-auto copyOneFile(const QString &source, const QString &target, ProblemInstaller::Overwrite policy,
-                 ProblemInstaller::Report *report, QString *error) -> bool {
-	const QFileInfo targetInfo(target);
+	auto copyOneFile(const QString &source, const QString &target, ProblemInstaller::Overwrite policy,
+	                 ProblemInstaller::Report *report, QString *error) -> bool {
+		const QFileInfo targetInfo(target);
 
-	if (! QDir().mkpath(targetInfo.absolutePath())) {
-		if (error)
-			*error = QObject::tr("无法创建目录 %1").arg(QDir::toNativeSeparators(targetInfo.absolutePath()));
-
-		++report->failed;
-		return false;
-	}
-
-	if (targetInfo.exists()) {
-		if (policy == ProblemInstaller::Skip) {
-			++report->skipped;
-			return true;
-		}
-
-		if (! QFile::remove(target)) {
+		if (! QDir().mkpath(targetInfo.absolutePath())) {
 			if (error)
-				*error = QObject::tr("无法覆盖已存在的文件 %1").arg(QDir::toNativeSeparators(target));
+				*error =
+				    QObject::tr("无法创建目录 %1").arg(QDir::toNativeSeparators(targetInfo.absolutePath()));
 
 			++report->failed;
 			return false;
 		}
+
+		if (targetInfo.exists()) {
+			if (policy == ProblemInstaller::Skip) {
+				++report->skipped;
+				return true;
+			}
+
+			if (! QFile::remove(target)) {
+				if (error)
+					*error = QObject::tr("无法覆盖已存在的文件 %1").arg(QDir::toNativeSeparators(target));
+
+				++report->failed;
+				return false;
+			}
+		}
+
+		if (! QFile::copy(source, target)) {
+			if (error)
+				*error = QObject::tr("复制 %1 失败").arg(QDir::toNativeSeparators(source));
+
+			++report->failed;
+			return false;
+		}
+
+		++report->written;
+		return true;
 	}
-
-	if (! QFile::copy(source, target)) {
-		if (error)
-			*error = QObject::tr("复制 %1 失败").arg(QDir::toNativeSeparators(source));
-
-		++report->failed;
-		return false;
-	}
-
-	++report->written;
-	return true;
-}
 
 } // namespace
 
@@ -111,9 +112,8 @@ auto ProblemInstaller::install(const ScannedProblem &problem, Report *report, QS
 	}
 
 	if (report->failed > 0) {
-		report->messages.append(QObject::tr("题目「%1」有 %2 个文件复制失败。")
-		                            .arg(problem.englishName)
-		                            .arg(report->failed));
+		report->messages.append(
+		    QObject::tr("题目「%1」有 %2 个文件复制失败。").arg(problem.englishName).arg(report->failed));
 		return false;
 	}
 

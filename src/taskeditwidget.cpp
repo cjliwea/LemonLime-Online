@@ -15,34 +15,34 @@
 #include "core/task.h"
 #include "core/testcase.h"
 
-#include <algorithm>
 #include <QAction>
 #include <QIntValidator>
 #include <QMenu>
 #include <QRadioButton>
 #include <QToolButton>
+#include <algorithm>
 
 namespace {
-// 把一组数值压成展示用文本：全空 -> “—”，同值 -> 单值，多档 -> “最小 ~ 最大”
-// （单位已并入标题文案，如 “时限 (ms)”，这里不再拼接）
-QString formatLimitRange(const QList<int> &values) {
-	if (values.isEmpty())
-		return QStringLiteral("—");
+	// 把一组数值压成展示用文本：全空 -> “—”，同值 -> 单值，多档 -> “最小 ~ 最大”
+	// （单位已并入标题文案，如 “时限 (ms)”，这里不再拼接）
+	QString formatLimitRange(const QList<int> &values) {
+		if (values.isEmpty())
+			return QStringLiteral("—");
 
-	QList<int> uniq;
+		QList<int> uniq;
 
-	for (int value : values) {
-		if (! uniq.contains(value))
-			uniq.append(value);
+		for (int value : values) {
+			if (! uniq.contains(value))
+				uniq.append(value);
+		}
+
+		std::sort(uniq.begin(), uniq.end());
+
+		if (uniq.size() == 1)
+			return QString::number(uniq.first());
+
+		return QStringLiteral("%1 ~ %2").arg(uniq.first()).arg(uniq.last());
 	}
-
-	std::sort(uniq.begin(), uniq.end());
-
-	if (uniq.size() == 1)
-		return QString::number(uniq.first());
-
-	return QStringLiteral("%1 ~ %2").arg(uniq.first()).arg(uniq.last());
-}
 } // namespace
 
 TaskEditWidget::TaskEditWidget(QWidget *parent) : QWidget(parent), ui(new Ui::TaskEditWidget) {
@@ -105,14 +105,12 @@ TaskEditWidget::TaskEditWidget(QWidget *parent) : QWidget(parent), ui(new Ui::Ta
 
 	// 信息条：时限 / 内存 / 满分可直接编辑，回车或失焦后批量应用到全部测试点
 	ui->taskInfoTimeValue->setValidator(new QIntValidator(1, Settings::upperBoundForTimeLimit(), this));
-	ui->taskInfoMemoryValue->setValidator(
-	    new QIntValidator(1, Settings::upperBoundForMemoryLimit(), this));
+	ui->taskInfoMemoryValue->setValidator(new QIntValidator(1, Settings::upperBoundForMemoryLimit(), this));
 	ui->taskInfoScoreValue->setValidator(new QIntValidator(1, Settings::upperBoundForFullScore(), this));
 	connect(ui->taskInfoTimeValue, &QLineEdit::editingFinished, this, &TaskEditWidget::applyBulkTimeLimit);
 	connect(ui->taskInfoMemoryValue, &QLineEdit::editingFinished, this,
 	        &TaskEditWidget::applyBulkMemoryLimit);
-	connect(ui->taskInfoScoreValue, &QLineEdit::editingFinished, this,
-	        &TaskEditWidget::applyBulkFullScore);
+	connect(ui->taskInfoScoreValue, &QLineEdit::editingFinished, this, &TaskEditWidget::applyBulkFullScore);
 
 	// 题型下拉菜单：菜单项与 5 个（隐藏的）QRadioButton 一一对应，
 	// 选中后 setChecked(true) 触发既有的 toggled -> setTo* 业务逻辑，不新增任何题型判断分支
@@ -142,7 +140,8 @@ TaskEditWidget::TaskEditWidget(QWidget *parent) : QWidget(parent), ui(new Ui::Ta
 	ui->advancedContent->setVisible(ui->advancedToggle->isChecked());
 
 	// 输入列占满卡片剩余宽度：文件名三列均分，高级卡第二列（输入框）吃掉全部富余
-	for (int col = 0; col < 3; ++col) ui->fileGrid->setColumnStretch(col, 1);
+	for (int col = 0; col < 3; ++col)
+		ui->fileGrid->setColumnStretch(col, 1);
 	ui->advancedGrid->setColumnStretch(1, 1);
 
 	// 编译语言列表横向标签条（对照预览版 langs 行）：从纵向列表改为从左到右流式排布
@@ -201,9 +200,9 @@ void TaskEditWidget::refreshTaskInfo() {
 		const QString &text;
 	};
 
-	for (InfoEdit it : {InfoEdit{ui->taskInfoTimeValue, timeText},
-	                    InfoEdit{ui->taskInfoMemoryValue, memoryText},
-	                    InfoEdit{ui->taskInfoScoreValue, scoreText}}) {
+	for (InfoEdit it :
+	     {InfoEdit{ui->taskInfoTimeValue, timeText}, InfoEdit{ui->taskInfoMemoryValue, memoryText},
+	      InfoEdit{ui->taskInfoScoreValue, scoreText}}) {
 		const bool empty = it.text == QStringLiteral("—");
 		it.edit->setText(it.text);
 		it.edit->setEnabled(! empty);
@@ -353,8 +352,8 @@ void TaskEditWidget::refreshWidgetState() {
 
 	int types = editTask->getTaskType();
 	// 卡片分组：编译设置不适用于提交答案题；高级卡片只有交互题 / 通信题才需要显示
-	const bool advanced = types == Task::Interaction || types == Task::Communication ||
-	                      types == Task::CommunicationExec;
+	const bool advanced =
+	    types == Task::Interaction || types == Task::Communication || types == Task::CommunicationExec;
 	ui->cardCompiler->setVisible(types != Task::AnswersOnly);
 	ui->cardAdvanced->setVisible(advanced);
 	if (advanced && ! ui->advancedToggle->isChecked())

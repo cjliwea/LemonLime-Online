@@ -30,23 +30,24 @@ class TitleBar : public QWidget {
 	void mouseDoubleClickEvent(QMouseEvent *) override;
 
   private:
-	QWidget *window_{};     // 被控制的顶层窗口
-	bool withMinMax_{};     // 是否带最小化 / 最大化按钮
-	bool dragging_{};       // 是否正在拖动窗口
-	bool hover_{};          // 鼠标是否悬停在标题栏上
-	QPoint dragOffset_;     // 拖动偏移（按下点相对窗口左上角）
-	QRect normalGeometry_;  // 最大化之前的还原尺寸
+	QWidget *window_{};    // 被控制的顶层窗口
+	bool withMinMax_{};    // 是否带最小化 / 最大化按钮
+	bool dragging_{};      // 是否正在拖动窗口
+	bool hover_{};         // 鼠标是否悬停在标题栏上
+	QPoint dragOffset_;    // 拖动偏移（按下点相对窗口左上角）
+	QRect normalGeometry_; // 最大化之前的还原尺寸
 	QLabel *iconLabel_{};
 	QLabel *titleLabel_{};
 	QPushButton *minBtn_{};
 	QPushButton *maxBtn_{};
 	QPushButton *closeBtn_{};
 
-	QPushButton *makeDot(const QString &, const QString &, const QString &, const QString &); // 创建圆形窗控按钮
-	void setHover(bool);    // 切换悬停状态并重写圆点内联样式
-	void syncMaxState();    // 最大化状态变化后同步按钮提示
+	QPushButton *makeDot(const QString &, const QString &, const QString &,
+	                     const QString &);         // 创建圆形窗控按钮
+	void setHover(bool);                           // 切换悬停状态并重写圆点内联样式
+	void syncMaxState();                           // 最大化状态变化后同步按钮提示
 	bool restoreToMedium(bool settleLater = true); // 回到「中等窗口」，并保证尺寸不再是整屏
-	void toggleMaximize();  // 最大化 / 还原
+	void toggleMaximize();                         // 最大化 / 还原
 };
 
 // 便捷函数：把窗口 w 改为无边框并装上自绘标题栏
