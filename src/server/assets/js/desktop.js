@@ -2,8 +2,9 @@
    - 布局：顶栏（考试须知/消息/题面下载/欢迎/退出登录）+ 左侧 dock（应用/文件/回收站）
      + 桌面图标 + 左下「提交代码」面板 + 右下同步状态
    - 模拟 OS 鼠标：屏蔽浏览器右键菜单/文本选择/拖拽；自定义右键菜单支持
-     新建文件夹/新建空白文件（虚拟文件，localStorage 持久化，可删除进回收站）
-   - 支持从操作系统拖入文件/文件夹（拖到文件夹图标进该文件夹，拖到桌面进桌面）
+     新建文件夹/新建空白文件（服务端文件树，按准考证号持久化在比赛目录，可删除进回收站）
+   - 文件树：每题目录槽（与 source/ 结构对应）+ 只读样例区（statements/ 下发）
+   - 支持从操作系统拖入文件/文件夹（直接落服务端，拖到文件夹图标进该文件夹，拖到桌面进桌面）
    - 窗口：拖动/双击最大化/角落调大小/最小化进 dock；须知窗口可真正关闭 */
 'use strict';
 
@@ -97,19 +98,24 @@ function showCtxMenu(items, x, y) {
 }
 
 function handleContextMenu(e) {
-  // 虚拟文件列表行（文件管理器/文件夹窗口内）
+  // 工作区列表行（文件管理器/文件夹窗口内）
   const row = e.target.closest ? e.target.closest('.vfs-row') : null;
-  if (row && row.dataset.vfsId) {
-    const it = vfsById(row.dataset.vfsId);
+  if (row && row.dataset.fsPath) {
+    const it = fsByPath(row.dataset.fsPath);
     if (it) { showCtxMenu(vfsRowMenu(it), e.clientX, e.clientY); return; }
   }
-  // 虚拟文件列表空白处：在该层级新建
+  // 工作区列表空白处：在该层级新建（工作区根禁止新建，须进题目目录）
   const body = e.target.closest ? e.target.closest('.vfs-body') : null;
-  if (body) {
-    const parent = body.dataset.parent || 'desktop';
-    const items = [{ label: '新建空白文件', action: () => createVirtual('file', parent) }];
-    if (parent === 'desktop') items.unshift({ label: '新建文件夹', action: () => createVirtual('folder', parent) });
-    showCtxMenu(items, e.clientX, e.clientY);
+  if (body && typeof body.dataset.parent === 'string') {
+    const parent = body.dataset.parent;
+    if (fsIsRoot(parent)) {
+      showCtxMenu([ { label: '（请进入题目目录后新建文件）', disabled: true } ], e.clientX, e.clientY);
+    } else {
+      showCtxMenu([
+        { label: '新建空白文件', action: () => createVirtual('file', parent) },
+        { label: '新建文件夹', action: () => createVirtual('folder', parent) },
+      ], e.clientX, e.clientY);
+    }
     return;
   }
   const icon = e.target.closest ? e.target.closest('.dicon') : null;
@@ -120,14 +126,14 @@ function handleContextMenu(e) {
   }
   if (e.target.closest && e.target.closest('.win')) return; // 其他窗口内不弹桌面菜单
   if (e.target.closest && (e.target.closest('#topbar') || e.target.closest('#dock'))) return;
-  // 桌面空白：清空选中 + 桌面菜单
+  // 桌面空白：清空选中 + 桌面菜单（工作区根禁止新建，须进入题目目录）
   selectIcon(null);
   showCtxMenu([
-    { label: '新建文件夹', action: () => createVirtual('folder', 'desktop') },
-    { label: '新建空白文件', action: () => createVirtual('file', 'desktop') },
+    { label: '打开我的文件', action: openFilesManager },
+    { label: '题面及样例', action: openSamples },
     '-',
     { label: '考试须知', action: openNotice },
-    { label: '题面下载', action: () => window.open('/statement', '_blank') },
+    { label: '下载题面及样例', action: () => window.open('/statement', '_blank') },
     '-',
     { label: '刷新桌面', action: loadTasks },
   ], e.clientX, e.clientY);
@@ -340,6 +346,7 @@ async function loadTasks() {
     tasks = j.tasks || [];
     const name = j.displayName || j.user || '';
     if (name) $('tbUser').textContent = '欢迎，' + name;
+    try { await fsLoad(); } catch (err) { /* 工作区拉取失败不阻断题目列表 */ }
     renderDesktop();
     renderHud();
     setSync(true);
@@ -349,51 +356,69 @@ async function loadTasks() {
   }
 }
 
-// ===== 虚拟文件系统（新建文件夹/空白文件，localStorage 持久化）=====
-const VFS_KEY = 'll_vfs_v1';
-let vfs = { seq: 1, items: [], trash: [] };
+// ===== 桌面工作区（服务端文件树，按准考证号持久化在比赛目录）=====
+// 数据由 /api/fs 提供：items（工作区条目，path 为工作区相对路径）、trash（回收站）、
+// samples（只读样例区：题面及样例下发文件）、slots（每道题的目录槽）。
+// 所有变更走 /api/fs 的 POST，改完重新拉取整棵树再刷新各窗口。
+const fs = { items: [], trash: [], samples: [], slots: [], loaded: false };
+const DROP_MAX_BYTES = 256 * 1024;
+const DROP_FORBIDDEN_EXTS = new Set([ 'in', 'out', 'exe', 'bak' ]);
 
-function loadVfs() {
-  try {
-    const raw = localStorage.getItem(VFS_KEY);
-    if (raw) {
-      const j = JSON.parse(raw);
-      if (j && Array.isArray(j.items)) vfs = j;
-    }
-  } catch (err) { /* 忽略损坏数据 */ }
-}
-function saveVfs() {
-  try { localStorage.setItem(VFS_KEY, JSON.stringify(vfs)); } catch (err) { /* 存储满则忽略 */ }
-}
-function vfsById(id) { return vfs.items.find(i => i.id === id) || null; }
+function fsByPath(p) { return fs.items.find(i => i.path === p) || null; }
 
-function uniqueName(base, parent, selfId) {
-  let name = base, n = 2;
-  const taken = (nm) => vfs.items.some(i => i.parent === parent && i.name === nm && i.id !== selfId);
-  while (taken(name)) name = base + ' (' + (n++) + ')';
-  return name;
+function fsChildren(parent) {
+  const p = parent || '';
+  return fs.items
+    .filter(i => (i.parent || '') === p)
+    .sort((a, b) => (a.type === b.type ? a.name.localeCompare(b.name, 'zh') : (a.type === 'folder' ? -1 : 1)));
 }
 
-function createVirtual(type, parent) {
-  const base = type === 'folder' ? '新建文件夹' : '新建空白文件.txt';
-  const item = {
-    id: 'v' + (vfs.seq++),
-    type,
-    name: uniqueName(base, parent),
-    content: '',
-    parent: parent || 'desktop',
-  };
-  vfs.items.push(item);
-  saveVfs();
+// 根 = 工作区顶层（内含每题一个目录槽）；根下不允许新建，必须进题目目录
+function fsIsSlot(name) { return fs.slots.indexOf(name) >= 0; }
+function fsIsRoot(parent) { return ! parent; }
+
+async function fsLoad() {
+  const r = await fetch('/api/fs', { credentials: 'same-origin', cache: 'no-store' });
+  if (r.status === 401) { location.href = '/login'; throw new Error('unauthorized'); }
+  if (! r.ok) throw new Error('fs load failed');
+  const j = await r.json();
+  fs.items = Array.isArray(j.items) ? j.items : [];
+  fs.trash = Array.isArray(j.trash) ? j.trash : [];
+  fs.samples = Array.isArray(j.samples) ? j.samples : [];
+  fs.slots = Array.isArray(j.slots) ? j.slots : [];
+  fs.loaded = true;
+}
+
+async function fsMutate(payload) {
+  const r = await fetch('/api/fs', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (r.status === 401) { location.href = '/login'; throw new Error('unauthorized'); }
+  let j = null;
+  try { j = await r.json(); } catch (err) { /* 空响应 */ }
+  if (! r.ok) throw new Error((j && j.error) || ('操作失败（' + r.status + '）'));
+  await fsLoad();
   renderDesktop();
   refreshVfsViews();
-  // 新图标进入重命名状态（OS 惯例）
-  const el = document.querySelector('.dicon[data-vfs-id="' + item.id + '"] .dicon-name');
-  if (el) beginRename(item.id, el);
+  return j;
 }
 
-function beginRename(id, nameEl) {
-  const it = vfsById(id);
+// 新条目默认名：服务端会自动去重（name、name (2)...）
+async function createVirtual(type, parent) {
+  const name = type === 'folder' ? '新建文件夹' : '新建空白文件.txt';
+  try {
+    const res = await fsMutate({ op: type === 'folder' ? 'mkdir' : 'newfile', parent: parent || '', name });
+    // 新图标进入重命名状态（OS 惯例）
+    const el = document.querySelector('.dicon[data-fs-path="' + res.path + '"] .dicon-name');
+    if (el) beginRename(res.path, el);
+  } catch (err) { showTip(err.message); }
+}
+
+function beginRename(path, nameEl) {
+  const it = fsByPath(path);
   if (! it || ! nameEl || nameEl.querySelector('input')) return;
   const input = document.createElement('input');
   input.className = 'dicon-rename';
@@ -404,14 +429,14 @@ function beginRename(id, nameEl) {
   input.select();
   input.addEventListener('dblclick', (e) => e.stopPropagation());
   let done = false;
-  const commit = (ok) => {
+  const commit = async (ok) => {
     if (done) return;
     done = true;
     const v = input.value.trim();
     if (ok && v && v !== it.name) {
-      it.name = uniqueName(v, it.parent, it.id);
-      saveVfs();
-      refreshVfsViews();
+      try { await fsMutate({ op: 'rename', path: it.path, name: v }); }
+      catch (err) { showTip(err.message); renderDesktop(); }
+      return;
     }
     renderDesktop();
   };
@@ -423,42 +448,23 @@ function beginRename(id, nameEl) {
   input.addEventListener('blur', () => commit(true));
 }
 
-function deleteVirtual(id) {
-  const idx = vfs.items.findIndex(i => i.id === id);
-  if (idx < 0) return;
-  const [it] = vfs.items.splice(idx, 1);
-  it.deletedAt = Date.now();
-  vfs.trash.unshift(it);
-  saveVfs();
-  // 关闭该文件已打开的窗口
-  const winId = 'win-v' + id;
+async function deleteVirtual(path) {
+  try { await fsMutate({ op: 'delete', path }); }
+  catch (err) { showTip(err.message); }
+  // 关闭该条目的窗口
+  const rec = fsByPath(path);
+  const winId = (rec && rec.type === 'folder' ? 'win-fs-' : 'win-fs-file-') + path;
   if (wins[winId]) { wins[winId].el.remove(); unregisterDock(winId); }
-  renderDesktop();
-  refreshVfsViews();
 }
 
-function restoreVirtual(id) {
-  const idx = vfs.trash.findIndex(i => i.id === id);
-  if (idx < 0) return;
-  const [it] = vfs.trash.splice(idx, 1);
-  delete it.deletedAt;
-  it.parent = 'desktop';
-  it.name = uniqueName(it.name, 'desktop');
-  vfs.items.push(it);
-  saveVfs();
-  renderDesktop();
-  refreshVfsViews();
+async function restoreVirtual(id) {
+  try { await fsMutate({ op: 'restore', id }); }
+  catch (err) { showTip(err.message); }
 }
 
-function emptyTrash() {
-  vfs.trash.forEach(it => {
-    const winId = 'win-v' + it.id;
-    if (wins[winId]) { wins[winId].el.remove(); unregisterDock(winId); }
-  });
-  vfs.trash = [];
-  saveVfs();
-  renderDesktop();
-  refreshVfsViews();
+async function emptyTrash() {
+  try { await fsMutate({ op: 'emptytrash' }); }
+  catch (err) { showTip(err.message); }
 }
 
 function vfsIconHtml(it) {
@@ -467,69 +473,91 @@ function vfsIconHtml(it) {
 }
 
 function renderVirtualIcons(icons) {
-  vfs.items.filter(i => i.parent === 'desktop').forEach(it => {
+  fsChildren('').forEach(it => {
     const open = () => (it.type === 'folder' ? openVirtualFolder(it) : openVirtualFile(it));
-    const el = iconEl(vfsIconHtml(it), it.name, open, [
-      { label: '打开', action: open },
-      { label: '重命名', action: () => {
-          const nameEl = document.querySelector('.dicon[data-vfs-id="' + it.id + '"] .dicon-name');
-          beginRename(it.id, nameEl);
-        } },
-      '-',
-      { label: '删除', action: () => deleteVirtual(it.id) },
-    ]);
-    el.dataset.vfsId = it.id;
+    const isSlot = fsIsSlot(it.name) && it.type === 'folder';
+    const menu = isSlot
+      ? [ { label: '打开', action: open } ]
+      : [ { label: '打开', action: open },
+          { label: '重命名', action: () => {
+              const nameEl = document.querySelector('.dicon[data-fs-path="' + it.path + '"] .dicon-name');
+              beginRename(it.path, nameEl);
+            } },
+          '-',
+          { label: '删除', action: () => deleteVirtual(it.path) } ];
+    const el = iconEl(vfsIconHtml(it), it.name, open, menu);
+    el.dataset.fsPath = it.path;
     icons.appendChild(el);
   });
 }
 
 function vfsRowMenu(it) {
-  return [
+  const items = [
     { label: '打开', action: () => (it.type === 'folder' ? openVirtualFolder(it) : openVirtualFile(it)) },
     '-',
-    { label: '删除', action: () => deleteVirtual(it.id) },
   ];
+  if (fsIsSlot(it.name) && it.type === 'folder') {
+    items.push({ label: '（题目目录由系统管理）', disabled: true });
+    return items;
+  }
+  items.push({ label: '重命名', action: () => deleteVirtual0Rename(it) });
+  items.push({ label: '删除', action: () => deleteVirtual(it.path) });
+  return items;
+}
+
+function deleteVirtual0Rename(it) {
+  const input = prompt('重命名为：', it.name);
+  if (input === null || ! input.trim() || input.trim() === it.name) return;
+  fsMutate({ op: 'rename', path: it.path, name: input.trim() }).catch(err => showTip(err.message));
 }
 
 function fillVfsList(container, parent) {
-  const items = vfs.items.filter(i => i.parent === parent);
+  const items = fsChildren(parent);
   container.innerHTML = '';
   if (! items.length) {
-    container.innerHTML = '<div class="vfs-empty">（空）— 在窗口内右键可新建</div>';
+    const hint = fsIsRoot(parent)
+      ? '（进入下方题目目录后可新建文件）'
+      : '（空）— 在窗口内右键可新建';
+    container.innerHTML = '<div class="vfs-empty">' + hint + '</div>';
     return;
   }
   items.forEach(it => {
     const row = document.createElement('div');
     row.className = 'vfs-row';
-    row.dataset.vfsId = it.id;
+    row.dataset.fsPath = it.path;
+    const meta = it.type === 'folder' ? '文件夹'
+      : (fsIsSlot(it.name) ? '题目槽 · ' + ((it.size || 0)) + ' 字节' : (it.size ? it.size + ' 字节' : '空文件'));
     row.innerHTML =
       '<span class="vrow-icon">' + vfsIconHtml(it) + '</span>' +
       '<span class="vname">' + escapeHtml(it.name) + '</span>' +
-      '<span class="vmeta">' + (it.type === 'folder' ? '文件夹' : (it.content ? it.content.length + ' 字符' : '空文件')) + '</span>';
+      '<span class="vmeta">' + escapeHtml(meta) + '</span>';
     row.addEventListener('dblclick', () => (it.type === 'folder' ? openVirtualFolder(it) : openVirtualFile(it)));
     container.appendChild(row);
   });
 }
 
-// ===== 虚拟文件编辑窗口 =====
+// ===== 工作区文件编辑窗口（读写服务端）=====
 function openVirtualFile(it) {
-  const winId = 'win-v' + it.id;
+  const winId = 'win-fs-file-' + it.path;
   if (wins[winId]) { focusWin(winId); return; }
   makeWindow(winId, it.name,
     '<textarea class="ed-text" spellcheck="false"></textarea>' +
-    '<div class="ed-foot"><span class="ed-status">Ctrl+S 保存（本机留存）</span>' +
+    '<div class="ed-foot"><span class="ed-status">Ctrl+S 保存到服务器</span>' +
     '<button class="ed-btn primary" data-act="save">保存</button></div>',
-    { w: 560, h: 400, onClose: null, onReady: (win) => {
+    { w: 560, h: 400, onReady: async (win) => {
       const ed = win.querySelector('.ed-text');
       const status = win.querySelector('.ed-status');
-      ed.value = it.content || '';
-      const save = () => {
-        const cur = vfsById(it.id);
-        if (! cur) { status.textContent = '文件已删除'; return; }
-        cur.content = ed.value;
-        saveVfs();
-        status.textContent = '已保存 ' + fmtClock(new Date());
-        refreshVfsViews();
+      try {
+        const r = await fetch('/api/fs?path=' + encodeURIComponent(it.path), { credentials: 'same-origin' });
+        if (! r.ok) throw new Error('读取失败');
+        const j = await r.json();
+        ed.value = j.content || '';
+      } catch (err) { status.textContent = '读取失败：' + err.message; }
+      const save = async () => {
+        try {
+          await fsMutate({ op: 'write', path: it.path, content: ed.value });
+          status.textContent = '已保存到服务器 ' + fmtClock(new Date());
+        } catch (err) { status.textContent = '保存失败：' + err.message; }
       };
       win.querySelector('[data-act="save"]').addEventListener('click', save);
       ed.addEventListener('keydown', (e) => {
@@ -538,14 +566,17 @@ function openVirtualFile(it) {
     } });
 }
 
-// ===== 虚拟文件夹窗口 =====
+// ===== 工作区文件夹窗口 =====
 function openVirtualFolder(it) {
-  const winId = 'win-v' + it.id;
+  const winId = 'win-fs-' + it.path;
   if (wins[winId]) { focusWin(winId); return; }
+  const hint = fsIsSlot(it.name)
+    ? '本题目录 · 右键可新建空白文件（在此编写源码）'
+    : '在窗口内右键可新建文件/文件夹';
   makeWindow(winId, it.name,
-    '<div class="vfs-hint">提示：在窗口内右键可新建空白文件</div>' +
-    '<div class="vfs-body" data-parent="' + it.id + '"></div>',
-    { w: 480, h: 360, onReady: (win) => fillVfsList(win.querySelector('.vfs-body'), it.id) });
+    '<div class="vfs-hint">' + escapeHtml(hint) + '</div>' +
+    '<div class="vfs-body" data-parent="' + escapeHtml(it.path) + '"></div>',
+    { w: 480, h: 360, onReady: (win) => fillVfsList(win.querySelector('.vfs-body'), it.path) });
 }
 
 // ===== 我的文件（dock 文件夹图标）=====
@@ -553,9 +584,37 @@ function openFilesManager() {
   const winId = 'win-files';
   if (wins[winId]) { focusWin(winId); return; }
   makeWindow(winId, '我的文件',
-    '<div class="vfs-hint">桌面上的文件夹与文件 · 右键空白处可新建</div>' +
-    '<div class="vfs-body" data-parent="desktop"></div>',
-    { w: 520, h: 400, onReady: (win) => fillVfsList(win.querySelector('.vfs-body'), 'desktop') });
+    '<div class="vfs-hint">工作区顶部为每道题的目录，请进入题目目录后新建/编辑文件</div>' +
+    '<div class="vfs-body" data-parent=""></div>',
+    { w: 520, h: 400, onReady: (win) => fillVfsList(win.querySelector('.vfs-body'), '') });
+}
+
+// ===== 只读样例区（题面及样例）=====
+function openSamples() {
+  const winId = 'win-samples';
+  if (wins[winId]) { focusWin(winId); refreshSamples(); return; }
+  makeWindow(winId, '题面及样例（只读）',
+    '<div class="vfs-hint">老师下发的题面与样例文件，只读，点击可下载</div>' +
+    '<div class="vfs-body" id="sampleList"></div>',
+    { w: 480, h: 360, onReady: () => refreshSamples() });
+}
+
+function refreshSamples() {
+  const box = $('sampleList');
+  if (! box) return;
+  box.innerHTML = '';
+  if (! fs.samples.length) { box.innerHTML = '<div class="vfs-empty">老师尚未下发题面或样例</div>'; return; }
+  fs.samples.forEach(s => {
+    const row = document.createElement('div');
+    row.className = 'vfs-row';
+    row.innerHTML =
+      '<span class="vrow-icon"><span class="badge-emoji">&#128196;</span></span>' +
+      '<span class="vname">' + escapeHtml(s.name) + '</span>' +
+      '<span class="vmeta">' + (s.size || 0) + ' 字节</span>' +
+      '<span class="link-btn">下载</span>';
+    row.addEventListener('click', () => window.open('/api/fs/sample/' + encodeURIComponent(s.name), '_blank'));
+    box.appendChild(row);
+  });
 }
 
 // ===== 回收站窗口 =====
@@ -575,35 +634,33 @@ function refreshTrash() {
   const box = $('trashList');
   if (! box) return;
   box.innerHTML = '';
-  if (! vfs.trash.length) { box.innerHTML = '<div class="vfs-empty">回收站是空的</div>'; return; }
-  vfs.trash.forEach(it => {
+  if (! fs.trash.length) { box.innerHTML = '<div class="vfs-empty">回收站是空的</div>'; return; }
+  fs.trash.forEach(it => {
     const row = document.createElement('div');
     row.className = 'vfs-row';
     row.innerHTML =
-      '<span class="vrow-icon">' + vfsIconHtml(it) + '</span>' +
+      '<span class="vrow-icon">' + (it.type === 'folder' ? '<span class="badge-emoji">&#128193;</span>' : '<span class="badge-emoji">&#128196;</span>') + '</span>' +
       '<span class="vname">' + escapeHtml(it.name) + '</span>' +
-      '<span class="link-btn" data-restore="' + it.id + '">恢复</span>';
+      '<span class="link-btn" data-restore="' + escapeHtml(it.id) + '">恢复</span>';
     box.appendChild(row);
   });
   box.querySelectorAll('[data-restore]').forEach(b =>
     b.addEventListener('click', () => restoreVirtual(b.dataset.restore)));
 }
 
-// 虚拟文件变化后刷新已打开的相关窗口
+// 工作区变化后刷新已打开的相关窗口
 function refreshVfsViews() {
-  if (wins['win-files']) fillVfsList($('win-files').querySelector('.vfs-body'), 'desktop');
-  vfs.items.filter(i => i.type === 'folder').forEach(f => {
-    const wid = 'win-v' + f.id;
-    if (wins[wid]) fillVfsList($(wid).querySelector('.vfs-body'), f.id);
+  if (wins['win-files']) fillVfsList($('win-files').querySelector('.vfs-body'), '');
+  fs.items.filter(i => i.type === 'folder').forEach(f => {
+    const wid = 'win-fs-' + f.path;
+    if (wins[wid]) fillVfsList($(wid).querySelector('.vfs-body'), f.path);
   });
   if (wins['win-trash']) refreshTrash();
+  if (wins['win-samples']) refreshSamples();
 }
 
-// ===== 从操作系统拖入（模拟 OS：拖到文件夹图标 → 进该文件夹；拖到桌面 → 进桌面）=====
-// 浏览器原生 File System API：webkitGetAsEntry 递归遍历目录树，读取为文本写入 VFS。
-// 同名文件夹合并、同名文件另起「name (2)」；单文件体积受限（localStorage 容量有限）。
-const DROP_MAX_BYTES = 256 * 1024;
-const DROP_FORBIDDEN_EXTS = new Set([ 'in', 'out', 'exe', 'bak' ]);
+// ===== 从操作系统拖入（拖到文件夹图标 → 进该文件夹；拖到桌面 → 工作区根）=====
+// 浏览器原生 File System API：webkitGetAsEntry 递归遍历目录树，文本写入服务端工作区。
 let dropHotEl = null;
 
 function isFileDrag(e) {
@@ -611,20 +668,20 @@ function isFileDrag(e) {
   return !! dt && Array.from(dt.types || []).indexOf('Files') >= 0;
 }
 
-// 命中落点：文件夹图标 → 该文件夹；文件窗口 / 文件夹窗口列表 → 其层级；桌面空白 → 桌面
+// 命中落点：文件夹图标 → 该文件夹；文件窗口 / 文件夹窗口列表 → 其层级；桌面空白 → 根
 function resolveDropTarget(x, y) {
   const el = document.elementFromPoint(x, y);
   if (! el || ! el.closest) return null;
   const icon = el.closest('.dicon');
   if (icon) {
-    const it = icon.dataset.vfsId ? vfsById(icon.dataset.vfsId) : null;
-    if (it && it.type === 'folder') return { parent: it.id, el: icon };
-    return { parent: 'desktop', el: $('desktop') }; // 文件/题目图标上方视为桌面
+    const it = icon.dataset.fsPath ? fsByPath(icon.dataset.fsPath) : null;
+    if (it && it.type === 'folder') return { parent: it.path, el: icon };
+    return { parent: '', el: $('desktop') }; // 文件/题目图标上方视为工作区根
   }
   const body = el.closest('.vfs-body');
-  if (body && body.dataset.parent) return { parent: body.dataset.parent, el: body };
+  if (body && typeof body.dataset.parent === 'string') return { parent: body.dataset.parent, el: body };
   if (el.closest('.win') || el.closest('#topbar') || el.closest('#dock')) return null;
-  return { parent: 'desktop', el: $('desktop') };
+  return { parent: '', el: $('desktop') };
 }
 
 function setDropHot(el) {
@@ -638,50 +695,43 @@ function sanitizeName(n) {
   return String(n || '').replace(/[\\/:*?"<>|]/g, '_').trim() || '未命名';
 }
 
-// 同名文件夹合并（复用已有节点），否则新建
-function findOrCreateFolder(name, parentId) {
-  const exist = vfs.items.find(i => i.parent === parentId && i.type === 'folder' && i.name === name);
-  if (exist) return exist;
-  const folder = { id: 'v' + (vfs.seq++), type: 'folder', name, content: '', parent: parentId };
-  vfs.items.push(folder);
-  return folder;
+// 同名文件夹复用，否则新建（返回其 path）
+async function ensureFolder(name, parentPath) {
+  const exist = fsChildren(parentPath).find(i => i.type === 'folder' && i.name === name);
+  if (exist) return exist.path;
+  const res = await fsMutate({ op: 'mkdir', parent: parentPath || '', name });
+  return res.path;
 }
 
-async function ingestFileEntry(file, parentId, stats) {
+async function ingestFileEntry(file, parentPath, stats) {
   if (file.size > DROP_MAX_BYTES) { stats.oversized++; return; }
   const ext = (file.name.match(/\.([^.]+)$/) || [ , '' ])[1].toLowerCase();
   if (DROP_FORBIDDEN_EXTS.has(ext)) { stats.skip++; return; }
   let text = '';
   try { text = await file.text(); } catch (err) { text = ''; }
-  vfs.items.push({
-    id: 'v' + (vfs.seq++),
-    type: 'file',
-    name: uniqueName(sanitizeName(file.name), parentId),
-    content: text,
-    parent: parentId,
-  });
+  await fsMutate({ op: 'upload', parent: parentPath || '', name: sanitizeName(file.name), content: text });
   stats.files++;
 }
 
-async function ingestEntry(entry, parentId, stats) {
+async function ingestEntry(entry, parentPath, stats) {
   if (entry.isFile) {
     const file = await new Promise((res, rej) => entry.file(res, rej));
-    await ingestFileEntry(file, parentId, stats);
+    await ingestFileEntry(file, parentPath, stats);
     return;
   }
   if (entry.isDirectory) {
-    const folder = findOrCreateFolder(sanitizeName(entry.name), parentId);
+    const folderPath = await ensureFolder(sanitizeName(entry.name), parentPath);
     const reader = entry.createReader();
     for (;;) {
       // readEntries 每次只返回一批，必须循环读到空
       const batch = await new Promise((res, rej) => reader.readEntries(res, rej));
       if (! batch.length) break;
-      for (const sub of batch) await ingestEntry(sub, folder.id, stats);
+      for (const sub of batch) await ingestEntry(sub, folderPath, stats);
     }
   }
 }
 
-async function ingestDataTransfer(dt, parentId) {
+async function ingestDataTransfer(dt, parentPath) {
   // 必须在任何 await 之前同步取出 entry，否则 dataTransfer 失效
   let list = Array.from(dt.items || [])
     .filter(i => i.kind === 'file')
@@ -690,10 +740,9 @@ async function ingestDataTransfer(dt, parentId) {
   if (! list.length && dt.files)
     list = Array.from(dt.files).map(f => ({ isFile: true, name: f.name, file: (cb) => cb(f) }));
   const stats = { files: 0, oversized: 0, skip: 0 };
-  for (const entry of list) await ingestEntry(entry, parentId, stats);
-  saveVfs();
-  renderDesktop();
-  refreshVfsViews();
+  try {
+    for (const entry of list) await ingestEntry(entry, parentPath || '', stats);
+  } catch (err) { showTip('导入中断：' + err.message); }
   const parts = [];
   if (stats.files) parts.push('已放入 ' + stats.files + ' 个文件');
   if (stats.oversized) parts.push(stats.oversized + ' 个超过 256KB 已跳过');
@@ -721,6 +770,8 @@ function initDesktopDrop() {
     const t = resolveDropTarget(e.clientX, e.clientY);
     setDropHot(null);
     if (! t || ! e.dataTransfer) return;
+    // 工作区根不接受直接落盘：请拖入题目目录或其它文件夹
+    if (fsIsRoot(t.parent)) { showTip('请拖入某个题目目录或文件夹内'); return; }
     await ingestDataTransfer(e.dataTransfer, t.parent);
   });
   window.addEventListener('dragend', () => setDropHot(null));
@@ -728,6 +779,15 @@ function initDesktopDrop() {
 }
 
 // ===== 题目编辑器窗口 =====
+// 源码保存到服务端工作区的题目目录槽（<题目>/<源文件名>.cpp），同时保留本机草稿兜底。
+function slotFilePath(taskId) {
+  const slot = fs.slots[taskId];
+  if (! slot) return null;
+  const f = fsChildren(slot).find(i => i.type === 'file' && i.name.toLowerCase().endsWith('.cpp'))
+    || fsChildren(slot).find(i => i.type === 'file');
+  return f ? f.path : null;
+}
+
 function openEditor(task) {
   const taskId = task.id;
   const fileName = task.sourceFileName || ('problem' + (taskId + 1) + '.cpp');
@@ -736,21 +796,41 @@ function openEditor(task) {
   const body =
     '<textarea class="ed-text" id="ed-' + taskId + '" spellcheck="false"></textarea>' +
     '<div class="ed-foot">' +
-      '<span class="ed-status" id="st-' + taskId + '">Ctrl+Enter 提交 · Ctrl+S 保存草稿 · 右下角可拉伸窗口</span>' +
+      '<span class="ed-status" id="st-' + taskId + '">Ctrl+Enter 提交 · Ctrl+S 保存到服务器 · 右下角可拉伸窗口</span>' +
       '<button class="ed-btn" id="up-' + taskId + '">上传文件</button>' +
       '<input type="file" id="file-' + taskId + '" hidden>' +
       '<button class="ed-btn primary" id="go-' + taskId + '">保存并提交</button>' +
     '</div>';
-  makeWindow('win-task-' + taskId, fileName, body, { w: 640, h: 480, onReady: (win) => {
+  makeWindow('win-task-' + taskId, fileName, body, { w: 640, h: 480, onReady: async (win) => {
     const ed = win.querySelector('.ed-text');
     const status = win.querySelector('.ed-status');
     const setStat = (msg, cls) => { status.textContent = msg; status.className = 'ed-status' + (cls ? ' ' + cls : ''); };
 
+    // 载入：优先服务端题目目录里的源码，其次本机草稿
     ed.value = localStorage.getItem(draftKey) || '';
+    const target = slotFilePath(taskId);
+    if (target) {
+      try {
+        const r = await fetch('/api/fs?path=' + encodeURIComponent(target), { credentials: 'same-origin' });
+        if (r.ok) {
+          const j = await r.json();
+          if (j.content) ed.value = j.content;
+        }
+      } catch (err) { /* 读取失败则用本机草稿 */ }
+    }
+    const saveDraft = async () => {
+      localStorage.setItem(draftKey, ed.value);
+      const path = slotFilePath(taskId);
+      if (! path) { setStat('草稿已保存（本机）', 'ok'); return; }
+      try {
+        await fsMutate({ op: 'write', path, content: ed.value });
+        setStat('已保存到服务器 ' + fmtClock(new Date()), 'ok');
+      } catch (err) { setStat('已存入本机，服务器保存失败：' + err.message, 'err'); }
+    };
     ed.addEventListener('input', () => localStorage.setItem(draftKey, ed.value));
     ed.addEventListener('keydown', (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); doSubmit(); }
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); localStorage.setItem(draftKey, ed.value); setStat('草稿已保存（本机）', 'ok'); }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); saveDraft(); }
     });
 
     async function doSubmit() {
@@ -761,6 +841,7 @@ function openEditor(task) {
       const orig = go.textContent;
       go.textContent = '提交中…';
       try {
+        await saveDraft(); // 先落盘到服务端工作区，再提交
         const r = await fetch('/api/submit/' + taskId, {
           method: 'POST', credentials: 'same-origin',
           headers: { 'Content-Type': 'application/json' },
@@ -769,7 +850,6 @@ function openEditor(task) {
         if (r.status === 401) { location.href = '/login'; return; }
         const j = await r.json();
         if (! r.ok) throw new Error(j.error || ('HTTP ' + r.status));
-        localStorage.removeItem(draftKey);
         setStat('已提交，评测以最后一次为准', 'ok');
         loadTasks(); // 刷新「提交代码」面板的已提交状态
       } catch (err) {
@@ -911,6 +991,7 @@ function toggleLauncher() {
     { label: '考试须知', icon: '&#9432;', action: openNotice },
     { label: '消息', icon: '&#9993;', action: openMsgs },
     { label: '题面下载', icon: '&#128196;', action: () => window.open('/statement', '_blank') },
+    { label: '题面及样例', icon: '&#128209;', action: openSamples },
     { label: '我的文件', icon: '&#128193;', action: openFilesManager },
     { label: '回收站', icon: '&#128465;', action: openTrash },
     '-',
@@ -1001,7 +1082,6 @@ function initChrome() {
 }
 
 // ===== 启动 =====
-loadVfs();
 initChrome();
 initDesktopDrop();
 updateMsgDot();

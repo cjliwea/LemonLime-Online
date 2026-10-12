@@ -106,6 +106,19 @@ class SubmissionServer : public QObject {
 	QHttpServerResponse handleApiUploadSource(qint32 taskId, const QHttpServerRequest &req);
 	QHttpServerResponse handleApiAnnounce(const QHttpServerRequest &req);
 	QHttpServerResponse handleStatement(const QHttpServerRequest &req);
+	// 学生桌面工作区（服务端文件树）：GET 取整棵树，POST 执行单次变更
+	QHttpServerResponse handleApiFs(const QHttpServerRequest &req);
+	QHttpServerResponse handleApiFsMutate(const QHttpServerRequest &req);
+	QHttpServerResponse handleApiFsSample(const QString &name, const QHttpServerRequest &req);
+
+	// 某学生的桌面工作区根目录：<contestDir>/desktop/<准考证号>/
+	QString fsRootFor(const QString &user) const;
+	// 每道题的槽位目录名（去重后按题目顺序返回，与题目下标一一对应）
+	QStringList fsSlotNames() const;
+	// 首次访问时补齐槽位目录与模板源码文件
+	void ensureFsScaffold(const QString &root) const;
+	// 把相对路径安全解析到 root 内；越界/非法返回空串
+	QString resolveFsPath(const QString &root, const QString &rel) const;
 
 	QString sessionUser(const QHttpServerRequest &req) const;
 	bool requireSession(const QHttpServerRequest &req, QString *user) const;

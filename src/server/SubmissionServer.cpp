@@ -14,6 +14,7 @@
 
 #include <QCryptographicHash>
 #include <QDir>
+#include <QDirIterator>
 #include <QFile>
 #include <QFileInfo>
 #include <QHttpHeaders>
@@ -25,6 +26,7 @@
 #include <QJsonObject>
 #include <QMimeDatabase>
 #include <QSaveFile>
+#include <QSet>
 #include <QStringList>
 #include <QTcpServer>
 #include <QUrlQuery>
@@ -152,6 +154,47 @@ namespace {
 	}
 
 	constexpr int kMaxFolderDepth = 8;
+
+	// 学生桌面工作区
+	constexpr auto kDesktopDirName = "desktop";
+	constexpr auto kFsTrashDirName = ".trash";
+	constexpr auto kFsTrashIndexName = ".trash/trash_index.json";
+	constexpr int kMaxFsFileBytes = 512 * 1024;
+	constexpr int kMaxFsSegmentLen = 60;
+
+	// 单层名字净化：替换非法字符、去掉首尾空白与结尾点，兜底名 + 截断
+	QString sanitizeSegment(const QString &raw, const QString &fallback) {
+		QString s = raw.trimmed();
+		for (int i = 0; i < s.size(); ++i) {
+			const QChar c = s.at(i);
+			if (c.unicode() < 0x20 || QStringLiteral("\\/:*?\"<>|").contains(c))
+				s[i] = QLatin1Char('_');
+		}
+		while (! s.isEmpty() && (s.endsWith(QLatin1Char('.')) || s.endsWith(QLatin1Char(' '))))
+			s.chop(1);
+		if (s.isEmpty())
+			s = fallback;
+		if (s.size() > kMaxFsSegmentLen)
+			s = s.left(kMaxFsSegmentLen);
+		return s;
+	}
+
+	QJsonArray readTrashIndex(const QString &root) {
+		QFile f(QDir(root).filePath(QLatin1String(kFsTrashIndexName)));
+		if (! f.open(QFile::ReadOnly))
+			return {};
+		return QJsonDocument::fromJson(f.readAll()).array();
+	}
+
+	void writeTrashIndex(const QString &root, const QJsonArray &arr) {
+		const auto path = QDir(root).filePath(QLatin1String(kFsTrashIndexName));
+		QDir().mkpath(QFileInfo(path).absolutePath());
+		QSaveFile f(path);
+		if (! f.open(QFile::WriteOnly))
+			return;
+		f.write(QJsonDocument(arr).toJson(QJsonDocument::Compact));
+		f.commit();
+	}
 } // namespace
 
 // 题面及样例只保留一个槽位：statements/ 下按文件名排序取第一个；
@@ -395,6 +438,15 @@ void SubmissionServer::setupRoutes() {
 
 	http_->route("/statement", QHttpServerRequest::Method::Get,
 	             [this](const QHttpServerRequest &req) { return handleStatement(req); });
+
+	// 学生桌面工作区（服务端文件树）
+	http_->route("/api/fs", QHttpServerRequest::Method::Get,
+	             [this](const QHttpServerRequest &req) { return handleApiFs(req); });
+	http_->route("/api/fs", QHttpServerRequest::Method::Post,
+	             [this](const QHttpServerRequest &req) { return handleApiFsMutate(req); });
+	http_->route(
+	    "/api/fs/sample/<arg>", QHttpServerRequest::Method::Get,
+	    [this](const QString &name, const QHttpServerRequest &req) { return handleApiFsSample(name, req); });
 
 	http_->route("/desktop", QHttpServerRequest::Method::Get,
 	             [this](const QHttpServerRequest &req) { return handleDesktopPage(req); });
@@ -987,6 +1039,378 @@ QHttpServerResponse SubmissionServer::handleStatement(const QHttpServerRequest &
 	// PDF 可直接在浏览器内预览，压缩包等其它形式一律作为附件下载
 	const bool inlineDisplay = mime.name() == QLatin1String("application/pdf");
 	QHttpServerResponse resp(mime.name().toUtf8(), bytes);
+	QHttpHeaders h = resp.headers();
+	h.append(QHttpHeaders::WellKnownHeader::ContentDisposition,
+	         QStringLiteral("%1; filename=\"%2\"; filename*=UTF-8''%3")
+	             .arg(inlineDisplay ? QStringLiteral("inline") : QStringLiteral("attachment"),
+	                  asciiFallbackName(name), encodeRfc5987(name)));
+	h.append(QHttpHeaders::WellKnownHeader::CacheControl, "private, max-age=60");
+	resp.setHeaders(h);
+	return resp;
+}
+
+// ---------------------------------------------------------------- 学生桌面工作区
+
+QString SubmissionServer::fsRootFor(const QString &user) const {
+	return QDir(contestDir_).filePath(QStringLiteral("%1/%2").arg(QLatin1String(kDesktopDirName), user));
+}
+
+QStringList SubmissionServer::fsSlotNames() const {
+	QStringList slots;
+	QSet<QString> used;
+	if (contest_) {
+		const auto list = contest_->getTaskList();
+		for (int i = 0; i < list.size(); ++i) {
+			auto base = list.at(i)->getSourceFileName();
+			if (base.isEmpty())
+				base = QStringLiteral("problem%1").arg(i + 1);
+			base = sanitizeSegment(base, QStringLiteral("problem%1").arg(i + 1));
+			QString name = base;
+			int n = 2;
+			while (used.contains(name.toLower()))
+				name = QStringLiteral("%1_%2").arg(base).arg(n++);
+			used.insert(name.toLower());
+			slots << name;
+		}
+	}
+	return slots;
+}
+
+void SubmissionServer::ensureFsScaffold(const QString &root) const {
+	QDir().mkpath(root);
+	QDir().mkpath(QDir(root).filePath(QLatin1String(kFsTrashDirName)));
+	const auto slots = fsSlotNames();
+	const auto tasks = contest_ ? contest_->getTaskList() : QList<Task *>{};
+	for (int i = 0; i < slots.size(); ++i) {
+		const auto dir = QDir(root).filePath(slots.at(i));
+		QDir().mkpath(dir);
+		const auto base = i < tasks.size() ? tasks.at(i)->getSourceFileName() : QString();
+		const auto fileBase = base.isEmpty() ? slots.at(i) : sanitizeSegment(base, slots.at(i));
+		const auto path = QDir(dir).filePath(fileBase + QStringLiteral(".cpp"));
+		if (! QFile::exists(path)) {
+			QFile f(path);
+			if (f.open(QFile::WriteOnly | QFile::Truncate))
+				f.write(QByteArray());
+		}
+	}
+}
+
+QString SubmissionServer::resolveFsPath(const QString &root, const QString &rel) const {
+	const auto clean = QDir::fromNativeSeparators(rel.trimmed());
+	if (clean.isEmpty())
+		return root;
+	QStringList parts = clean.split(QLatin1Char('/'), Qt::SkipEmptyParts);
+	if (parts.size() > kMaxFolderDepth)
+		return {};
+	for (const auto &p : parts) {
+		if (p == QLatin1String(".") || p == QLatin1String(".."))
+			return {};
+		if (! isSafePathComponent(p))
+			return {};
+	}
+	const auto rel2 = parts.join(QLatin1Char('/'));
+	const auto abs = QDir(root).absoluteFilePath(rel2);
+	// 规范化后再确认仍在 root 之内，挡住符号链接/怪路径逃逸
+	const auto canonRoot = QDir::cleanPath(QDir(root).absolutePath());
+	const auto canonAbs = QDir::cleanPath(abs);
+	if (canonAbs != canonRoot && ! canonAbs.startsWith(canonRoot + QLatin1Char('/')))
+		return {};
+	return canonAbs;
+}
+
+QHttpServerResponse SubmissionServer::handleApiFs(const QHttpServerRequest &req) {
+	QString user;
+	if (! requireSession(req, &user))
+		return jsonError(401, tr("Not authenticated"));
+	if (! contest_ || contestDir_.isEmpty())
+		return jsonError(500, tr("No contest bound"));
+
+	const auto root = fsRootFor(user);
+	ensureFsScaffold(root);
+
+	const auto query = QUrlQuery(req.url());
+	// 读取单个文件内容
+	if (query.hasQueryItem(QStringLiteral("path"))) {
+		const auto abs =
+		    resolveFsPath(root, query.queryItemValue(QStringLiteral("path"), QUrl::FullyDecoded));
+		if (abs.isEmpty())
+			return jsonError(400, tr("Invalid path"));
+		QFileInfo fi(abs);
+		if (! fi.isFile() || fi.isSymLink())
+			return jsonError(404, tr("Not a file"));
+		if (fi.size() > kMaxFsFileBytes)
+			return jsonError(413, tr("File too large"));
+		QFile f(abs);
+		if (! f.open(QFile::ReadOnly))
+			return jsonError(500, tr("Cannot read file"));
+		QJsonObject out;
+		out.insert("path", QDir(root).relativeFilePath(abs));
+		out.insert("content", QString::fromUtf8(f.readAll()));
+		return QHttpServerResponse("application/json", QJsonDocument(out).toJson(QJsonDocument::Compact));
+	}
+
+	// 整棵树
+	QJsonArray items;
+	const auto slots = fsSlotNames();
+	QDirIterator it(root, QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
+	while (it.hasNext()) {
+		it.next();
+		const auto fi = it.fileInfo();
+		const auto rel = QDir(root).relativeFilePath(fi.absoluteFilePath());
+		if (rel.startsWith(QLatin1String(kFsTrashDirName)))
+			continue; // 回收站不进工作区视图
+		QJsonObject obj;
+		obj.insert("path", rel);
+		obj.insert("name", fi.fileName());
+		const auto parentRel = QDir(root).relativeFilePath(fi.absolutePath());
+		obj.insert("parent", parentRel == QLatin1String(".") ? QString() : parentRel);
+		obj.insert("type", fi.isDir() ? "folder" : "file");
+		if (fi.isFile())
+			obj.insert("size", static_cast<double>(fi.size()));
+		obj.insert("mtime", fi.lastModified().toString(Qt::ISODate));
+		obj.insert("slot", slots.contains(fi.fileName()) || slots.contains(parentRel));
+		items.append(obj);
+	}
+
+	// 回收站条目（保存在 .trash 下的实际文件 + 索引）
+	QJsonArray trash = readTrashIndex(root);
+	QJsonArray trashAlive;
+	for (const auto &v : trash) {
+		const auto obj = v.toObject();
+		const auto stored = obj.value("stored").toString();
+		if (QFileInfo::exists(
+		        QDir(root).filePath(QLatin1String(kFsTrashDirName) + QLatin1Char('/') + stored)))
+			trashAlive.append(obj);
+	}
+	if (trashAlive.size() != trash.size())
+		writeTrashIndex(root, trashAlive);
+
+	// 只读样例区：题面及样例下发的文件
+	QJsonArray samples;
+	const QDir stmtDir(QDir(contestDir_).filePath(QLatin1String(kStatementDirName)));
+	for (const auto &fi : stmtDir.entryInfoList(QDir::Files | QDir::Readable, QDir::Name)) {
+		QJsonObject obj;
+		obj.insert("name", fi.fileName());
+		obj.insert("size", static_cast<double>(fi.size()));
+		samples.append(obj);
+	}
+	if (samples.isEmpty()) {
+		const auto legacy = findStatementFile(contestDir_);
+		if (! legacy.isEmpty()) {
+			const auto fi = QFileInfo(legacy);
+			QJsonObject obj;
+			obj.insert("name", fi.fileName());
+			obj.insert("size", static_cast<double>(fi.size()));
+			samples.append(obj);
+		}
+	}
+
+	QJsonObject root2;
+	root2.insert("user", user);
+	root2.insert("slots", QJsonArray::fromStringList(slots));
+	root2.insert("items", items);
+	root2.insert("trash", trashAlive);
+	root2.insert("samples", samples);
+	return QHttpServerResponse("application/json", QJsonDocument(root2).toJson(QJsonDocument::Compact));
+}
+
+QHttpServerResponse SubmissionServer::handleApiFsMutate(const QHttpServerRequest &req) {
+	QString user;
+	if (! requireSession(req, &user))
+		return jsonError(401, tr("Not authenticated"));
+	if (! contest_ || contestDir_.isEmpty())
+		return jsonError(500, tr("No contest bound"));
+
+	QJsonParseError err;
+	const auto doc = QJsonDocument::fromJson(req.body(), &err);
+	if (err.error != QJsonParseError::NoError)
+		return jsonError(400, tr("Bad JSON: %1").arg(err.errorString()));
+	const auto obj = doc.object();
+	const auto op = obj.value("op").toString();
+	const auto root = fsRootFor(user);
+	ensureFsScaffold(root);
+
+	const auto okJson = [](const QJsonObject &extra = {}) {
+		QJsonObject out = extra;
+		out.insert("ok", true);
+		return QHttpServerResponse("application/json", QJsonDocument(out).toJson(QJsonDocument::Compact));
+	};
+
+	if (op == QLatin1String("mkdir") || op == QLatin1String("newfile") || op == QLatin1String("upload")) {
+		const auto parentAbs = resolveFsPath(root, obj.value("parent").toString());
+		if (parentAbs.isEmpty() || ! QFileInfo(parentAbs).isDir())
+			return jsonError(400, tr("Invalid parent folder"));
+		auto name = sanitizeSegment(obj.value("name").toString(),
+		                            op == QLatin1String("mkdir") ? tr("新建文件夹") : tr("新建空白文件.txt"));
+		// 同名自动加 (2)
+		QString finalName = name;
+		int n = 2;
+		while (QFileInfo::exists(QDir(parentAbs).filePath(finalName)))
+			finalName = QStringLiteral("%1 (%2)").arg(name).arg(n++);
+		const auto target = QDir(parentAbs).filePath(finalName);
+		const auto rel = QDir(root).relativeFilePath(target);
+		if (resolveFsPath(root, rel).isEmpty())
+			return jsonError(400, tr("Invalid name"));
+		if (op == QLatin1String("mkdir")) {
+			if (! QDir().mkpath(target))
+				return jsonError(500, tr("Cannot create folder"));
+		} else {
+			const auto content = obj.value("content").toString();
+			if (content.toUtf8().size() > kMaxFsFileBytes)
+				return jsonError(413, tr("File too large"));
+			QFile f(target);
+			if (! f.open(QFile::WriteOnly | QFile::Truncate))
+				return jsonError(500, tr("Cannot write file"));
+			f.write(content.toUtf8());
+		}
+		return okJson({{"path", rel}, {"name", finalName}});
+	}
+
+	if (op == QLatin1String("write")) {
+		const auto abs = resolveFsPath(root, obj.value("path").toString());
+		if (abs.isEmpty() || ! QFileInfo(abs).isFile())
+			return jsonError(404, tr("File not found"));
+		const auto content = obj.value("content").toString();
+		if (content.toUtf8().size() > kMaxFsFileBytes)
+			return jsonError(413, tr("File too large"));
+		QSaveFile f(abs);
+		if (! f.open(QFile::WriteOnly | QFile::Truncate))
+			return jsonError(500, tr("Cannot write file"));
+		f.write(content.toUtf8());
+		if (! f.commit())
+			return jsonError(500, tr("Cannot save file"));
+		return okJson();
+	}
+
+	if (op == QLatin1String("rename")) {
+		const auto abs = resolveFsPath(root, obj.value("path").toString());
+		if (abs.isEmpty() || ! QFileInfo::exists(abs))
+			return jsonError(404, tr("Not found"));
+		const auto parentAbs = QFileInfo(abs).absolutePath();
+		const bool isDir = QFileInfo(abs).isDir();
+		auto name = sanitizeSegment(obj.value("name").toString(), isDir ? tr("新建文件夹") : tr("未命名"));
+		const auto target = QDir(parentAbs).filePath(name);
+		const auto rel = QDir(root).relativeFilePath(target);
+		if (resolveFsPath(root, rel).isEmpty())
+			return jsonError(400, tr("Invalid name"));
+		if (target != abs && QFileInfo::exists(target))
+			return jsonError(409, tr("名称已存在"));
+		if (! QDir().rename(abs, target))
+			return jsonError(500, tr("Cannot rename"));
+		return okJson({{"path", rel}, {"name", name}});
+	}
+
+	if (op == QLatin1String("delete")) {
+		const auto abs = resolveFsPath(root, obj.value("path").toString());
+		if (abs.isEmpty() || ! QFileInfo::exists(abs))
+			return jsonError(404, tr("Not found"));
+		const auto rel = QDir(root).relativeFilePath(abs);
+		if (rel.isEmpty() || rel.startsWith(QLatin1String(kFsTrashDirName)))
+			return jsonError(400, tr("Invalid path"));
+		const auto trashDir = QDir(root).filePath(QLatin1String(kFsTrashDirName));
+		QDir().mkpath(trashDir);
+		const auto id = QStringLiteral("t%1").arg(QDateTime::currentMSecsSinceEpoch());
+		const auto stored = QStringLiteral("%1_%2").arg(id, QFileInfo(abs).fileName());
+		const auto storedAbs = QDir(trashDir).filePath(stored);
+		const bool isDir = QFileInfo(abs).isDir();
+		bool moved = isDir ? QDir().rename(abs, storedAbs) : QFile::rename(abs, storedAbs);
+		if (! moved) {
+			// 跨设备等情况：退化为递归复制 + 删除
+			auto copyRec = [](const QString &from, const QString &to) {
+				auto self = [](const QString &f, const QString &t, auto &fn) -> bool {
+					if (QFileInfo(f).isDir()) {
+						if (! QDir().mkpath(t))
+							return false;
+						const auto subs =
+						    QDir(f).entryInfoList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot);
+						for (const auto &s : subs)
+							if (! fn(s.absoluteFilePath(), QDir(t).filePath(s.fileName()), fn))
+								return false;
+						return true;
+					}
+					return QFile::copy(f, t);
+				};
+				return self(from, to, self);
+			};
+			if (! copyRec(abs, storedAbs))
+				return jsonError(500, tr("Cannot move to trash"));
+			if (isDir)
+				QDir(abs).removeRecursively();
+			else
+				QFile::remove(abs);
+		}
+		auto index = readTrashIndex(root);
+		QJsonObject entry;
+		entry.insert("id", id);
+		entry.insert("name", QFileInfo(abs).fileName());
+		entry.insert("stored", stored);
+		entry.insert("type", isDir ? "folder" : "file");
+		entry.insert("deletedAt", QDateTime::currentDateTime().toString(Qt::ISODate));
+		index.append(entry);
+		writeTrashIndex(root, index);
+		return okJson({{"id", id}});
+	}
+
+	if (op == QLatin1String("restore")) {
+		const auto id = obj.value("id").toString();
+		auto index = readTrashIndex(root);
+		QJsonArray kept;
+		QJsonObject found;
+		for (const auto &v : index) {
+			const auto e = v.toObject();
+			if (e.value("id").toString() == id && found.isEmpty())
+				found = e;
+			else
+				kept.append(e);
+		}
+		if (found.isEmpty())
+			return jsonError(404, tr("Trash entry not found"));
+		const auto trashDir = QDir(root).filePath(QLatin1String(kFsTrashDirName));
+		const auto storedAbs = QDir(trashDir).filePath(found.value("stored").toString());
+		auto name = sanitizeSegment(found.value("name").toString(), tr("未命名"));
+		QString finalName = name;
+		int n = 2;
+		while (QFileInfo::exists(QDir(root).filePath(finalName)))
+			finalName = QStringLiteral("%1 (%2)").arg(name).arg(n++);
+		const auto target = QDir(root).filePath(finalName);
+		if (! QFileInfo::exists(storedAbs))
+			return jsonError(404, tr("Trash file missing"));
+		if (! QFile::rename(storedAbs, target) && ! QDir().rename(storedAbs, target))
+			return jsonError(500, tr("Cannot restore"));
+		writeTrashIndex(root, kept);
+		return okJson({{"path", finalName}, {"name", finalName}});
+	}
+
+	if (op == QLatin1String("emptytrash")) {
+		QDir(QDir(root).filePath(QLatin1String(kFsTrashDirName))).removeRecursively();
+		QDir().mkpath(QDir(root).filePath(QLatin1String(kFsTrashDirName)));
+		writeTrashIndex(root, QJsonArray());
+		return okJson();
+	}
+
+	return jsonError(400, tr("Unknown op"));
+}
+
+QHttpServerResponse SubmissionServer::handleApiFsSample(const QString &name, const QHttpServerRequest &req) {
+	QString user;
+	if (! requireSession(req, &user))
+		return redirect("/login");
+	if (! isSafePathComponent(name))
+		return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
+	const QDir stmtDir(QDir(contestDir_).filePath(QLatin1String(kStatementDirName)));
+	auto path = stmtDir.filePath(name);
+	if (! QFile::exists(path)) {
+		const auto legacy = findStatementFile(contestDir_);
+		if (legacy.isEmpty() || QFileInfo(legacy).fileName() != name)
+			return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
+		path = legacy;
+	}
+	QFile f(path);
+	if (! f.open(QFile::ReadOnly))
+		return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
+	const auto mime = QMimeDatabase().mimeTypeForFile(path, QMimeDatabase::MatchExtension);
+	const bool inlineDisplay = mime.name() == QLatin1String("application/pdf");
+	QHttpServerResponse resp(mime.name().toUtf8(), f.readAll());
 	QHttpHeaders h = resp.headers();
 	h.append(QHttpHeaders::WellKnownHeader::ContentDisposition,
 	         QStringLiteral("%1; filename=\"%2\"; filename*=UTF-8''%3")
