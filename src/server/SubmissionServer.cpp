@@ -1056,7 +1056,7 @@ QString SubmissionServer::fsRootFor(const QString &user) const {
 }
 
 QStringList SubmissionServer::fsSlotNames() const {
-	QStringList slots;
+	QStringList slotNames;
 	QSet<QString> used;
 	if (contest_) {
 		const auto list = contest_->getTaskList();
@@ -1070,22 +1070,22 @@ QStringList SubmissionServer::fsSlotNames() const {
 			while (used.contains(name.toLower()))
 				name = QStringLiteral("%1_%2").arg(base).arg(n++);
 			used.insert(name.toLower());
-			slots << name;
+			slotNames << name;
 		}
 	}
-	return slots;
+	return slotNames;
 }
 
 void SubmissionServer::ensureFsScaffold(const QString &root) const {
 	QDir().mkpath(root);
 	QDir().mkpath(QDir(root).filePath(QLatin1String(kFsTrashDirName)));
-	const auto slots = fsSlotNames();
+	const auto slotNames = fsSlotNames();
 	const auto tasks = contest_ ? contest_->getTaskList() : QList<Task *>{};
-	for (int i = 0; i < slots.size(); ++i) {
-		const auto dir = QDir(root).filePath(slots.at(i));
+	for (int i = 0; i < slotNames.size(); ++i) {
+		const auto dir = QDir(root).filePath(slotNames.at(i));
 		QDir().mkpath(dir);
 		const auto base = i < tasks.size() ? tasks.at(i)->getSourceFileName() : QString();
-		const auto fileBase = base.isEmpty() ? slots.at(i) : sanitizeSegment(base, slots.at(i));
+		const auto fileBase = base.isEmpty() ? slotNames.at(i) : sanitizeSegment(base, slotNames.at(i));
 		const auto path = QDir(dir).filePath(fileBase + QStringLiteral(".cpp"));
 		if (! QFile::exists(path)) {
 			QFile f(path);
@@ -1151,7 +1151,7 @@ QHttpServerResponse SubmissionServer::handleApiFs(const QHttpServerRequest &req)
 
 	// 整棵树
 	QJsonArray items;
-	const auto slots = fsSlotNames();
+	const auto slotNames = fsSlotNames();
 	QDirIterator it(root, QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
 	while (it.hasNext()) {
 		it.next();
@@ -1168,7 +1168,7 @@ QHttpServerResponse SubmissionServer::handleApiFs(const QHttpServerRequest &req)
 		if (fi.isFile())
 			obj.insert("size", static_cast<double>(fi.size()));
 		obj.insert("mtime", fi.lastModified().toString(Qt::ISODate));
-		obj.insert("slot", slots.contains(fi.fileName()) || slots.contains(parentRel));
+		obj.insert("slot", slotNames.contains(fi.fileName()) || slotNames.contains(parentRel));
 		items.append(obj);
 	}
 
@@ -1207,7 +1207,7 @@ QHttpServerResponse SubmissionServer::handleApiFs(const QHttpServerRequest &req)
 
 	QJsonObject root2;
 	root2.insert("user", user);
-	root2.insert("slots", QJsonArray::fromStringList(slots));
+	root2.insert("slots", QJsonArray::fromStringList(slotNames));
 	root2.insert("items", items);
 	root2.insert("trash", trashAlive);
 	root2.insert("samples", samples);
